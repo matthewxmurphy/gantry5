@@ -142,6 +142,14 @@ bin/composer-install
 
 After that, you need to properly symlink Gantry into your CMS installation.
 
+## PHP 8.4 compatibility checks
+
+The nullable rewriter handles intersections/DNF unions and grouped attributes
+while preserving reference parameters and function bodies. See
+[the PHP 8.4 rewriter checks](tests/php84/README.md) for the actual parser/runtime
+command, coverage and integration limits. Existing Composer runtime bounds,
+including the upper bound below PHP 8.5, are unchanged.
+
 ## Testing PHP 8.3 Compatibility
 
 The framework includes a PHPUnit test suite specifically for validating PHP 8.3 compatibility. To run these tests:
