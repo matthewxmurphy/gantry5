@@ -18,8 +18,8 @@ use Gantry\Admin\Events\MenuEvent;
 use Gantry\Component\Config\Config;
 use Gantry\Component\Menu\Item;
 use Gantry\Framework\Menu;
-use RocketTheme\Toolbox\Event\Event;
-use RocketTheme\Toolbox\Event\EventSubscriberInterface;
+use Gantry\Component\Event\Event;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Class EventListener

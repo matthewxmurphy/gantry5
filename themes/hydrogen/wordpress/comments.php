@@ -13,19 +13,18 @@
 
 defined('ABSPATH') or die;
 
-use Timber\Post;
 use Timber\Timber;
 
 /*
  * The template for displaying comments
  */
 
-$context = Timber::get_context();
+$context = Timber::context();
 
-$post            = new Post();
+$post            = Timber::get_post();
 $context['post'] = $post;
 
-if (post_password_required($post)) {
+if (!$post || post_password_required($post->ID)) {
     return;
 }
 

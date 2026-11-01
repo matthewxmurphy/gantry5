@@ -78,7 +78,48 @@ class Gantry5Plugin extends Plugin
             PermissionsRegisterEvent::class => [
                 ['onRegisterPermissions', 100]
             ],
+            'onApiRegisterRoutes' => ['onApiRegisterRoutes', 0],
+            'onApiSidebarItems' => ['onApiSidebarItems', 0],
+            'onApiPluginPageInfo' => ['onApiPluginPageInfo', 0],
         ];
+    }
+
+    public function onApiRegisterRoutes(Event $event): void
+    {
+        $event['routes']->post('/gantry/dispatch', [\Gantry\Admin\ApiController::class, 'dispatch']);
+    }
+
+    public function onApiSidebarItems(Event $event): void
+    {
+        $actor = $event['user'];
+        if (!$actor instanceof UserInterface || !$actor->authenticated || !$actor->get('authorized', true)) { return; }
+        $resolver = new \Grav\Plugin\Api\PermissionResolver($this->grav['permissions'] ?? null);
+        $settings = $actor->authorize('api.super') || $resolver->resolve($actor, 'api.config.themes') === true;
+        $approved = false;
+        if (!$settings && ($actor->authorize('api.super') || $resolver->resolve($actor, 'api.pages.update') === true)) {
+            try {
+                Loader::setup();
+                $this->initializeNativeApiTheme();
+                $approved = \Gantry\Component\ClientEditing\Access::store(Gantry::instance())->state()['enabled'];
+            } catch (\Throwable $error) { $approved = false; }
+        }
+        if (!$settings && !$approved) { return; }
+        $items = $event['items'] ?? [];
+        $items[] = ['id' => 'gantry5', 'plugin' => 'gantry5', 'label' => $settings ? 'Gantry' : 'Approved text',
+            'icon' => 'fa-layer-group', 'route' => '/plugin/gantry5', 'priority' => 0,
+            'authorize' => $settings ? 'api.config.themes' : 'api.pages.update'];
+        $event['items'] = $items;
+    }
+
+    public function onApiPluginPageInfo(Event $event): void
+    {
+        if ($event['plugin'] !== 'gantry5') { return; }
+        $event['definition'] = ['id' => 'gantry5', 'title' => 'Gantry', 'page_type' => 'component', 'actions' => []];
+    }
+
+    public function initializeNativeApiTheme(): void
+    {
+        if (!$this->theme) { $this->initializeGantryTheme(); }
     }
 
     /**

@@ -33,6 +33,10 @@ class Access
             $definitions[$extension] = is_string($canonical) && is_file($canonical) ? hash_file('sha256', $canonical) : null;
         }
         $definitions['escape'] = hash_file('sha256', __DIR__ . '/SafeText.php');
+        if ($gantry['platform']->getName() === 'grav') {
+            // Grav2 changes the native authority namespace; never reuse old role approvals silently.
+            $definitions['authority'] = $gantry['platform']->clientEditingCapabilityLabel();
+        }
         return new PolicyStore($locator->findResource('gantry-theme://config', true, true), [
             'cms' => $gantry['platform']->getName(), 'theme' => $gantry['theme']->name,
             'definition' => hash('sha256', json_encode($definitions))

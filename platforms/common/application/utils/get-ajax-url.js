@@ -33,6 +33,7 @@ var parseAjaxURI = function(uri) {
             uri = uri.replace(/themes\.php/ig, 'admin-ajax.php');
             break;
         case 'grav':
+            if (window.GANTRY_NATIVE_API === true) { break; }
             // converts foo/bar?nonce=1234.json to foo/bar.json?nonce=1234
             var suffix = getAjaxSuffix();
             if (endsWith(uri, suffix)) {

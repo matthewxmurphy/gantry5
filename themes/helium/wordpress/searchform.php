@@ -19,6 +19,6 @@ use Timber\Timber;
  * The template for displaying Search Form in Search widget
  */
 
-$context = Timber::get_context();
+$context = Timber::context();
 
 Timber::render('searchform.html.twig', $context);

@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        php: [ 8.4, 8.3, 8.2, 8.1 ]
+        php: [ 8.4, 8.3 ]
         os: [ubuntu-latest]
     timeout-minutes: 10
     steps:
@@ -40,9 +40,8 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
       - name: Build Gantry packages
         run: composer build-dev
-      - name: Run PHP 8.3 compatibility tests
-        if: matrix.php == '8.3'
-        run: ./tests/php83/scripts/run-tests.sh
+      - name: Run modern dependency and Twig integration checks
+        run: php tests/modern/dependencies.php platforms/wordpress/gantry5/vendor/autoload.php
       - name: Run targeted PHP 8.4 nullable-rewriter checks
         if: matrix.php == '8.4'
         run: php tests/php84/nullable-rewriter.php

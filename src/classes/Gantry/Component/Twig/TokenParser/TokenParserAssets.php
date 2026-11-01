@@ -64,14 +64,14 @@ class TokenParserAssets extends AbstractTokenParser
         $stream = $this->parser->getStream();
         $location = null;
         if ($stream->nextIf(Token::OPERATOR_TYPE, 'in')) {
-            $location = $this->parser->getExpressionParser()->parseExpression();
+            $location = $this->parser->parseExpression();
         } else {
             $lineno = $token->getLine();
             $location = new ConstantExpression('head', $lineno);
         }
 
         if ($stream->nextIf(Token::NAME_TYPE, 'with')) {
-            $variables = $this->parser->getExpressionParser()->parseExpression();
+            $variables = $this->parser->parseExpression();
         } else {
             $lineno = $token->getLine();
             $variables = new ArrayExpression([], $lineno);

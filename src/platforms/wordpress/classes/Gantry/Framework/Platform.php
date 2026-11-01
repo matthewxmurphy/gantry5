@@ -18,7 +18,6 @@ use Gantry\Component\Config\Config;
 use Gantry\Component\Filesystem\Folder;
 use Gantry\Component\System\Messages;
 use Gantry\Framework\Base\Platform as BasePlatform;
-use Gantry\WordPress\PostQuery;
 use Gantry\WordPress\Utilities;
 use Gantry\WordPress\Widgets;
 use RocketTheme\Toolbox\DI\Container;
@@ -244,11 +243,11 @@ class Platform extends BasePlatform
 
     /**
      * @param mixed $query
-     * @return QueryIterator
+     * @return \Timber\PostCollectionInterface|null
      */
     public function query_posts($query)
     {
-        return new PostQuery($query);
+        return \Timber\Timber::get_posts($query);
     }
 
     /**

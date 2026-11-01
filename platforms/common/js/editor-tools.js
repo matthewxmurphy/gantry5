@@ -1,6 +1,18 @@
 /* Gantry editor tools. Copyright 2026 Matthew C. Murphy. MIT. */
 (function () {
     'use strict';
+    function pageLocation() {
+        if (window.GANTRY_NATIVE_API === true) {
+            var history = window.GANTRY_ADMIN_HISTORY;
+            if (!history || typeof history.url !== 'string') { throw new Error('No native editor URL'); }
+            var url = new URL(history.url);
+            if (!/^https?:$/.test(url.protocol) || url.origin !== window.parent.location.origin || url.username || url.password) {
+                throw new Error('Unsupported native editor origin');
+            }
+            return url;
+        }
+        return window.location;
+    }
     function associateStyles() {
         document.querySelectorAll('[data-section-style-pane]').forEach(function (pane) {
             var id = pane.getAttribute('data-section-style-pane');
@@ -11,8 +23,9 @@
         });
     }
     function ajaxURL(action) {
-        var url = new URL(action, window.location.href);
-        if (url.origin !== window.location.origin) { throw new Error('Nonlocal action'); }
+        var current = pageLocation();
+        var url = new URL(action, current.href);
+        if (url.origin !== current.origin) { throw new Error('Nonlocal action'); }
         var suffix = window.GANTRY_AJAX_SUFFIX || '';
         if (suffix.charAt(0) === '.') {
             if (!url.pathname.endsWith(suffix)) { url.pathname += suffix; }
@@ -89,9 +102,10 @@
         try {
             var raw = panel.getAttribute('data-saved-site-preview');
             if (!raw || !raw.trim()) { throw new Error('No saved frontend URL'); }
-            url = new URL(raw, window.location.href);
-            if (!/^https?:$/.test(url.protocol) || url.origin !== window.location.origin || url.username || url.password) { throw new Error('Unsupported origin'); }
-            if (url.pathname === window.location.pathname && url.search === window.location.search) { throw new Error('Recursive preview URL'); }
+            var current = pageLocation();
+            url = new URL(raw, current.href);
+            if (!/^https?:$/.test(url.protocol) || url.origin !== current.origin || url.username || url.password) { throw new Error('Unsupported origin'); }
+            if (url.pathname === current.pathname && url.search === current.search) { throw new Error('Recursive preview URL'); }
         } catch (error) {
             status.textContent = 'A saved-page preview is unavailable for this site.';
             return;

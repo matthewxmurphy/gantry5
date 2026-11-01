@@ -49,17 +49,19 @@ abstract class RealLoader
      */
     public static function getClassLoader()
     {
-        // Fail safe version check for PHP <5.6.20.
-        if (version_compare($phpVersion = PHP_VERSION, '5.6.20', '<')) {
-            throw new \RuntimeException(sprintf(self::$errorMessagePhpMin, $phpVersion, '5.6.20'));
+        if (version_compare($phpVersion = PHP_VERSION, '8.3.0', '<')) {
+            throw new \RuntimeException(sprintf(self::$errorMessagePhpMin, $phpVersion, '8.3.0'));
+        }
+        if (PHP_VERSION_ID >= 80500) {
+            throw new \RuntimeException('This Gantry candidate supports PHP 8.3 and 8.4. A newer PHP version is not yet supported.');
         }
 
         if (defined('GANTRY5_VERSION')) {
             throw new \LogicException(self::$errorMessageGantryLoaded);
         }
 
-        define('GANTRY5_VERSION', '5.6.5');
-        define('GANTRY5_VERSION_DATE', '2026-10-15');
+        define('GANTRY5_VERSION', '6.0.0-dev');
+        define('GANTRY5_VERSION_DATE', '2026-10-31');
 
         if (!defined('DS')) {
             define('DS', DIRECTORY_SEPARATOR);
@@ -93,6 +95,9 @@ abstract class RealLoader
             }
             define('GANTRY5_LIBRARY', WP_CONTENT_DIR . '/plugins/gantry5');
         } elseif (defined('GRAV_VERSION') && defined('ROOT_DIR')) {
+            if (version_compare(GRAV_VERSION, '2.0.0', '<')) {
+                throw new \RuntimeException('This Gantry candidate requires Grav 2 and its modern dependencies. Keep Grav 1.7 on the Gantry 5.6.5 line.');
+            }
             /** @var \RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator $locator */
             $locator = \Grav\Common\Grav::instance()['locator'];
             define('GANTRY5_PLATFORM', 'grav');
@@ -110,23 +115,12 @@ abstract class RealLoader
             throw new \LogicException('Please run composer in Gantry 5 Library!');
         }
 
-        // Load compat libraries only on platforms that still rely on the legacy stack.
-        // WordPress ships with modern dependencies in vendor/, so prefer those there.
-        $useCompatLibraries = GANTRY5_PLATFORM !== 'wordpress' && \PHP_VERSION_ID >= 70205 && GANTRY5_PLATFORM !== 'grav';
-        if ($useCompatLibraries) {
-            /** @var ClassLoader $loader */
-            $loader = require "{$lib}/compat/vendor/autoload.php";
-            $loader->unregister();
-        }
-
         /** @var ClassLoader $loader */
         $loader = require $autoload;
-
-        // On legacy platforms, map Pimple/Twig to compat vendor.
-        if ($useCompatLibraries) {
-            $loader->setPsr4('Twig\\', "{$lib}/compat/vendor/twig/twig/src");
-            $loader->set('Twig_', "{$lib}/compat/vendor/twig/twig/lib");
-            $loader->set('Pimple', "{$lib}/compat/vendor/pimple/pimple/src");
+        // Joomla/WordPress use their modern package vendor; Grav keeps its host vendor.
+        // Never mix the old compat Twig autoloader into a Twig 3 environment.
+        if (\Twig\Environment::VERSION_ID < 32100 || \Twig\Environment::VERSION_ID >= 40000) {
+            throw new \LogicException('This Gantry candidate requires Twig 3.21 or later in the Twig 3 series. Update conflicting extensions before loading it.');
         }
 
         // Skip registering SCSS compiler until it's needed.

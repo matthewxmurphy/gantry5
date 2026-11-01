@@ -35,8 +35,8 @@ class Pkg_Gantry5InstallerScript
      */
     protected $versions = array(
         'PHP' => array (
-            '8.1' => '8.1.0',
-            '0' => '8.2.0' // Preferred version
+            '8.3' => '8.3.0',
+            '0' => '8.4.0' // Preferred version
         ),
         'Joomla!' => array (
             // Require Joomla 5+ (minimum 5.0.0)

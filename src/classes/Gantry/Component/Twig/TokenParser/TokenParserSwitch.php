@@ -19,6 +19,7 @@ namespace Gantry\Component\Twig\TokenParser;
 
 use Gantry\Component\Twig\Node\TwigNodeSwitch;
 use Twig\Error\SyntaxError;
+use Twig\ExpressionParser\InfixExpressionParserInterface;
 use Twig\Node\Node;
 use Twig\Token;
 use Twig\TokenParser\AbstractTokenParser;
@@ -47,7 +48,7 @@ class TokenParserSwitch extends AbstractTokenParser
         $lineno = $token->getLine();
         $stream = $this->parser->getStream();
 
-        $name = $this->parser->getExpressionParser()->parseExpression();
+        $name = $this->parser->parseExpression();
         $stream->expect(Token::BLOCK_END_TYPE);
 
         // There can be some whitespace between the {% switch %} and first {% case %} tag.
@@ -57,7 +58,11 @@ class TokenParserSwitch extends AbstractTokenParser
 
         $stream->expect(Token::BLOCK_START_TYPE);
 
-        $expressionParser = $this->parser->getExpressionParser();
+        $separator = $this->parser->getEnvironment()->getExpressionParsers()->getByName(InfixExpressionParserInterface::class, 'or');
+        if (!$separator) {
+            throw new SyntaxError('The switch tag requires the standard or operator.', $lineno);
+        }
+        $casePrecedence = $separator->getPrecedence() + 1;
 
         $default = null;
         $cases = [];
@@ -71,7 +76,7 @@ class TokenParserSwitch extends AbstractTokenParser
                     $values = [];
 
                     while (true) {
-                        $values[] = $expressionParser->parsePrimaryExpression();
+                        $values[] = $this->parser->parseExpression($casePrecedence);
                         // Multiple allowed values?
                         if ($stream->test(Token::OPERATOR_TYPE, 'or')) {
                             $stream->next();

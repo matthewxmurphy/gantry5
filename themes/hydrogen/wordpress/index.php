@@ -41,7 +41,7 @@ if (!isset($paged) || !$paged) {
 }
 
 // We need to render contents of <head> before plugin content gets added.
-$context              = Timber::get_context();
+$context              = Timber::context();
 $context['page_head'] = $theme->render('partials/page_head.html.twig', $context);
 
 // Category variables for query manipulation
@@ -66,7 +66,7 @@ if ($cat) {
 }
 
 $context['posts']      = Timber::get_posts();
-$context['pagination'] = Timber::get_pagination();
+$context['pagination'] = Timber::get_posts()->pagination();
 
 $templates = ['index.html.twig'];
 

@@ -16,7 +16,10 @@
 
 namespace Gantry\Component\Twig\Node;
 
+use Twig\Attribute\YieldReady;
+
 use Twig\Compiler;
+use Twig\Node\CaptureNode;
 use Twig\Node\Node;
 use Twig\Node\NodeOutputInterface;
 
@@ -24,6 +27,7 @@ use Twig\Node\NodeOutputInterface;
  * Class TwigNodeMarkdown
  * @package Gantry\Component\Twig\Node
  */
+#[YieldReady]
 class TwigNodeMarkdown extends Node implements NodeOutputInterface
 {
     /**
@@ -34,7 +38,9 @@ class TwigNodeMarkdown extends Node implements NodeOutputInterface
      */
     public function __construct(Node $body, $lineno, $tag = 'markdown')
     {
-        parent::__construct(['body' => $body], [], $lineno, $tag);
+        $capture = new CaptureNode($body, $lineno);
+        $capture->setAttribute('raw', true);
+        parent::__construct(['body' => $capture], [], $lineno);
     }
     /**
      * Compiles the node to PHP.
@@ -45,13 +51,13 @@ class TwigNodeMarkdown extends Node implements NodeOutputInterface
     {
         $compiler
             ->addDebugInfo($this)
-            ->write('ob_start();' . PHP_EOL)
+            ->write('$content = ')
             ->subcompile($this->getNode('body'))
-            ->write('$content = ob_get_clean();' . PHP_EOL)
+            ->raw(PHP_EOL)
             ->write('preg_match("/^\s*/", $content, $matches);' . PHP_EOL)
             ->write('$lines = explode("\n", $content);' . PHP_EOL)
             ->write('$content = preg_replace(\'/^\' . $matches[0]. \'/\', "", $lines);' . PHP_EOL)
             ->write('$content = join("\n", $content);' . PHP_EOL)
-            ->write('echo $this->env->getExtension(\'Gantry\Component\Twig\TwigExtension\')->markdownFunction($content);' . PHP_EOL);
+            ->write('yield $this->env->getExtension(\'Gantry\Component\Twig\TwigExtension\')->markdownFunction($content);' . PHP_EOL);
     }
 }

@@ -97,6 +97,14 @@ class Upgrade extends HtmlController
             throw new \RuntimeException('Acknowledge the private contents before downloading.', 400);
         }
         $bytes = $service->create();
+        if (($this->container['admin2.context'] ?? null) instanceof \Gantry\Admin\ApiContext) {
+            $response = new HtmlResponse($bytes);
+            $response->mimeType = 'application/json';
+            $response->setHeader('Content-Disposition', 'attachment; filename="gantry-outline-snapshot.json"');
+            $response->setHeader('Cache-Control', 'private, no-store');
+            $response->setHeader('X-Content-Type-Options', 'nosniff');
+            return $response;
+        }
         // As with Gantry's existing download controller, terminate before CMS admin chrome.
         while (ob_get_level() && @ob_end_clean()) {
         }

@@ -10,5 +10,5 @@
 
 {% block page_footer %}
     {% do gantry.platform.finalize() %}
-    {{ wp_footer|raw }}
+    {{ gantry.theme.wordpressFooter()|raw }}
 {% endblock %}

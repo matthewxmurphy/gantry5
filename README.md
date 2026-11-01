@@ -1,14 +1,20 @@
-## Fork candidate: unreleased source
+## Gantry 6.0.0-dev: unreleased development candidate
 
-This fork preserves Gantry 5 and its original licenses. The PHP 8.4 compatibility
-candidate is tracked in [PR #10](https://github.com/matthewxmurphy/gantry5/pull/10)
-and [focused PHP 8.4 checks](tests/php84/README.md). The source identity is 5.6.5;
-this is not a published release. New unreleased administration features are
+This fork preserves the Gantry 5 codebase and its original licenses. This separate
+next-major candidate targets PHP 8.3–8.4 and modern dependencies; it is not a
+published release or an automatic upgrade for existing themes. The retained
+5.6.5 compatibility line is tracked in
+[PR #10](https://github.com/matthewxmurphy/gantry5/pull/10) and
+[focused PHP 8.4 checks](tests/php84/README.md). New administration features are
 documented in [Upgrade assistant](docs/upgrade-assistant.md),
-[Editor tools](docs/editor-tools.md), [Design packs](docs/design-packs.md) and
+[Editor tools](docs/editor-tools.md), [Design packs](docs/design-packs.md),
+[Client editing](docs/client-editing.md) and
 [frontend keyboard, motion and focus behavior](docs/frontend-accessibility.md).
-Dependency modernization remains a proposal; current constraints and vendored
-libraries have not been replaced by that proposal.
+See the [itemized candidate release notes](docs/6.0-release-notes.md) and
+[Grav 2 Admin2 integration](docs/grav-admin2.md).
+See [dependency and theme migration](docs/dependency-migration.md) before using
+this development line. Existing sites, CMS host vendors and content are not
+changed by checking out or building this source.
 
 ## Historical upstream announcement
 

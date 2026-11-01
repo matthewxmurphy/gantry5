@@ -28,10 +28,10 @@ $gantry = Gantry::instance();
 $theme  = $gantry['theme'];
 
 // We need to render contents of <head> before plugin content gets added.
-$context              = Timber::get_context();
+$context              = Timber::context();
 $context['page_head'] = $theme->render('partials/page_head.html.twig', $context);
 
-$context['posts']   = Timber::query_post();
+$context['posts']   = Timber::get_post();
 $context['content'] = Helper::ob_function('the_content');
 
 Timber::render('bbpress.html.twig', $context);

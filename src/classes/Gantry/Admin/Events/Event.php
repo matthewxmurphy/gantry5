@@ -23,7 +23,7 @@ use Gantry\Framework\Gantry;
  * Class AssigmentsEvent
  * @package Gantry\Admin\Events
  */
-class Event extends \RocketTheme\Toolbox\Event\Event
+class Event extends \Gantry\Component\Event\Event
 {
  /**
      * Permanent fix for PHP 8.2 dynamic property warning:

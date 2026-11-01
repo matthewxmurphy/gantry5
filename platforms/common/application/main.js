@@ -6,6 +6,7 @@ var $              = require('elements'),
     ui             = require('./ui'),
     interpolate    = require('mout/string/interpolate'),
     trim           = require('mout/string/trim'),
+    History        = require('./utils/history'),
     setParam       = require('mout/queryString/setParam'),
     modal          = ui.modal,
     toastr         = ui.toastr,
@@ -129,9 +130,10 @@ ready(function() {
         var key = element.data('settings-key');
         if (!key) { return true; }
 
-        var redirect = window.location.search,
+        var currentURL = window.GANTRY_ADMIN_HISTORY ? History.getState().url : window.location.href,
+            redirect = new URL(currentURL).search,
             settings = element.attribute('href'),
-            uri      = window.location.href.split('?');
+            uri      = currentURL.split('?');
         if (uri.length > 1 && uri[0].match(/index.php$/)) { redirect = 'index.php' + redirect; }
 
         redirect = setParam(settings, key, btoa(redirect));
@@ -165,7 +167,8 @@ ready(function() {
             type    = element.data('save'),
             extras  = '',
             page    = $('[data-lm-root]') ? 'layout' : ($('[data-mm-id]') ? 'menu' : ($('[data-g5-position]') ? 'positions' : 'other')),
-            saveURL = parseAjaxURI(trim(window.location.href, '#') + getAjaxSuffix());
+            currentURL = window.GANTRY_ADMIN_HISTORY ? History.getState().url : window.location.href,
+            saveURL = parseAjaxURI(trim(currentURL, '#') + getAjaxSuffix());
 
         switch (page) {
             case 'layout':

@@ -16,7 +16,7 @@ namespace Gantry\Framework;
 
 use Gantry\Debugger;
 use Pimple\ServiceProviderInterface;
-use RocketTheme\Toolbox\Event\EventSubscriberInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Timber\Timber;
 
 /**
@@ -63,27 +63,17 @@ class Gantry extends Base\Gantry
      */
     protected static function init()
     {
-        // Make sure that Timber plugin is new enough or not installed.
-        if (class_exists('Timber', false) && empty(\Timber::$version)) {
-            $action = 'deactivate';
-            $slug = 'timber-library/timber.php';
-            $url = \esc_url(\wp_nonce_url(\add_query_arg(['action' => $action, 'plugin' => $slug], \admin_url('plugins.php')), 'deactivate-plugin_' . $slug));
-            throw new \LogicException('<strong>Timber Plugin</strong> is too old for <strong>Gantry 5</strong> and it is no longer needed. Click <a href="' . $url . '"><strong>here</strong></a> to deactivate it.');
+        // Timber 2 is a Composer library; a preloaded Timber 1 plugin cannot be mixed in.
+        if (!defined(Timber::class . '::VERSION') || version_compare(Timber::VERSION, '2.5.1', '<')
+            || (class_exists('Timber', false) && !is_a('Timber', Timber::class, true))) {
+            throw new \LogicException('This Gantry candidate requires its Composer Timber 2.5 library. Disable the legacy Timber plugin before using it.');
         }
 
         $container = parent::init();
 
-        if (class_exists('TimberHelper')) {
-            // Using Timber plugin.
-            if (\GANTRY_DEBUGGER) {
-                Debugger::addMessage('Using Timber Plugin v' . Timber::$version);
-            }
-        } else {
-            // Using composer version of Timber; Initialize it.
-            new Timber;
-            if (\GANTRY_DEBUGGER) {
-                Debugger::addMessage('Using Timber Library v' . Timber::$version);
-            }
+        Timber::init();
+        if (\GANTRY_DEBUGGER) {
+            Debugger::addMessage('Using Timber Library v' . Timber::VERSION);
         }
 
         $lookup = $container['loader']->getPrefixesPsr4()['Gantry\\'];

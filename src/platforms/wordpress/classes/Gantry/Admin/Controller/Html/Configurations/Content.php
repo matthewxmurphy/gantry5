@@ -18,7 +18,7 @@ use Gantry\Component\Admin\HtmlController;
 use Gantry\Component\Config\Config;
 use Gantry\Component\Response\JsonResponse;
 use Gantry\Framework\Services\ConfigServiceProvider;
-use RocketTheme\Toolbox\Event\Event;
+use Gantry\Component\Event\Event;
 use RocketTheme\Toolbox\File\YamlFile;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 

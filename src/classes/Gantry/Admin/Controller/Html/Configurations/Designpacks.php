@@ -150,6 +150,14 @@ class Designpacks extends HtmlController
         }
         $service->validate($pack);
         $bytes = DesignPack::encode($pack);
+        if (($this->container['admin2.context'] ?? null) instanceof \Gantry\Admin\ApiContext) {
+            $response = new HtmlResponse($bytes);
+            $response->mimeType = 'application/json';
+            $response->setHeader('Content-Disposition', 'attachment; filename="gantry-design-pack.json"');
+            $response->setHeader('Cache-Control', 'private, no-store');
+            $response->setHeader('X-Content-Type-Options', 'nosniff');
+            return $response;
+        }
         while (ob_get_level() && @ob_end_clean()) {
         }
         if (headers_sent()) {
