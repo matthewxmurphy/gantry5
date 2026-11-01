@@ -5,6 +5,9 @@ Author: Tiger12, LLC
 Author URI: http://tiger12.com
 Description: Child theme for the Helium Gantry 5 theme.
 Version: @version@
+Requires at least: 7.1.4
+Requires PHP: 8.3
+Update URI: https://github.com/matthewxmurphy/gantry5
 License: GNU General Public License v2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Template: g5_helium

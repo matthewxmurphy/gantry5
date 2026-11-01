@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Historical upstream Gantry 5 template. The alpha uses manual GitHub releases; this file is not an alpha feed. -->
 <updates>
 	<update>
 		<name>g5_hydrogen</name>

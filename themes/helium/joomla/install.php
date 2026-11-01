@@ -27,7 +27,7 @@ use Joomla\Filesystem\Folder;
 class G5_HeliumInstallerScript
 {
     /** @var string */
-    public $requiredGantryVersion = '5.5';
+    public $requiredGantryVersion = '6.0.0-alpha.1';
 
     /**
      * @param string $type

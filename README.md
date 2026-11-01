@@ -1,9 +1,11 @@
-## Gantry 6.0.0-dev: unreleased development candidate
+## Gantry 6.0.0-alpha.1
 
 This fork preserves the Gantry 5 codebase and its original licenses. This separate
-next-major candidate targets PHP 8.3–8.5 and modern dependencies; it is not a
-published release or an automatic upgrade for existing themes. The retained
-5.6.5 compatibility line is tracked in
+next-major alpha targets PHP 8.3–8.5 and modern dependencies. Use an isolated
+testing site: third-party themes, particles and integrations need API migration
+and acceptance before production use. Installation is manual and does not
+automatically migrate existing sites or content. The retained Gantry 5
+maintenance line is tracked in
 [PR #10](https://github.com/matthewxmurphy/gantry5/pull/10) and
 [focused PHP 8.4 checks](tests/php84/README.md). New administration features are
 documented in [Upgrade assistant](docs/upgrade-assistant.md),
@@ -15,6 +17,23 @@ See the [itemized candidate release notes](docs/6.0-release-notes.md) and
 See [dependency and theme migration](docs/dependency-migration.md) before using
 this development line. Existing sites, CMS host vendors and content are not
 changed by checking out or building this source.
+
+The ecosystem version in `VERSION` is **6.0.0-alpha.1**. Its independent calendar
+revision is **2026.11.01.002**, recorded in `RELEASE_REVISION` and `release.json`;
+the corresponding GitHub release tag is `v2026.11.01.002`. This preserves the
+established Gantry SemVer scheme while recording the fork's release revision.
+Use the reviewed assets for that release from
+[this fork's GitHub releases](https://github.com/matthewxmurphy/gantry5/releases).
+The alpha has no automatic update feed and uses no official Gantry 5 feed.
+
+The development baseline was exercised on Joomla 6.2.0, WordPress 7.1.4 and
+Grav 2.2.19/Admin2. See the release notes for exact final-package results and
+limits. Alpha availability does not certify a production site, every CMS/PHP
+combination or full accessibility/device acceptance.
+
+Fork maintenance: Matthew X Murphy, https://MatthewxMurphy.com.
+Product/support: https://builtnotbegged.com. Existing upstream notices and
+applicable Gantry/third-party licenses remain unchanged.
 
 ## Historical upstream announcement
 

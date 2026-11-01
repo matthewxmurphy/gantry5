@@ -57,6 +57,33 @@
         <phingcall target="build-grav-library" />
         <phingcall target="build-grav-media" />
 
+        <!-- Keep release identity and original license/notice texts in installed frameworks. -->
+        <copy todir="${tmp_dir}/packages/plugin/gantry5" overwrite="true">
+            <fileset dir="${project_dir}/licenses"/>
+            <fileset dir="${project_dir}">
+                <include name="VERSION"/>
+                <include name="RELEASE_REVISION"/>
+                <include name="release.json"/>
+            </fileset>
+        </copy>
+        <!-- Retain legal files even when general vendor Markdown/docs are trimmed. -->
+        <copy todir="${tmp_dir}/packages/plugin/gantry5/vendor" overwrite="true">
+            <fileset dir="${path.platforms}/grav/gantry5/vendor">
+                <include name="**/LICENSE*"/>
+                <include name="**/LICENCE*"/>
+                <include name="**/COPYING*"/>
+                <include name="**/NOTICE*"/>
+                <include name="**/license*"/>
+                <include name="**/licence*"/>
+                <include name="**/copying*"/>
+                <include name="**/notice*"/>
+                <include name="**/License*"/>
+                <include name="**/Licence*"/>
+                <include name="**/Copying*"/>
+                <include name="**/Notice*"/>
+            </fileset>
+        </copy>
+
         <!-- Add version information to all xml files -->
         <copy todir="${tmp_dir}/packages/plugin/gantry5" overwrite="true">
             <filterchain refid="filter"/>
@@ -115,7 +142,6 @@
                 <exclude name="**/*.sh"/>
                 <exclude name="**/readme.txt"/>
                 <exclude name="**/CHANGELOG*"/>
-                <exclude name="**/LICENSE*"/>
                 <exclude name="**/Makefile"/>
                 <exclude name="**/todo"/>
                 <exclude name="**/composer.lock"/>
@@ -214,6 +240,16 @@
                         <include name="blueprints.yaml"/>
                         <include name="gantry/theme.yaml"/>
                         <include name="theme.php" />
+                    </fileset>
+                </copy>
+
+                <!-- Preserve alpha identity and full legal texts in each migrated theme. -->
+                <copy todir="${tmp_dir}/themes/${directory}/g5_${directory}" overwrite="true">
+                    <fileset dir="${project_dir}/licenses"/>
+                    <fileset dir="${project_dir}">
+                        <include name="VERSION"/>
+                        <include name="RELEASE_REVISION"/>
+                        <include name="release.json"/>
                     </fileset>
                 </copy>
 

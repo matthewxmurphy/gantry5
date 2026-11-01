@@ -695,6 +695,11 @@ class ThemeInstaller extends AbstractInstaller
         $manifest = $manifest ?: $this->getManifest();
         $xml = $manifest->getXml();
 
+        if ((string) $xml->gantryUpdateChannel === 'manual-alpha') {
+            $this->removeOfficialAlphaUpdateSites();
+            return;
+        }
+
         if (empty($xml->updateservers->server)) {
             return;
         }
@@ -783,6 +788,50 @@ class ThemeInstaller extends AbstractInstaller
                 'extension_id' => (int) $this->extension->extension_id
             ];
             $db->insertObject('#__update_sites_extensions', $link);
+        }
+    }
+
+    /**
+     * Alpha Helium/Hydrogen/Base update manually. Remove only their exact
+     * inherited Gantry 5 associations/offers; preserve shared feed records,
+     * other extension links and all custom update locations.
+     */
+    protected function removeOfficialAlphaUpdateSites()
+    {
+        $element = (string) $this->extension->element;
+        $extensionId = (int) $this->extension->extension_id;
+        if (!$extensionId || (string) $this->extension->type !== 'template'
+            || (int) $this->extension->client_id !== 0
+            || !in_array($element, ['g5_helium', 'g5_hydrogen', 'g5_base'], true)) {
+            return;
+        }
+        $locations = [
+            "http://updates.gantry.org/5.0/joomla/tpl_{$element}.xml",
+            "https://updates.gantry.org/5.0/joomla/tpl_{$element}.xml",
+            'http://updates.gantry.org/5.0/joomla/list.xml',
+            'https://updates.gantry.org/5.0/joomla/list.xml'
+        ];
+        $db = Factory::getContainer()->get(DatabaseInterface::class);
+        $quoted = array_map([$db, 'quote'], $locations);
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('us.update_site_id'))
+            ->from($db->quoteName('#__update_sites', 'us'))
+            ->innerJoin($db->quoteName('#__update_sites_extensions', 'usex') .
+                ' ON ' . $db->quoteName('usex.update_site_id') . ' = ' . $db->quoteName('us.update_site_id'))
+            ->where($db->quoteName('usex.extension_id') . ' = ' . $extensionId)
+            ->where($db->quoteName('us.location') . ' IN (' . implode(',', $quoted) . ')');
+        $db->setQuery($query);
+        $siteIds = array_map('intval', (array) $db->loadColumn());
+        if (!$siteIds) {
+            return;
+        }
+        foreach (['#__update_sites_extensions', '#__updates'] as $table) {
+            $query = $db->getQuery(true)
+                ->delete($db->quoteName($table))
+                ->where($db->quoteName('extension_id') . ' = ' . $extensionId)
+                ->where($db->quoteName('update_site_id') . ' IN (' . implode(',', $siteIds) . ')');
+            $db->setQuery($query);
+            $db->execute();
         }
     }
 }

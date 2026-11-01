@@ -33,6 +33,12 @@
         <file>template_preview.png</file>
         <file>template_thumbnail.png</file>
         <file>MD5SUMS</file>
+        <file>VERSION</file>
+        <file>RELEASE_REVISION</file>
+        <file>release.json</file>
+        <file>GPL-2.0.txt</file>
+        <file>Gantry-MIT.txt</file>
+        <file>NOTICE-GANTRY.txt</file>
     </files>
 
     <positions>
@@ -44,7 +50,6 @@
             </fieldset>
         </fields>
     </config>
-    <updateservers>
-        <server type="extension" priority="1" name="Gantry 5 Hydrogen">https://updates.gantry.org/5.0/joomla/tpl_g5_hydrogen.xml</server>
-    </updateservers>
+    <!-- Alpha packages update manually from the fork GitHub releases. -->
+    <gantryUpdateChannel>manual-alpha</gantryUpdateChannel>
 </extension>

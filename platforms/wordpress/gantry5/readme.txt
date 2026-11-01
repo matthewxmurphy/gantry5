@@ -2,14 +2,14 @@
 Contributors: gantry
 Author URI: http://gantry.org
 Tags: gantry, gantry5, framework, theme, builder
-Requires at least: 5.2
-Tested up to: 7.1
-Requires PHP: 8.1.0
+Requires at least: 7.1.4
+Tested up to: 7.1.4
+Requires PHP: 8.3.0
 Stable tag: @version@
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Gantry is a comprehensive set of building blocks to enable the rapid development and realization of a design into a flexible and powerful web platform
+Gantry 6 alpha is an independent Gantry 5 based testing release for PHP 8.3–8.5. Use reviewed packages from https://github.com/matthewxmurphy/gantry5/releases for manual installation and updates. Existing Gantry and third-party licenses remain applicable.
 
 == Description ==
 
@@ -27,7 +27,7 @@ Gantry 5 uses the **Nucleus** grid system, built from scratch using Flexbox and 
 
 = Cross-platform Support =
 
-The new responsive Gantry 5 framework is available for **WordPress 5.2+**, **Joomla 5.0+** and **Grav 1.7.25+**.
+The current native verification baseline is **WordPress 7.1.4**, **Joomla 6.2.0** and **Grav 2.2.19/Admin2**. The alpha requires PHP 8.3–8.5; older CMS combinations need separate acceptance.
 
 = Intuitive YAML-driven Configuration =
 
@@ -35,7 +35,7 @@ The new responsive Gantry 5 framework is available for **WordPress 5.2+**, **Joo
 
 = Twig Templating =
 
-Gantry 5 utilizes [Twig](https://twig.symfony.com/doc/1.x/) and [Timber](http://upstatement.com/timber/) to make creating powerful, dynamic themes quick and easy.
+The alpha uses Twig 3 and WordPress Timber 2; third-party themes and extensions require the documented API migration.
 
 = New Administrative Interface =
 
@@ -97,7 +97,7 @@ Please note that Gantry Framework plugin doesn't come up with the default theme.
 We try to ensure that any Gantry theme and the Gantry Plugin specifically will work with any modern and secure server environment. The recommended minimum requirements are :
 
 * WordPress 5.2 or higher
-* PHP 8.1.0+ (8.2+ recommended)
+* PHP 8.3, 8.4 or 8.5 (below 8.6)
 
 = Is there any documentation available ? =
 

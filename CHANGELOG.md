@@ -1,5 +1,11 @@
-# 6.0.0-dev
-## Unreleased development candidate
+# 6.0.0-alpha.1
+## Alpha — calendar revision 2026.11.01.002
+
+- Give the alpha framework and migrated Helium/Hydrogen themes an explicit
+  prerelease identity, with PHP 8.3–8.5 and Gantry 6/Grav 2 admission metadata.
+- Distribute this alpha through manual GitHub release packages, separated from
+  the inherited official Gantry 5 update feeds.
+- Preserve full Gantry and bundled vendor license/notice texts in packages.
 
 - Move the isolated next-major line to PHP 8.3–8.5, Toolbox 2, Symfony 7.4,
   Twig 3.30 and WordPress Timber 2.5, preserving the separate Gantry 5.6.5 line.

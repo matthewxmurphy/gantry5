@@ -35,8 +35,6 @@
         <language tag="en-GB">en-GB/en-GB.pkg_gantry5.sys.ini</language>
     </languages>
 
-    <updateservers>
-        <server type="extension" priority="1" name="Gantry 5">http://updates.gantry.org/5.0/joomla/pkg_gantry5.xml</server>
-        <server type="collection" priority="2" name="Gantry 5">http://updates.gantry.org/5.0/joomla/list.xml</server>
-    </updateservers>
+    <!-- Alpha packages update manually from the fork GitHub releases. -->
+    <gantryUpdateChannel>manual-alpha</gantryUpdateChannel>
 </extension>

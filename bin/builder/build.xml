@@ -51,13 +51,13 @@
     <!-- Use PHP to generate human-readable dates to avoid Intl dependency in Phing TstampTask -->
     <exec executable="php" outputproperty="php.datefmt">
         <arg value="-r"/>
-        <arg value="echo date('F j, Y');"/>
+        <arg value="date_default_timezone_set('America/Chicago'); echo date('F j, Y');"/>
     </exec>
     <property name="str.datefmt" value="${php.datefmt}" />
 
     <exec executable="php" outputproperty="php.datexml">
         <arg value="-r"/>
-        <arg value="echo date('F j, Y');"/>
+        <arg value="date_default_timezone_set('America/Chicago'); echo date('F j, Y');"/>
     </exec>
     <property name="str.datexml" value="${php.datexml}" />
 
