@@ -1,4 +1,4 @@
-# Frontend navigation changes (unreleased)
+# Frontend navigation changes — Gantry 5.7
 
 The existing Gantry frontend bundle now normalizes the default off-canvas trigger
 as a named, keyboard-reachable button. Enter and Space open the drawer; focus

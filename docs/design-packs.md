@@ -1,4 +1,4 @@
-# Design packs (unreleased)
+# Design packs — Gantry 5.7
 
 Design packs share reviewed visual definitions across outlines or compatible sites.
 They do not install executable particles and do not duplicate a private outline.

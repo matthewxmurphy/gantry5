@@ -1,0 +1,23 @@
+{
+    "schema": 1,
+    "product": "Gantry",
+    "version": "5.7.0",
+    "version_file": "VERSION",
+    "calendar_revision": "2026.11.01.003",
+    "calendar_revision_file": "RELEASE_REVISION",
+    "release_timezone": "America/Chicago",
+    "tag": "v2026.11.01.003",
+    "repository": "matthewxmurphy/gantry5",
+    "developer": "Matthew X Murphy",
+    "developer_url": "https://MatthewxMurphy.com",
+    "support_url": "https://builtnotbegged.com",
+    "php": ">=8.1.0 <8.5.0",
+    "framework_only": true,
+    "components": {
+        "framework": "5.7.0",
+        "unchanged_helium": "5.6.4",
+        "unchanged_hydrogen": "5.6.4"
+    },
+    "publication_gate": "Real-content proving-site acceptance and verified rollback before public source/packages.",
+    "license_notice": "Existing Gantry and third-party licenses and notices remain applicable."
+}

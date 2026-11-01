@@ -1,7 +1,9 @@
 # Modern dependency migration candidate
 
 This is a proposed next-major route, not shipped support or a dependency update.
-Gantry 5.6.5 and its existing CMS compatibility remain separate. No requirements,
+Gantry 5.7 retains the Gantry 5.6.6 dependency pins and PHP 8.1–8.4 range.
+The separately implemented Gantry 6 alpha follows this migration; it is not part
+of the Gantry 5.7 feature backport. No requirements,
 lock files or installed CMS dependencies are changed by this document.
 
 ## Candidate runtime

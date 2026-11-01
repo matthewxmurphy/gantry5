@@ -1,26 +1,29 @@
+# 5.7.0
+## 2026-11-01 — feature release candidate; proving-site gate pending
+
+Calendar identity: `2026.11.01.003`; reserved release tag: `v2026.11.01.003`.
+This candidate is private until real-content proving-site acceptance passes.
+
+- Add selected-outline compatibility preflight and acknowledged private YAML
+  snapshots, read-only restore preview, stale-state refusal and guarded recovery.
+- Add independent blueprint-bound section Styles in Layout, preserving the editor
+  draft, and saved-site preview at desktop/tablet/mobile CSS viewport widths.
+- Add visual design-pack export, compatibility preview and import into new
+  unassigned outlines, with bounded bitmap assets and complete supplied notices.
+- Add default-off approved client text editing using existing native page-editing
+  authority, explicit instance approvals, fresh tokens and policy/layout revisions.
+- Improve menu keyboard/focus behavior, submenu Escape, current-level Tab handling,
+  reduced motion, off-canvas transition state, observers, touch/breakpoints and scrolling.
+- Retain the 5.6.6 PHP 8.4 compatibility fixes and original dependency pins; PHP 8.5
+  and modern dependency/theme APIs stay on the Gantry 6 line.
+- Ship framework-only Joomla/WordPress/Grav packages; unchanged official Helium
+  and Hydrogen remain independently versioned 5.6.4.
+
 # 5.6.6
 ## 2026-11-01 — maintenance release
 
 Calendar release revision: `2026.11.01.001`. The framework keeps its established
 SemVer identity `5.6.6`; the release tag is `v2026.11.01.001`.
-
-- Add default-off client text editing with explicit native-capability consent,
-  instance approvals, revision-checked text-only saves and restricted legacy routing.
-
-- Improve frontend keyboard and focus behavior, current-level Tab handling and
-  submenu Escape; respect reduced motion and correct transition scheduling,
-  observers, touch/breakpoint behavior and back-to-top controls.
-
-- Add explicitly selected, versioned visual design packs with installed-target
-  compatibility preview, bounded custom bitmap copies and full supplied notices;
-  imports create new unassigned outlines without overwriting existing content.
-
-- Add section Styles controls for exact section-blueprint matches, with an independent
-  save that preserves the Layout draft, and a controlled saved-site viewport preview.
-
-- Add a selected-outline upgrade assistant with local compatibility preflight,
-  explicitly acknowledged private YAML snapshots, counts-only restore preview and
-  guarded restoration with stale-state checks and compensating file recovery.
 
 - Restore the Grav error-service admission method using authenticated Grav users
   with both admin login and plugin-settings permission; keep guest and partial
