@@ -20,7 +20,7 @@ setlocale(LC_ALL, ['en_GB.utf8', 'en_GB']);
 if (!is_file(dirname(__DIR__) . '/engines/common/nucleus/scss/vendor/bourbon/_bourbon.scss')) {
     throw new RuntimeException('Missing tracked Bourbon SCSS source; stage the complete Git source tree before building.');
 }
-date_default_timezone_set('America/Denver');
+date_default_timezone_set('America/Chicago');
 
 // PHP 8.4 deprecates implicit nullable parameters when the file is compiled.
 // Composer reinstalls vendor code, so rewrite those signatures before packaging.

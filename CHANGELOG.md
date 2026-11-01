@@ -1,8 +1,9 @@
 # 5.7.0
-## 2026-11-01 — feature release candidate; proving-site gate pending
+## 2026-11-01 — feature release; real-content proving-site gate passed
 
-Calendar identity: `2026.11.01.003`; reserved release tag: `v2026.11.01.003`.
-This candidate is private until real-content proving-site acceptance passes.
+Calendar identity: `2026.11.01.003`; release tag: `v2026.11.01.003`.
+Real-content proving-site acceptance and private backup restoration passed before
+publication. Temporary test identities/outlines were removed; original state was verified.
 
 - Add selected-outline compatibility preflight and acknowledged private YAML
   snapshots, read-only restore preview, stale-state refusal and guarded recovery.

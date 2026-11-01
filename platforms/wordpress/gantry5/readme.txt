@@ -13,11 +13,12 @@ Gantry is a comprehensive set of building blocks to enable the rapid development
 
 == Description ==
 
-This independent Gantry 5.7.0 feature candidate retains PHP 8.1-8.4 and the
+This independent Gantry 5.7.0 feature release retains PHP 8.1-8.4 and the
 5.6.6 dependency pins. It adds upgrade snapshots, section Styles and saved-site
 previews, design packs, approved client text editing and frontend keyboard/focus
-improvements. Calendar revision 2026.11.01.003 maps to future tag v2026.11.01.003.
-Publication requires the owner's real-content proving-site acceptance first.
+improvements. Calendar revision 2026.11.01.003 maps to tag v2026.11.01.003.
+The owner's real-content proving-site acceptance and backup restore drill passed
+before publication; the release notes describe the tested scope and limits.
 Existing theme versions and site update channels remain unchanged. PHP 8.5 and
 modern dependency/API work stay on the Gantry 6 line. Full scope and limits are
 in docs/releases/5.7.0.md; snapshots do not back up a complete site.
@@ -126,7 +127,7 @@ Once you downloaded and installed Gantry 5 plugin, please download also a defaul
 
 == Changelog ==
 
-= 5.7.0 candidate (2026-11-01; proving-site acceptance pending) =
+= 5.7.0 (2026-11-01; real-content proving-site gate passed) =
 * Add selected-outline preflight/private snapshots/guarded restore, independent section Styles and saved-site previews.
 * Add visual design packs that create new unassigned outlines and default-off approved client text editing.
 * Improve frontend keyboard/focus, reduced motion, off-canvas state, touch/breakpoint and back-to-top behavior.

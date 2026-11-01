@@ -1,4 +1,4 @@
-# Gantry 5.7.0 — PHP 8.4 feature release candidate
+# Gantry 5.7.0 — PHP 8.4 feature release
 
 This independent fork continues Gantry 5 and preserves upstream history, authorship
 and licenses. Version **5.7.0** adds the upgrade assistant, Layout editing tools,
@@ -10,10 +10,11 @@ The Twig, Symfony, Toolbox and WordPress Timber package pins remain those of
 5.6.6. PHP 8.5 and the modern dependency/API migration belong to the separate
 [Gantry 6 roadmap](https://github.com/matthewxmurphy/gantry5/issues/9).
 
-This is a **private release candidate**. Public source/packages and the release tag
-must wait for the owner's real-content proving-site run on testing.joomlamafia.com,
-including rollback verification and the same feature acceptance used for the
-native CMS fixtures. Earlier fixture results do not satisfy that gate.
+The owner's real-content proving-site gate passed on testing.joomlamafia.com
+before publication, including a private backup restore drill, actual feature
+acceptance and final preservation/cleanup checks. The existing `g5_jmafia` theme,
+content, assignments and original account remain preserved. The release notes
+record the accepted scope and reporting limits.
 
 Read [5.7.0 scope, installation and acceptance](docs/releases/5.7.0.md),
 [upgrade snapshots](docs/upgrade-assistant.md), [editor tools](docs/editor-tools.md),
@@ -22,7 +23,7 @@ Read [5.7.0 scope, installation and acceptance](docs/releases/5.7.0.md),
 private content; their restore scope is selected-outline YAML, not a full site.
 
 `VERSION` is framework SemVer `5.7.0`; `RELEASE_REVISION` is calendar identity
-`2026.11.01.003` (America/Chicago). The reserved future tag is `v2026.11.01.003`.
+`2026.11.01.003` (America/Chicago). The release tag is `v2026.11.01.003`.
 Only the three matching framework ZIPs are release assets. Unchanged official
 Helium and Hydrogen retain **5.6.4**; no relabeled default-theme ZIPs are included.
 Existing published 5.6.6 and Gantry 6 alpha artifacts stay intact.
