@@ -1,3 +1,20 @@
+# 5.6.5
+## Unreleased
+
+- Restore the Grav error-service admission method using authenticated Grav users
+  with both admin login and plugin-settings permission; keep guest and partial
+  bootstrap requests denied without changing the shared WordPress handler.
+
+- Emit legal nullable DNF intersections instead of invalid ?(A&B), preserving
+  by-reference parameters, existing unions/nullability and function bodies.
+- Track grouped attribute depth before splitting parameters, and parse the
+  corrected self-test examples. Add actual PHP 8.4 parser/runtime/idempotence
+  checks without invoking a CMS or rewriting installed site files.
+- Modernize the three legacy SCSS operator-name interpolations without changing
+  dispatch names or replacing Leaf Corcoran's existing MIT attribution.
+- Preserve the existing source VERSION and Composer bounds. These are unreleased
+  source changes, not a published release or deployed-site compatibility claim.
+
 # 5.6.4
 ## 09/03/2026
 1. [Joomla](#joomla)
