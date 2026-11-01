@@ -400,6 +400,15 @@ class Gantry5Plugin extends Plugin
         $router = $gantry['router'];
         $response = $router->dispatch();
 
+        // The generated native page normally requires theme administration. Admit only
+        // the approved Client routes after the shared dispatcher has checked their policy.
+        $admin = $this->grav['admin'];
+        if (!empty($gantry['client.restricted_entry'])
+            && preg_match('~^(?:themes/[^/]+/)?client(?:/save)?$~', trim($admin->route, '/'))
+            && \Gantry\Component\ClientEditing\Access::mayEnter($gantry)) {
+            $page->header()->access = ['admin.pages' => true];
+        }
+
         // Store response into the page.
         $page->content($response->getBody());
 

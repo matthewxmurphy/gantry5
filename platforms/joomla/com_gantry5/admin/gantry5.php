@@ -31,6 +31,13 @@ if ($user && !$user->guest && $user->authorise('core.edit', 'com_content') && cl
         try {
             Loader::setup();
             $clientGantry = Gantry::instance();
+            if (!defined('GANTRYADMIN_PATH')) {
+                define('GANTRYADMIN_PATH', JPATH_COMPONENT_ADMINISTRATOR);
+            }
+            // Resolve the requested native theme before checking its persistent policy.
+            // This is preparation only: no controller is dispatched before admission.
+            $clientRouter = new Router($clientGantry);
+            $clientRouter->boot()->load();
             $clientEntry = \Gantry\Component\ClientEditing\Access::mayEnter($clientGantry);
             if ($clientEntry) { \Gantry\Component\ClientEditing\Access::restrictNative($clientGantry); }
         } catch (\Throwable $error) {
