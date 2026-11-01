@@ -1,6 +1,10 @@
 # 5.6.5
 ## Unreleased
 
+- Restore the Grav error-service admission method using authenticated Grav users
+  with both admin login and plugin-settings permission; keep guest and partial
+  bootstrap requests denied without changing the shared WordPress handler.
+
 - Emit legal nullable DNF intersections instead of invalid ?(A&B), preserving
   by-reference parameters, existing unions/nullability and function bodies.
 - Track grouped attribute depth before splitting parameters, and parse the
