@@ -206,6 +206,16 @@ class Platform extends BasePlatform
         return admin_url('customize.php?theme=' . $theme);
     }
 
+    public function getSavedSiteUrl()
+    {
+        return \home_url('/');
+    }
+
+    public function isSettingsAdministrator() { return \is_user_logged_in() && \current_user_can('manage_options'); }
+    public function canEditClientContent() { return \is_user_logged_in() && \current_user_can('edit_pages'); }
+    public function clientEditingCapabilityLabel() { return 'WordPress edit_pages'; }
+    public function clientEditingNonceFields() { return ['_wpnonce', '_ajax_nonce']; }
+
     /**
      * Get administrator url for individual theme.
      *

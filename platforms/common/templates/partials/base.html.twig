@@ -9,6 +9,7 @@
 
 {% block javascript %}
     <script type="text/javascript" async="async" src="{{ url('gantry-admin://assets/js/main.js') }}"></script>
+        <script defer src="{{ url('gantry-admin://js/editor-tools.js') }}"></script>
     {% include "@gantry-admin/partials/js-translations.html.twig" %}
     {{ parent() }}
 {% endblock %}

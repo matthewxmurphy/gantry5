@@ -46,7 +46,9 @@ if (class_exists( 'Timber')) {
             $theme = $gantry['theme'];
             $name = $theme->details()['details.name'];
             remove_submenu_page('themes.php', 'theme-editor.php');
-            add_menu_page("{$name} Theme", "{$name} Theme", 'manage_options', 'layout-manager', 'gantry5_layout_manager');
+            $client = !current_user_can('manage_options') && \Gantry\Component\ClientEditing\Access::mayEnter($gantry);
+            add_menu_page($client ? 'Approved text' : "{$name} Theme", $client ? 'Approved text' : "{$name} Theme",
+                $client ? 'edit_pages' : 'manage_options', 'layout-manager', 'gantry5_layout_manager');
         },
         100
     );
@@ -186,7 +188,13 @@ function gantry5_layout_manager()
     static $output = null;
 
     if (!current_user_can('manage_options')) {
-        wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'gantry5'));
+        $gantry = Gantry::instance();
+        $view = isset($_GET['view']) && is_string($_GET['view']) ? wp_unslash($_GET['view']) : '';
+        if (!\Gantry\Component\ClientEditing\Access::mayEnter($gantry)
+            || !\Gantry\Component\ClientEditing\Access::clientView($view)) {
+            wp_die(esc_html__('You do not have sufficient permissions to access this page.', 'gantry5'));
+        }
+        \Gantry\Component\ClientEditing\Access::restrictNative($gantry);
     }
 
     add_filter('admin_body_class', static function() {

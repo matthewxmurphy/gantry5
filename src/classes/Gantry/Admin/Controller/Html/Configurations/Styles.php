@@ -35,12 +35,16 @@ class Styles extends HtmlController
     protected $httpVerbs = [
         'GET' => [
             '/'              => 'index',
+            '/sections'      => 'undefined',
+            '/sections/*'    => 'displaySection',
             '/blocks'        => 'undefined',
             '/blocks/*'      => 'display',
             '/blocks/*/**'   => 'formfield'
         ],
         'POST' => [
             '/'          => 'save',
+            '/sections'  => 'forbidden',
+            '/sections/*' => 'saveSection',
             '/blocks'    => 'forbidden',
             '/blocks/*'  => 'save',
             '/compile'   => 'compile'
@@ -90,20 +94,27 @@ class Styles extends HtmlController
      */
     public function display($id)
     {
+        $this->params = array_replace($this->params, $this->blockContext($id));
+        return $this->render('@gantry-admin/pages/configurations/styles/item.html.twig', $this->params);
+    }
+
+    protected function blockContext($id)
+    {
         $outline = $this->params['outline'];
         $blueprints = $this->container['styles']->getBlueprintForm($id);
         $prefix = 'styles.' . $id;
+        $context = [];
 
         if($outline === 'default') {
-            $this->params['overrideable'] = false;
-            $this->params['data'] = $this->container['config']->get($prefix);
+            $context['overrideable'] = false;
+            $context['data'] = $this->container['config']->get($prefix);
         } else {
-            $this->params['overrideable'] = true;
-            $this->params['defaults'] = $this->container['defaults']->get($prefix);
-            $this->params['data'] = ConfigServiceProvider::load($this->container, $outline, false, false)->get($prefix);
+            $context['overrideable'] = true;
+            $context['defaults'] = $this->container['defaults']->get($prefix);
+            $context['data'] = ConfigServiceProvider::load($this->container, $outline, false, false)->get($prefix);
         }
 
-        $this->params += [
+        return $context + [
             'block' => $blueprints,
             'id' => $id,
             'parent' => "configurations/{$outline}/styles",
@@ -111,7 +122,60 @@ class Styles extends HtmlController
             'skip' => ['enabled']
         ];
 
-        return $this->render('@gantry-admin/pages/configurations/styles/item.html.twig', $this->params);
+    }
+
+    private function sectionBlueprint($id)
+    {
+        if (!$this->authorize('platform.settings.manage')) {
+            $this->forbidden();
+        }
+        $styles = $this->container['styles']->all();
+        if (!is_string($id) || !isset($styles[$id]) || ($styles[$id]['type'] ?? null) !== 'section') {
+            throw new \RuntimeException('No section style blueprint matches this section.', 404);
+        }
+    }
+
+    public function displaySection($id)
+    {
+        $this->sectionBlueprint($id);
+        return $this->display($id);
+    }
+
+    public function saveSection($id)
+    {
+        $this->sectionBlueprint($id);
+        return $this->save($id);
+    }
+
+    public function sectionFields($id, $formId)
+    {
+        $this->sectionBlueprint($id);
+        $context = $this->blockContext($id);
+        $html = $this->render('@gantry-admin/forms/fields.html.twig', array_replace($context, [
+            'blueprints' => $context['block']['form'], 'scope' => '', 'prefix' => ''
+        ]));
+        $document = new \DOMDocument('1.0', 'UTF-8');
+        $previous = libxml_use_internal_errors(true);
+        try {
+            $document->loadHTML('<?xml encoding="UTF-8"><div id="g-section-style-fields">' . $html . '</div>', LIBXML_NONET | LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+            foreach (['input', 'select', 'textarea', 'button'] as $tag) {
+                foreach ($document->getElementsByTagName($tag) as $control) {
+                    $control->setAttribute('form', $formId);
+                    if (strtolower($control->getAttribute('type')) === 'submit') {
+                        $control->setAttribute('type', 'button');
+                    }
+                }
+            }
+            $root = $document->getElementById('g-section-style-fields');
+            $result = '';
+            foreach ($root->childNodes as $node) {
+                $result .= $document->saveHTML($node);
+            }
+            return $result;
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
     }
 
     /**

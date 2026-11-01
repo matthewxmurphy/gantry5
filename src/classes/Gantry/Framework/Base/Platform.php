@@ -209,6 +209,18 @@ abstract class Platform
      */
     abstract public function getThemePreviewUrl($theme);
 
+    /** Saved frontend entry point; does not select an outline or an inactive theme. */
+    public function getSavedSiteUrl()
+    {
+        return null;
+    }
+
+    /** Explicit native authority; unknown platforms never gain client admission. */
+    public function isSettingsAdministrator() { return false; }
+    public function canEditClientContent() { return false; }
+    public function clientEditingCapabilityLabel() { return 'No client capability is configured for this platform.'; }
+    public function clientEditingNonceFields() { return []; }
+
     /**
      * Get administrator url for individual theme.
      *

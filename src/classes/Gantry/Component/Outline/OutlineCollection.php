@@ -457,7 +457,7 @@ class OutlineCollection extends Collection
      * @return string
      * @throws \RuntimeException
      */
-    public function create($id, $title = null, $preset = null)
+    public function create($id, $title = null, $preset = null, ?callable $reserve = null)
     {
         $title = $title ?: 'Untitled';
         $name = ltrim(strtolower(preg_replace('|[^a-z\d_-]|ui', '_', $id ?: $title)), '_');
@@ -471,6 +471,9 @@ class OutlineCollection extends Collection
         }
 
         $name = $this->findFreeName($name);
+        if ($reserve) {
+            $reserve($name);
+        }
         if (!$id) {
             $title = ucwords(trim(preg_replace(['|_|', '|/|'], [' ', ' / '], $name)));
         }

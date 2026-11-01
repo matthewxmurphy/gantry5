@@ -3,3 +3,27 @@
 {% block title %}
     {{ particle.name|trim }}
 {% endblock %}
+
+{% block extra_tabs %}
+{% if section_styles %}
+<li><a href="#" id="g-section-styles-tab" aria-controls="g-section-styles-pane" role="tab" aria-expanded="false">Styles</a></li>
+{% endif %}
+{% endblock %}
+
+{% block extra_panes %}
+{% if section_styles %}
+<div class="g-pane" id="g-section-styles-pane" role="tabpanel" aria-labelledby="g-section-styles-tab" aria-expanded="false"
+     data-section-style-pane="{{ section_styles.form_id }}">
+    <p>Styles for <strong>{{ section_styles.id }}</strong> save immediately to this outline. They do not apply or save your Layout draft. Cancel does not undo styles already saved.</p>
+    {{ section_styles.fields|raw }}
+    <p><button type="button" class="button button-primary" form="{{ section_styles.form_id }}" data-section-style-save="{{ section_styles.form_id }}">Save section styles</button></p>
+    <p role="status" data-section-style-status></p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block after_form %}
+{% if section_styles %}
+<form id="{{ section_styles.form_id }}" method="post" action="{{ section_styles.url }}" data-section-style-form></form>
+{% endif %}
+{% endblock %}

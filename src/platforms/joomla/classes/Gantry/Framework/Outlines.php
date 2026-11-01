@@ -20,6 +20,7 @@ use Gantry\Debugger;
 use Gantry\Joomla\StyleHelper;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Factory;
+use Joomla\Database\DatabaseInterface;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 
 /**
@@ -126,11 +127,11 @@ class Outlines extends OutlineCollection
      * @return string
      * @throws \RuntimeException
      */
-    public function create($id, $title = null, $preset = null)
+    public function create($id, $title = null, $preset = null, ?callable $reserve = null)
     {
         if ($this->createId) {
             // Workaround Joomla wanting to use different logic for style duplication.
-            $new = parent::create($this->createId, $title, $preset);
+            $new = parent::create($this->createId, $title, $preset, $reserve);
 
             $this->createId = null;
 
@@ -143,24 +144,40 @@ class Outlines extends OutlineCollection
         $title = $installer->getStyleName($title);
         $style = $installer->addStyle($title);
 
-        $error = $style->getError();
+        try {
+            $error = $style->getError();
+            if ($error) {
+                throw new \RuntimeException($error, 400);
+            }
+            $presetId = (string) (isset($preset['preset']['name']) ? $preset['preset']['name'] : ($preset ?: 'default'));
+            StyleHelper::update($style->id, $presetId);
 
-        if ($error) {
-            throw new \RuntimeException($error, 400);
+            // Reservation runs after Joomla chooses its ID, before any layout write.
+            $newId = parent::create($style->id, $title, $preset, $reserve);
+            if ($newId != $style->id) {
+                throw new \RuntimeException(sprintf("Creating outline: folder '%s' already exists!", $style->id));
+            }
+            return $style->id;
+        } catch (\Throwable $error) {
+            // New opt-in callers own this fresh style, but may have refused an existing
+            // filesystem directory. Model deletion dispatches Gantry's extension-delete
+            // event, which would remove that refused path. Delete only this new unused
+            // DB row directly; never run extension events or change menu assignments.
+            if ($reserve && !empty($style->id)) {
+                $db = Factory::getContainer()->get(DatabaseInterface::class);
+                $id = (int) $style->id;
+                $assigned = $db->getQuery(true)->select('1')->from('#__menu')->where('template_style_id=' . $id);
+                $query = $db->getQuery(true)->delete('#__template_styles')
+                    ->where('id=' . $id)->where('client_id=0')->where('home=' . $db->quote('0'))
+                    ->where('template=' . $db->quote($this->container['theme.name']))
+                    ->where('NOT EXISTS (' . $assigned . ')');
+                $db->setQuery($query)->execute();
+                if ($db->getAffectedRows() !== 1) {
+                    throw new \RuntimeException('Design import failed and the new template style needs administrator cleanup.', 500, $error);
+                }
+            }
+            throw $error;
         }
-
-        $presetId = (string) (isset($preset['preset']['name']) ? $preset['preset']['name'] : ($preset ?: 'default'));
-
-        StyleHelper::update($style->id, $presetId);
-
-        // Create configuration folder.
-        $newId = parent::create($style->id, $title, $preset);
-
-        if ($newId != $style->id) {
-            throw new \RuntimeException(sprintf("Creating outline: folder '%s' already exists!", $style->id));
-        }
-
-        return $style->id;
     }
 
     /**

@@ -216,6 +216,30 @@ class Platform extends BasePlatform
         return (string)(int) $theme === (string) $theme ? Uri::root(false) . 'index.php?templateStyle=' . $theme : null;
     }
 
+    public function getSavedSiteUrl()
+    {
+        return Uri::root(false);
+    }
+
+    public function isSettingsAdministrator()
+    {
+        $user = Factory::getApplication()->getIdentity();
+        return $user && !$user->guest && $this->authorize('platform.settings.manage');
+    }
+
+    public function canEditClientContent()
+    {
+        $user = Factory::getApplication()->getIdentity();
+        return $user && !$user->guest && $user->authorise('core.edit', 'com_content');
+    }
+
+    public function clientEditingCapabilityLabel() { return 'Joomla core.edit on com_content, with existing administrator login access'; }
+    public function clientEditingNonceFields()
+    {
+        $session = Factory::getApplication()->getSession();
+        return [$session::getFormToken()];
+    }
+
     /**
      * Get administrator url for individual theme.
      *
