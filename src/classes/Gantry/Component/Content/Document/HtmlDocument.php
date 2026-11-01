@@ -684,7 +684,8 @@ class HtmlDocument
     public static function _escape_html_attr_callback($matches)
     {
         $chr = $matches[0];
-        $ord = \ord($chr);
+        // Inspect one byte for the existing control/entity rules; Unicode is decoded below.
+        $ord = \ord($chr[0]);
 
         /*
          * The following replaces characters undefined in HTML with the

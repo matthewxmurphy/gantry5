@@ -3,8 +3,8 @@
 use Gantry\Component\ClientEditing\PolicyStore;
 use Symfony\Component\Yaml\Yaml;
 
-if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500 || !isset($argv[1])) {
-    throw new RuntimeException('Use PHP 8.4 CLI with a real installed YAML autoloader.');
+if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80600 || !isset($argv[1])) {
+    throw new RuntimeException('Use PHP 8.4/8.5 CLI with a real installed YAML autoloader.');
 }
 require $argv[1];
 $source = dirname(__DIR__, 2) . '/src/classes/';

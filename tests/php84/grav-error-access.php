@@ -16,9 +16,9 @@ use Grav\Common\User\Interfaces\UserInterface;
 use Grav\Plugin\Admin\Admin;
 use Pimple\Container;
 
-if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500
+if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80600
     || getenv('GANTRY_GRAV_TEST_SITE') !== 'disposable') {
-    throw new RuntimeException('Use actual PHP 8.4 CLI on an explicitly disposable Grav installation.');
+    throw new RuntimeException('Use actual PHP 8.4/8.5 CLI on an explicitly disposable Grav installation.');
 }
 $root = isset($argv[1]) ? realpath($argv[1]) : false;
 if (!$root || !is_file($root . '/vendor/autoload.php') || !is_file($root . '/user/plugins/admin/classes/plugin/Admin.php')) {

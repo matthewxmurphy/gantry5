@@ -16,8 +16,8 @@ use Twig\Loader\ArrayLoader;
 use Twig\Source;
 use Twig\TwigFunction;
 
-if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80300 || PHP_VERSION_ID >= 80500 || !isset($argv[1]) || !is_file($argv[1])) {
-    throw new RuntimeException('Use actual PHP 8.3/8.4 and the resolved modern dependency autoloader.');
+if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80300 || PHP_VERSION_ID >= 80600 || !isset($argv[1]) || !is_file($argv[1])) {
+    throw new RuntimeException('Use actual PHP 8.3/8.4/8.5 and the resolved modern dependency autoloader.');
 }
 $loader = require $argv[1];
 $loader->addPsr4('Gantry\\', dirname(__DIR__, 2) . '/src/classes/Gantry', true);

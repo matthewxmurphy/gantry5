@@ -19,7 +19,7 @@
 
 defined('ABSPATH') or die;
 
-if (PHP_VERSION_ID < 80300 || PHP_VERSION_ID >= 80500) {
+if (PHP_VERSION_ID < 80300 || PHP_VERSION_ID >= 80600) {
     if (is_admin()) {
         add_action('admin_notices', 'gantry5_php_version_error');
     }
@@ -197,7 +197,7 @@ function gantry5_php_version_error()
         '<div class="error"><p>%s</p></div>',
         sprintf(
             /* translators: 1: current PHP version. */
-            esc_html__('This Gantry development candidate supports PHP 8.3 and 8.4; you are running PHP %1$s.', 'gantry5'),
+            esc_html__('This Gantry development candidate supports PHP 8.3 through 8.5; you are running PHP %1$s.', 'gantry5'),
             esc_html(PHP_VERSION)
         )
     );

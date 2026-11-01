@@ -122,19 +122,19 @@ class Response
         static $filesize = null;
 
         $args           = func_get_args();
-        $isCurlResource = is_resource($args[0]) && get_resource_type($args[0]) === 'curl';
+        $isCurlHandle = $args[0] instanceof \CurlHandle;
 
-        $notification_code = !$isCurlResource ? $args[0] : false;
-        $bytes_transferred = $isCurlResource ? $args[2] : $args[4];
+        $notification_code = !$isCurlHandle ? $args[0] : false;
+        $bytes_transferred = $isCurlHandle ? $args[2] : $args[4];
 
-        if ($isCurlResource) {
+        if ($isCurlHandle) {
             $filesize = $args[1];
         } elseif ($notification_code === STREAM_NOTIFY_FILE_SIZE_IS) {
             $filesize = $args[5];
         }
 
         if ($bytes_transferred > 0) {
-            if ($notification_code === STREAM_NOTIFY_PROGRESS | STREAM_NOTIFY_COMPLETED || $isCurlResource) {
+            if ($notification_code === STREAM_NOTIFY_PROGRESS || $notification_code === STREAM_NOTIFY_COMPLETED || $isCurlHandle) {
 
                 $progress = [
                     'code'        => $notification_code,
@@ -148,6 +148,8 @@ class Response
                 }
             }
         }
+
+        return 0;
     }
 
     /**
@@ -182,7 +184,7 @@ class Response
         list($uri, $options, $callback) = $args;
 
         if ($callback) {
-            $options['fopen']['notification'] = ['self', 'progress'];
+            $options['fopen']['notification'] = [self::class, 'progress'];
         }
 
         $stream  = stream_context_create(['http' => $options['fopen']], $options['fopen']);
@@ -215,7 +217,7 @@ class Response
                 $ch,
                 [
                     CURLOPT_NOPROGRESS       => false,
-                    CURLOPT_PROGRESSFUNCTION => ['self', 'progress']
+                    CURLOPT_PROGRESSFUNCTION => [self::class, 'progress']
                 ]
             );
         }
@@ -228,7 +230,8 @@ class Response
             throw new \RuntimeException("cURL error ({$errno}):\n {$error_message}");
         }
 
-        curl_close($ch);
+        // PHP 8 uses CurlHandle objects; releasing the last reference closes it.
+        unset($ch);
 
         return $response;
     }

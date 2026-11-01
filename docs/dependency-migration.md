@@ -7,9 +7,11 @@ Grav 1.7 installations on the separate Gantry 5.6.5 line.
 
 ## Runtime and package boundaries
 
-The candidate targets PHP **8.3 and 8.4**, below 8.5. Runtime package requirements,
+The candidate targets PHP **8.3, 8.4 and 8.5**, below 8.6. Runtime package requirements,
 plugin admission and the shared loader reflect that floor. Root/builder Composer
-graphs are build tools; their separate requirements do not declare CMS runtime support.
+graphs are build tools; their separate PHP 8.1 floor does not declare CMS runtime
+support. The existing runtime dependency versions remain pinned; widening the PHP
+upper bound does not upgrade those packages or an installed CMS.
 
 WordPress and Joomla resolve these exact candidate versions:
 
@@ -91,7 +93,7 @@ Head/footer hooks are captured when their template blocks render. Capturing
 
 ## Verification
 
-Use an isolated checkout with PHP 8.3/8.4. Check actual platform requirements:
+Use an isolated checkout with actual PHP 8.3, 8.4 or 8.5. Check actual platform requirements:
 
 ```sh
 composer install --working-dir=platforms/wordpress/gantry5 --no-dev
@@ -103,6 +105,9 @@ The new shared-service test uses actual resolved libraries and Gantry container,
 event, cache and parser code. It checks events/YAML/cache/switch/assets/throw/try
 in both Twig output modes. Pageblock/Markdown compile into native PHP declarations;
 their destinations remain real CMS acceptance. This test does not boot or impersonate a CMS.
+CI includes PHP 8.3/8.4/8.5; the nullable, snapshot, design-pack and client-text
+checks run on both PHP 8.4 and 8.5. Native CMS/host dependency compatibility and
+site-owned themes require separate verification on each runtime.
 
 Native checks must observe actual Reflection origins/runtime versions, install the
 candidate, save/reload configuration, compile SCSS, serve generated CSS and exercise

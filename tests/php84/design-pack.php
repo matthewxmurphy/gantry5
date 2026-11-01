@@ -2,12 +2,12 @@
 /**
  * Real filesystem/bitmap acceptance for the portable visual design-pack boundary.
  * Copyright (c) 2026 Matthew C. Murphy, https://MatthewxMurphy.com. MIT.
- * Usage: php tests/php84/design-pack.php (actual PHP 8.4 with GD).
+ * Usage: php tests/php84/design-pack.php (actual PHP 8.4/8.5 with GD).
  */
 use Gantry\Component\DesignPack\DesignPack;
 
-if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500 || !function_exists('imagecreatetruecolor')) {
-    throw new RuntimeException('Use PHP 8.4 CLI with the real GD extension.');
+if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80600 || !function_exists('imagecreatetruecolor')) {
+    throw new RuntimeException('Use PHP 8.4/8.5 CLI with the real GD extension.');
 }
 require dirname(__DIR__, 2) . '/src/classes/Gantry/Component/DesignPack/DesignPack.php';
 $checks = 0;
@@ -50,7 +50,7 @@ try {
     file_put_contents($root . '/outside.txt', 'preserve outside');
     $image = imagecreatetruecolor(2, 3);
     imagepng($image, $root . '/custom/images/mark.png');
-    imagedestroy($image);
+    unset($image);
     $bitmap = file_get_contents($root . '/custom/images/mark.png');
     $styles = ['accent.color-1' => ['kind' => 'color', 'section' => null],
         'font.family-default' => ['kind' => 'font', 'section' => null],
