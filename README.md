@@ -106,18 +106,19 @@ The back-end administration requirements of Gantry in order of preference are as
 
 **Note:** Internet Explorer is no longer supported
 
-## Installing Gantry 5 and the Hydrogen Theme
+## Installing the Gantry 6 alpha and a matching theme
 
 Gantry 5 is a framework by which Gantry-powered themes are made. In order for a Gantry theme to work, you will need to install both the **framework** and the **theme**. Doing this is not difficult at all.
 
-The first thing you need to do is download the latest build of Gantry 5 and Hydrogen. You can do so by clicking the links below, or via [GitHub](http://github.com/gantry/gantry5/).
+Download the framework and matching **6.0.0-alpha.1** Helium or Hydrogen theme
+for your CMS from [this fork's releases](https://github.com/matthewxmurphy/gantry5/releases).
+Install them in an isolated copy with a tested file/database restore path.
+Official stable Gantry 5 themes require migration before use with this alpha;
+read [the dependency migration guide](docs/dependency-migration.md).
 
-| [Download Stable](http://www.gantry.org/downloads#gantry5) | [Download CI Builds](http://gantry.org/downloads#ci-builds) |
-|:---------------------------------------------------:|:---------------------------------------------------------:|
-
-Once you have the latest packages, installation is simple. We have provided a step-by-step guide in the **Installation** portion of this documentation.
-
-[**Learn More**](http://docs.gantry.org/gantry5/basics/installation)
+The [original installation guide](http://docs.gantry.org/gantry5/basics/installation)
+describes the native CMS workflow; use the alpha package roster and requirements
+above when following it.
 
 ## Accessing the Gantry Administrator
 
