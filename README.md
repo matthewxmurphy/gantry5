@@ -1,4 +1,37 @@
-## Recent Updates – 2026 Activity & 5.6.0 Release
+# Gantry 5.6.6 — PHP 8.4 maintenance line
+
+This independent fork continues the Gantry 5 codebase and preserves its upstream
+history, copyright notices and licenses. Framework version **5.6.6** retains the
+declared PHP **8.1–8.4** dependency range. PHP 8.5 and modern dependency/API changes
+belong to the separate [Gantry 6 development roadmap](https://github.com/matthewxmurphy/gantry5/issues/9).
+
+The maintenance changes correct nullable DNF/attribute rewriting, legacy SCSS
+interpolation and Grav error-service admission. See the
+[release notes and compatibility limits](docs/releases/5.6.6.md) and
+[focused PHP 8.4 checks](tests/php84/README.md). Existing sites and custom themes
+need their own upgrade/rollback acceptance; the dependency range alone does not
+certify every CMS, extension or theme combination.
+
+Release identity is stored in two explicit fields: `VERSION` is the established
+framework SemVer `5.6.6`, while `RELEASE_REVISION` is calendar revision
+`2026.11.01.001` (America/Chicago). The corresponding release tag is
+`v2026.11.01.001`; installable framework filenames and CMS metadata use `5.6.6`.
+The independent JavaScript build-tool version and unchanged Helium/Hydrogen
+theme versions are retained. Only the three framework ZIPs are release assets.
+
+Source and release downloads: [matthewxmurphy/gantry5](https://github.com/matthewxmurphy/gantry5/releases).
+The fork does not redirect an installed site's existing update channels.
+Maintenance developer: Matthew X Murphy, [MatthewxMurphy.com](https://MatthewxMurphy.com),
+with product/support information at [Built Not Begged](https://builtnotbegged.com).
+This attribution applies to the fork maintenance; upstream and dependency authors
+retain their existing copyrights and licenses.
+
+## Historical upstream announcement
+
+The original steward announcement below is retained for attribution and history.
+Its release dates, support statements and future plans describe that announcement.
+
+### Recent Updates – 2026 Activity & 5.6.0 Release
 
 We've been heads-down on development since taking over stewardship, with lighter public communication than ideal (last major updates were quieter after October 2025). Thank you for your patience—we're back to more visible progress.
 
@@ -141,6 +174,14 @@ bin/composer-install
 ```
 
 After that, you need to properly symlink Gantry into your CMS installation.
+
+## PHP 8.4 compatibility checks
+
+The nullable rewriter handles intersections/DNF unions and grouped attributes
+while preserving reference parameters and function bodies. See
+[the PHP 8.4 rewriter checks](tests/php84/README.md) for the actual parser/runtime
+command, coverage and integration limits. Existing Composer runtime bounds,
+including the upper bound below PHP 8.5, are unchanged.
 
 ## Testing PHP 8.3 Compatibility
 

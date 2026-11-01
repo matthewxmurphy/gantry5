@@ -1,3 +1,29 @@
+# 5.6.6
+## 2026-11-01 — maintenance release
+
+Calendar release revision: `2026.11.01.001`. The framework keeps its established
+SemVer identity `5.6.6`; the release tag is `v2026.11.01.001`.
+
+- Restore the Grav error-service admission method using authenticated Grav users
+  with both admin login and plugin-settings permission; keep guest and partial
+  bootstrap requests denied without changing the shared WordPress handler.
+
+- Emit legal nullable DNF intersections instead of invalid ?(A&B), preserving
+  by-reference parameters, existing unions/nullability and function bodies.
+- Track grouped attribute depth before splitting parameters, and parse the
+  corrected self-test examples. Add actual PHP 8.4 parser/runtime/idempotence
+  checks without invoking a CMS or rewriting installed site files.
+- Modernize the three legacy SCSS operator-name interpolations without changing
+  dispatch names or replacing Leaf Corcoran's existing MIT attribution.
+- Admit the Font Awesome 4/5 catalogues in native Joomla and Grav contexts as
+  well as WordPress; requests without a recognized CMS marker remain refused.
+- Retain the PHP `>=8.1.0 <8.5.0` framework dependency range, including PHP 8.4.
+  PHP 8.5 and the modern dependency/API migration belong to the separate Gantry 6 line.
+- Preserve complete bundled vendor license/notice files and include the inherited
+  Gantry MIT and GPLv2 license texts in the framework distributions.
+- Publish framework packages for Joomla, WordPress and Grav. Unchanged Helium and
+  Hydrogen themes keep their existing versions and are not relabeled for this release.
+
 # 5.6.4
 ## 09/03/2026
 1. [Joomla](#joomla)
