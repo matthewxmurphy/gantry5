@@ -14,7 +14,7 @@
 namespace Gantry\Framework;
 
 use Gantry\Component\Assignments\AbstractAssignments;
-use RocketTheme\Toolbox\Event\Event;
+use Gantry\Component\Event\Event;
 
 /**
  * Class Assignments

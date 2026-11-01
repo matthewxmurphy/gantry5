@@ -16,6 +16,8 @@
 
 namespace Gantry\Component\Twig\Node;
 
+use Twig\Attribute\YieldReady;
+
 use LogicException;
 use Twig\Compiler;
 use Twig\Node\Node;
@@ -24,6 +26,7 @@ use Twig\Node\Node;
  * Class TwigNodeTryCatch
  * @package Gantry\Component\Twig\Node
  */
+#[YieldReady]
 class TwigNodeTryCatch extends Node
 {
     /**
@@ -38,7 +41,7 @@ class TwigNodeTryCatch extends Node
         $nodes = ['try' => $try, 'catch' => $catch];
         $nodes = array_filter($nodes);
 
-        parent::__construct($nodes, [], $lineno, $tag);
+        parent::__construct($nodes, [], $lineno);
     }
 
     /**

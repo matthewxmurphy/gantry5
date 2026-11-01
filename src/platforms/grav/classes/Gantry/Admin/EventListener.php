@@ -23,8 +23,8 @@ use Grav\Common\Flex\Types\Pages\PageObject;
 use Grav\Common\Grav;
 use Grav\Common\Uri;
 use Grav\Framework\Flex\Flex;
-use RocketTheme\Toolbox\Event\Event;
-use RocketTheme\Toolbox\Event\EventSubscriberInterface;
+use Gantry\Component\Event\Event;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use RocketTheme\Toolbox\File\YamlFile;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 

@@ -1,3 +1,15 @@
+# 6.0.0-dev
+## Unreleased development candidate
+
+- Move the isolated next-major line to PHP 8.3–8.4, Toolbox 2, Symfony 7.4,
+  Twig 3.30 and WordPress Timber 2.5, preserving the separate Gantry 5.6.5 line.
+- Replace the removed Toolbox dispatcher with a Gantry-owned Symfony Contracts
+  event payload and event-first dispatch while retaining array payload behavior.
+- Migrate Twig parser/capture/cache APIs and shipped WordPress theme factories,
+  context, pagination and rendering hooks. Existing theme integrations require
+  the documented API migration; no automatic site or content upgrade is performed.
+- Keep Grav's Twig/Symfony/Toolbox owned by Grav 2; Grav 1.7 remains on 5.6.5.
+
 # 5.6.5
 ## Unreleased
 

@@ -26,8 +26,8 @@ use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\Registry\Registry;
-use RocketTheme\Toolbox\Event\Event;
-use RocketTheme\Toolbox\Event\EventSubscriberInterface;
+use Gantry\Component\Event\Event;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use RocketTheme\Toolbox\File\IniFile;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 

@@ -5,6 +5,7 @@
  * Plugin URI: http://gantry.org/
  * Description: Framework for Gantry 5 based themes.
  * Version: @version@
+ * Requires PHP: 8.3
  * Author: Tiger12, LLC
  * Author URI: http://tiger12.com/
  * License: GNU General Public License v2 or later
@@ -18,8 +19,7 @@
 
 defined('ABSPATH') or die;
 
-// Fail safe version check for PHP < 8.1.0
-if (PHP_VERSION_ID < 80100) {
+if (PHP_VERSION_ID < 80300 || PHP_VERSION_ID >= 80500) {
     if (is_admin()) {
         add_action('admin_notices', 'gantry5_php_version_error');
     }
@@ -196,10 +196,9 @@ function gantry5_php_version_error()
     printf(
         '<div class="error"><p>%s</p></div>',
         sprintf(
-            /* translators: 1: current PHP version, 2: required PHP version. */
-            esc_html__('You are running PHP %1$s, but Gantry 5 Framework needs at least PHP %2$s to run.', 'gantry5'),
-            esc_html(PHP_VERSION),
-            '8.1.0'
+            /* translators: 1: current PHP version. */
+            esc_html__('This Gantry development candidate supports PHP 8.3 and 8.4; you are running PHP %1$s.', 'gantry5'),
+            esc_html(PHP_VERSION)
         )
     );
 }

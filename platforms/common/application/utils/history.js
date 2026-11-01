@@ -1,5 +1,9 @@
 "use strict";
 
+if (window.GANTRY_ADMIN_HISTORY) {
+    module.exports = require('./history-bridge')(window.GANTRY_ADMIN_HISTORY);
+} else {
+
 // ========================================================================
 // Initialise
 
@@ -2038,3 +2042,4 @@ if (typeof History.init === 'undefined') {
 }
 
 module.exports = History;
+}

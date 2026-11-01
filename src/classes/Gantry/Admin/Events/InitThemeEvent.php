@@ -18,7 +18,7 @@ namespace Gantry\Admin\Events;
 
 use Gantry\Admin\Theme;
 use Gantry\Framework\Gantry;
-use RocketTheme\Toolbox\Event\Event;
+use Gantry\Component\Event\Event;
 
 /**
  * Class AssigmentsEvent

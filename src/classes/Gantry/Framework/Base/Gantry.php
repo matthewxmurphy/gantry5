@@ -38,8 +38,8 @@ use Gantry\Framework\Site;
 use Gantry\Framework\Translator;
 use Gantry5\Loader;
 use RocketTheme\Toolbox\DI\Container;
-use RocketTheme\Toolbox\Event\Event;
-use RocketTheme\Toolbox\Event\EventDispatcher;
+use Gantry\Component\Event\Event;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 /**
  * Class Gantry
@@ -189,7 +189,7 @@ abstract class Gantry extends Container
         $events = $this['events'];
 
         /** @var Event $event */
-        $event = $events->dispatch($eventName, $event);
+        $event = $events->dispatch($event ?: new Event(), $eventName);
 
         return $event;
     }

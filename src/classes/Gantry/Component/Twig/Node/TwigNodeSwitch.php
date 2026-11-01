@@ -16,6 +16,8 @@
 
 namespace Gantry\Component\Twig\Node;
 
+use Twig\Attribute\YieldReady;
+
 use Twig\Compiler;
 use Twig\Node\Node;
 
@@ -23,6 +25,7 @@ use Twig\Node\Node;
  * Class TwigNodeSwitch
  * @package Gantry\Component\Twig\Node
  */
+#[YieldReady]
 class TwigNodeSwitch extends Node
 {
     /**
@@ -43,7 +46,7 @@ class TwigNodeSwitch extends Node
         $nodes = ['value' => $value, 'cases' => $cases, 'default' => $default];
         $nodes = array_filter($nodes);
 
-        parent::__construct($nodes, [], $lineno, $tag);
+        parent::__construct($nodes, [], $lineno);
     }
 
     /**

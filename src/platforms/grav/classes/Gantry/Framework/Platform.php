@@ -297,17 +297,21 @@ class Platform extends BasePlatform
 
     public function isSettingsAdministrator()
     {
+        $context = Gantry::instance()['admin2.context'] ?? null;
+        if ($context instanceof \Gantry\Admin\ApiContext) { return $context->settings; }
         $user = $this->clientEditingUser();
         return $user && $user->authorize('admin.plugins');
     }
 
     public function canEditClientContent()
     {
+        $context = Gantry::instance()['admin2.context'] ?? null;
+        if ($context instanceof \Gantry\Admin\ApiContext) { return $context->pages; }
         $user = $this->clientEditingUser();
         return $user && $user->authorize('admin.pages');
     }
 
-    public function clientEditingCapabilityLabel() { return 'Grav admin.login and admin.pages on a fully authenticated account'; }
+    public function clientEditingCapabilityLabel() { return 'Grav2 native API access and api.pages.update on a fully authenticated account'; }
     public function clientEditingNonceFields() { return ['admin-nonce', 'nonce']; }
 
     /**
@@ -318,6 +322,8 @@ class Platform extends BasePlatform
      */
     public function getThemeAdminUrl($theme)
     {
+        $context = Gantry::instance()['admin2.context'] ?? null;
+        if ($context instanceof \Gantry\Admin\ApiContext) { return $context->baseUrl . '/themes/' . rawurlencode($theme); }
         $grav = Grav::instance();
         $base = $grav['gantry5_plugin']->base;
 
@@ -334,6 +340,10 @@ class Platform extends BasePlatform
         }
 
         $grav = Grav::instance();
+        if ((Gantry::instance()['admin2.context'] ?? null) instanceof \Gantry\Admin\ApiContext) {
+            return rtrim((string) $grav['base_url_relative'], '/')
+                . '/' . trim((string) $grav['config']->get('plugins.admin2.route', '/admin'), '/') . '/plugins/gantry5';
+        }
 
         return $grav['base_url_relative'] . $grav['admin']->base . '/plugins/gantry5';
     }
@@ -362,6 +372,8 @@ class Platform extends BasePlatform
      */
     public function authorize($action, $id = null)
     {
+        $context = Gantry::instance()['admin2.context'] ?? null;
+        if ($context instanceof \Gantry\Admin\ApiContext) { return $context->authorize($action); }
         // TODO: hook everything into ACL
         static $actions = [
             'platform.settings.manage' => 'admin.plugins',

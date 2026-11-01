@@ -65,7 +65,7 @@ class TokenParserPageblock extends AbstractTokenParser
         $location = new ConstantExpression($stream->expect(Token::NAME_TYPE)->getValue(), $lineno);
 
         if ($stream->nextIf(Token::NAME_TYPE, 'with')) {
-            $variables = $this->parser->getExpressionParser()->parseExpression();
+            $variables = $this->parser->parseExpression();
         } else {
             $lineno = $token->getLine();
             $variables = new ArrayExpression([], $lineno);

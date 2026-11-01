@@ -16,8 +16,11 @@
 
 namespace Gantry\Component\Twig\Node;
 
+use Twig\Attribute\YieldReady;
+
 use Twig\Compiler;
 use Twig\Node\Expression\AbstractExpression;
+use Twig\Node\CaptureNode;
 use Twig\Node\Node;
 use Twig\Node\NodeCaptureInterface;
 
@@ -25,6 +28,7 @@ use Twig\Node\NodeCaptureInterface;
  * Class TwigNodePageblock
  * @package Gantry\Component\Twig\Node
  */
+#[YieldReady]
 class TwigNodePageblock extends Node implements NodeCaptureInterface
 {
     protected $tagName = 'pageblock';
@@ -39,7 +43,9 @@ class TwigNodePageblock extends Node implements NodeCaptureInterface
      */
     public function __construct(?Node $body = null, ?AbstractExpression $location = null, ?AbstractExpression $variables = null, $lineno = 0, $tag = null)
     {
-        parent::__construct(['body' => $body, 'location' => $location, 'variables' => $variables], [], $lineno, $tag);
+        $capture = new CaptureNode($body ?: new Node(), $lineno);
+        $capture->setAttribute('raw', true);
+        parent::__construct(['body' => $capture, 'location' => $location, 'variables' => $variables], [], $lineno);
     }
     /**
      * Compiles the node to PHP.
@@ -66,9 +72,9 @@ class TwigNodePageblock extends Node implements NodeCaptureInterface
             ->outdent()
             ->write("}\n")
             ->write("\$priority = isset(\$pageblockVariables['priority']) ? \$pageblockVariables['priority'] : 0;\n")
-            ->write("ob_start();\n")
+            ->write('$content = ')
             ->subcompile($this->getNode('body'))
-            ->write("\$content = ob_get_clean();\n")
+            ->raw("\n")
             ->write("Gantry\Framework\Gantry::instance()['document']->addHtml(\$content, \$priority, \$location);\n");
     }
 }

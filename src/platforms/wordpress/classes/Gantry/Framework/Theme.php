@@ -19,6 +19,7 @@ defined('ABSPATH') || exit;
 use Gantry\Component\Config\Config;
 use Gantry\Component\Theme\AbstractTheme;
 use Gantry\Component\Theme\ThemeTrait;
+use Gantry\Component\Twig\TwigCacheFilesystem;
 use Gantry\Debugger;
 use Gantry\WordPress\Widget\Particle;
 use Gantry\WordPress\Widgets;
@@ -63,7 +64,7 @@ class Theme extends AbstractTheme
         $context['textdomain'] = $this->details()->get('configuration.theme.textdomain');
 
         if (!$this->user) {
-            $this->user = new User;
+            $this->user = Timber::get_user();
         }
 
         $context['current_user'] = $this->user;
@@ -126,10 +127,9 @@ class Theme extends AbstractTheme
     {
         if (!$this->renderer) {
             $twig = parent::renderer();
-            $twig = \apply_filters('twig_apply_filters', $twig);
-            $twig = \apply_filters('timber/twig/filters', $twig);
-            $twig = \apply_filters('timber/twig/functions', $twig);
-            $twig = \apply_filters('timber/twig/escapers', $twig);
+            // Timber 2 registers functions/filters/escapers on this environment hook.
+            // Its similarly named definition hooks receive arrays, not an Environment.
+            $twig = \apply_filters('timber/twig', $twig);
             $twig = \apply_filters('timber/loader/twig', $twig);
             $this->renderer = $twig;
         }
@@ -149,13 +149,26 @@ class Theme extends AbstractTheme
         static $timberContext;
 
         if (!isset($timberContext)) {
-            $timberContext = Timber::get_context();
+            $timberContext = Timber::context();
         }
 
         // Include Gantry specific things to the context.
         $context = array_replace($timberContext, $context);
 
         return $this->renderer()->render($file, $context);
+    }
+
+    /**
+     * Capture WordPress hooks at their template position, after assets are registered.
+     */
+    public function wordpressHead(): string
+    {
+        return \Timber\Helper::ob_function('wp_head', []);
+    }
+
+    public function wordpressFooter(): string
+    {
+        return \Timber\Helper::ob_function('wp_footer', []);
     }
 
     public function set_template_layout()
@@ -384,6 +397,22 @@ class Theme extends AbstractTheme
         return $this->getCachePath('twig');
     }
 
+    public function timber_locations(array $locations): array
+    {
+        return [FilesystemLoader::MAIN_NAMESPACE => static::getTwigPaths()] + $locations;
+    }
+
+    public function timber_environment_options(array $options): array
+    {
+        $global = static::gantry()['global'];
+        $options['cache'] = $global->get('compile_twig', 1)
+            ? new TwigCacheFilesystem($this->getCachePath('twig'), TwigCacheFilesystem::FORCE_BYTECODE_INVALIDATION) : false;
+        // Preserve the prior Timber rendering policy without deprecated static globals.
+        $options['autoescape'] = false;
+        $options['auto_reload'] = true;
+        return $options;
+    }
+
     /**
      * Extend file type support in WP Theme Editor
      *
@@ -481,16 +510,6 @@ class Theme extends AbstractTheme
             $this->install();
         }
 
-        // Set lookup locations for Timber.
-        Timber::$locations = static::getTwigPaths();
-
-        // Enable caching in Timber.
-        Timber::$twig_cache =  (bool) $global->get('compile_twig', 1);
-        Timber::$cache = false;
-
-        // Set autoescape in Timber.
-        Timber::$autoescape = false;
-
         \add_theme_support('html5', ['comment-list', 'comment-form', 'search-form', 'gallery', 'caption', 'widgets']);
         \add_theme_support('title-tag');
         \add_theme_support('post-formats', []);
@@ -499,10 +518,11 @@ class Theme extends AbstractTheme
         \add_theme_support('widgets');
 
         \add_filter('script_loader_tag', [Document::class, 'script_add_attributes'], 10, 2);
-        \add_filter('timber_context', [$this, 'getContext']);
+        \add_filter('timber/context', [$this, 'getContext']);
+        \add_filter('timber/locations', [$this, 'timber_locations']);
+        \add_filter('timber/twig/environment/options', [$this, 'timber_environment_options']);
         \add_filter('timber/loader/twig', [$this, 'timber_loader_twig']);
-        \add_filter('timber/cache/location', [$this, 'timber_cache_location']);
-        \add_filter('timber_compile_result', [$this, 'postProcessOutput']);
+        \add_filter('timber/output', [$this, 'postProcessOutput']);
         \add_filter('wp_theme_editor_filetypes', [$this, 'extend_theme_editor_filetypes']);
         \add_filter('timber/twig', [$this, 'extendTwig'], 100);
         \add_filter('the_content', [$this, 'url_filter'], 0);

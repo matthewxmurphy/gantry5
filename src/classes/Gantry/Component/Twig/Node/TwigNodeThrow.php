@@ -16,6 +16,8 @@
 
 namespace Gantry\Component\Twig\Node;
 
+use Twig\Attribute\YieldReady;
+
 use Twig\Compiler;
 use Twig\Node\Node;
 
@@ -23,6 +25,7 @@ use Twig\Node\Node;
  * Class TwigNodeThrow
  * @package Gantry\Component\Twig\Node
  */
+#[YieldReady]
 class TwigNodeThrow extends Node
 {
     /**
@@ -38,7 +41,7 @@ class TwigNodeThrow extends Node
         $lineno = 0,
         $tag = null
     ) {
-        parent::__construct(['message' => $message], ['code' => $code], $lineno, $tag);
+        parent::__construct(['message' => $message], ['code' => $code], $lineno);
     }
 
     /**

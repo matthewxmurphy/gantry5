@@ -16,10 +16,13 @@
 
 namespace Gantry\Component\Twig\Node;
 
+use Twig\Attribute\YieldReady;
+
 /**
  * Class TwigNodeScripts
  * @package Gantry\Component\Twig\Node
  */
+#[YieldReady]
 class TwigNodeScripts extends TwigNodeAssets
 {
     protected $tagName = 'scripts';

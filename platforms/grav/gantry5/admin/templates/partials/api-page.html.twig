@@ -1,0 +1,58 @@
+{# Standalone native Admin2 iframe document. Matthew C. Murphy, 2026. MIT. #}
+{% set page_content %}{% block content %}{% endblock %}{% endset %}
+{% set page_footer %}{% block footer_section %}{% endblock %}{% endset %}
+<!doctype html>
+<html lang="{{ gantry['admin2.context'].user.language|default('en') }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gantry</title>
+    <style>
+        html,body{margin:0;padding:0;font-family:system-ui,sans-serif}body{min-width:0}
+        body.gantry-api-document #g5-container{margin:0;padding:0;max-width:100%;min-width:0}
+        body.gantry-api-document #g5-container #main-header{position:relative;top:auto;left:auto;right:auto;height:auto;background:#253340;color:#fff}
+        body.gantry-api-document #g5-container #main-header .theme-title,
+        body.gantry-api-document #g5-container #main-header .theme-title small,
+        body.gantry-api-document #g5-container #main-header a{color:#fff}
+        body.gantry-api-document #g5-container #main-header .g-content{padding:0 1rem!important}
+        body.gantry-api-document #g5-container #main-header .theme-title{line-height:1.5;padding:.75rem 0}
+        body.gantry-api-document #g5-container .inner-container{margin:0}
+        body.gantry-api-document #g5-container .gantry-api-tools{display:flex;flex-wrap:wrap;gap:.75rem;padding:1rem}
+    </style>
+    {% block stylesheets %}
+        <link rel="stylesheet" href="{{ url('gantry-admin://assets/css-compiled/grav-g-admin.css') }}">
+    {% endblock %}
+    {{ gantry.document.getStyles('head')|join('\n')|raw }}
+    {{ gantry.document.getHtml('head')|join('\n')|raw }}
+    <script src="{{ url('system://assets/jquery/jquery-3.x.min.js') }}"></script>
+        <script>
+            var GANTRY_AJAX_SUFFIX = {{ gantry.ajax_suffix|json_encode|raw }};
+            var GANTRY_AJAX_URL = {{ gantry.route('%ajax%')|json_encode|raw }};
+            var GANTRY_AJAX_CONF_URL = {{ gantry.route('configurations/%ajax%')|json_encode|raw }};
+            var GANTRY_AJAX_NONCE = '';
+            var GANTRY_PLATFORM = 'grav';
+            var GANTRY_NATIVE_API = true;
+        </script>
+    {% block javascript %}{% endblock %}
+    {{ gantry.document.getScripts('head')|join('\n')|raw }}
+</head>
+<body class="gantry-api-document">
+<div id="g5-container">
+    {% if gantry.platform.isSettingsAdministrator() %}
+        {% set current_outline = gantry.outline|default('default') %}
+        <nav class="gantry-api-tools" aria-label="Gantry editing tools">
+            <a href="{{ gantry.route('configurations', current_outline, 'layout') }}">Layout</a>
+            <a href="{{ gantry.route('configurations', current_outline, 'styles') }}">Styles</a>
+            <a href="{{ gantry.route('configurations', current_outline, 'upgrade') }}">Upgrade and rollback</a>
+            <a href="{{ gantry.route('configurations', current_outline, 'designpacks') }}">Design packs</a>
+            <a href="{{ gantry.route('client') }}">Client text policy</a>
+            <a href="{{ gantry.route('configurations', current_outline, 'preview') }}" target="_blank" rel="noopener">Saved preview</a>
+        </nav>
+    {% endif %}
+    {{ page_content|raw }}
+    {{ page_footer|raw }}
+    {{ gantry.document.getHtml('bottom')|join('\n')|raw }}
+    {{ gantry.document.getScripts('footer')|join('\n')|raw }}
+</div>
+</body>
+</html>

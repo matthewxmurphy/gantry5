@@ -39,10 +39,10 @@ $gantry = Gantry::instance();
 $theme  = $gantry['theme'];
 
 // We need to render contents of <head> before plugin content gets added.
-$context              = Timber::get_context();
+$context              = Timber::context();
 $context['page_head'] = $theme->render('partials/page_head.html.twig', $context);
 
-$post            = Timber::query_post();
+$post            = Timber::get_post();
 $context['post'] = $post;
 
 Timber::render(['page-' . $post->post_name . '.html.twig', 'page.html.twig'], $context);
