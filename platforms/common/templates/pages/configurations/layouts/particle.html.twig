@@ -33,6 +33,7 @@
                 </a>
             </li>
             {% endif %}
+            {% block extra_tabs %}{% endblock %}
         </ul>
     </div>
 
@@ -80,6 +81,7 @@
             </div>
         </div>
         {% endif %}
+        {% block extra_panes %}{% endblock %}
     </div>
 
     <div class="g-modal-actions">
@@ -88,4 +90,5 @@
         <button class="button g5-dialog-close">{{ 'GANTRY5_PLATFORM_CANCEL'|trans }}</button>
     </div>
 </form>
+{% block after_form %}{% endblock %}
 {% endblock %}

@@ -1,6 +1,24 @@
 # 5.6.5
 ## Unreleased
 
+- Add default-off client text editing with explicit native-capability consent,
+  instance approvals, revision-checked text-only saves and restricted legacy routing.
+
+- Improve frontend keyboard and focus behavior, current-level Tab handling and
+  submenu Escape; respect reduced motion and correct transition scheduling,
+  observers, touch/breakpoint behavior and back-to-top controls.
+
+- Add explicitly selected, versioned visual design packs with installed-target
+  compatibility preview, bounded custom bitmap copies and full supplied notices;
+  imports create new unassigned outlines without overwriting existing content.
+
+- Add section Styles controls for exact section-blueprint matches, with an independent
+  save that preserves the Layout draft, and a controlled saved-site viewport preview.
+
+- Add a selected-outline upgrade assistant with local compatibility preflight,
+  explicitly acknowledged private YAML snapshots, counts-only restore preview and
+  guarded restoration with stale-state checks and compensating file recovery.
+
 - Restore the Grav error-service admission method using authenticated Grav users
   with both admin login and plugin-settings permission; keep guest and partial
   bootstrap requests denied without changing the shared WordPress handler.

@@ -1,0 +1,21 @@
+{% extends "@gantry-admin/partials/base.html.twig" %}
+
+{% block gantry %}
+<section aria-labelledby="saved-preview-heading" data-saved-site-preview="{{ saved_site_url }}">
+    <h2 id="saved-preview-heading">Saved site responsive preview</h2>
+    <p>This shows the saved frontend using its normal routing and assignments. It may use a different outline or active theme from the editor. Unsaved Layout drafts and unapplied section inputs are excluded.</p>
+    <p>Sizes are CSS viewport pixels, not device emulation. This separate tab leaves your editor draft unchanged.</p>
+    <div role="group" aria-label="Preview viewport width">
+        <button type="button" class="button" data-preview-width="1280" aria-pressed="true">Desktop 1280</button>
+        <button type="button" class="button" data-preview-width="768" aria-pressed="false">Tablet 768</button>
+        <button type="button" class="button" data-preview-width="390" aria-pressed="false">Mobile 390</button>
+        <button type="button" class="button" data-preview-reload>Reload saved site</button>
+    </div>
+    <p role="status" data-preview-status></p>
+    <p><a hidden data-preview-open target="_blank" rel="noopener noreferrer">Open saved site in a new tab</a></p>
+    <div style="max-width:100%;height:722px;overflow:auto;position:relative">
+        <iframe hidden title="Saved frontend viewport preview" referrerpolicy="no-referrer" style="position:absolute;top:1px;left:1px;width:1280px;height:720px;max-width:none;border:0;outline:1px solid #777"></iframe>
+    </div>
+    <noscript>Enable JavaScript to load the controlled same-origin preview. No framing or content security policies are changed.</noscript>
+</section>
+{% endblock %}

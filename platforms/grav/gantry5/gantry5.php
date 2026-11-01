@@ -158,6 +158,7 @@ class Gantry5Plugin extends Plugin
 
         $gantry = Gantry::instance();
         $gantry['base_url'] = $this->base;
+        \Gantry\Component\ClientEditing\Access::restrictNative($gantry);
         $gantry['router'] = new Router($gantry);
         $gantry['router']->boot();
 
@@ -362,6 +363,19 @@ class Gantry5Plugin extends Plugin
     {
         $nonce = Utils::getNonce('gantry-admin');
 
+        try {
+            $gantry = Gantry::instance();
+            if (!$gantry['platform']->isSettingsAdministrator() && \Gantry\Component\ClientEditing\Access::mayEnter($gantry)) {
+                $this->grav['twig']->plugins_hooked_nav['Approved text'] = [
+                    'authorize' => ['admin.pages'], 'location' => 'gantry',
+                    'route' => "gantry/client?nonce={$nonce}", 'icon' => 'fa-font'
+                ];
+                return;
+            }
+        } catch (\Throwable $error) {
+            // Default-off and unavailable setup retain existing native admission.
+        }
+
         $this->grav['twig']->plugins_hooked_nav['Gantry 5'] = [
             'authorize' => ['admin.gantry', 'admin.themes', 'admin.super'],
             'location' => 'gantry',
@@ -385,6 +399,15 @@ class Gantry5Plugin extends Plugin
         /** @var Router $router */
         $router = $gantry['router'];
         $response = $router->dispatch();
+
+        // The generated native page normally requires theme administration. Admit only
+        // the approved Client routes after the shared dispatcher has checked their policy.
+        $admin = $this->grav['admin'];
+        if (!empty($gantry['client.restricted_entry'])
+            && preg_match('~^(?:themes/[^/]+/)?client(?:/save)?$~', trim($admin->route, '/'))
+            && \Gantry\Component\ClientEditing\Access::mayEnter($gantry)) {
+            $page->header()->access = ['admin.pages' => true];
+        }
 
         // Store response into the page.
         $page->content($response->getBody());

@@ -36,6 +36,26 @@
                         <i class="fa fa-fw fa-question-circle" aria-hidden="true"></i> <span>{{ 'GANTRY5_PLATFORM_ABOUT'|trans }}</span>
                     </a>
                 </li>
+                {% if gantry.authorize('platform.settings.manage') %}
+                <li>
+                    <a href="{{ gantry.route('configurations', configuration ?: 'default', 'designpacks') }}">
+                        <i class="fa fa-fw fa-paint-brush" aria-hidden="true"></i> Design packs
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ gantry.route('configurations', configuration ?: 'default', 'upgrade') }}">
+                        <i class="fa fa-fw fa-life-ring" aria-hidden="true"></i> Upgrade assistant
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ gantry.route('configurations', configuration ?: 'default', 'preview') }}" target="_blank" rel="noopener noreferrer">
+                        <i class="fa fa-fw fa-desktop" aria-hidden="true"></i> Saved site preview (new tab)
+                    </a>
+                </li>
+                {% endif %}
+                {% if gantry.platform.isSettingsAdministrator() %}
+                <li><a href="{{ gantry.route('client') }}"><i class="fa fa-fw fa-font" aria-hidden="true"></i> Client text policy</a></li>
+                {% endif %}
                 <li data-g-extras data-g-popover data-g-popover-style="extras" aria-haspopup="true" aria-expanded="false" role="presentation">
                     <a href="#"><i class="fa fa-fw fa-cog" aria-hidden="true"></i> {{ 'GANTRY5_PLATFORM_EXTRAS'|trans }} <i class="font-small fa fa-fw fa-chevron-down" aria-hidden="true"></i></a>
                     <ul data-popover-content class="hidden" tabindex="0">

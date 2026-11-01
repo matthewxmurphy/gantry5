@@ -64,22 +64,39 @@ abstract class Router implements RouterInterface
      */
     public function dispatch()
     {
-        $this->boot();
-        $this->load();
+        try {
+            $this->boot();
+            $this->load();
+            // Some native adapters initialize before their selected-theme streams exist.
+            // Preserve any early scope binding; otherwise bind the now-loaded policy.
+            \Gantry\Component\ClientEditing\Access::restrictNative($this->container);
+        } catch (\Throwable $e) {
+            $clientResponse = \Gantry\Component\ClientEditing\Access::errorResponse($this->container, $e, $this->format === 'json');
+            if ($clientResponse) { return $this->send($clientResponse); }
+            throw $e;
+        }
 
         // Render the page or execute the task.
         try {
             $response = $this->execute($this->resource, $this->method, $this->path, $this->params, $this->format);
 
         } catch (ErrorException $e) {
+            $clientResponse = \Gantry\Component\ClientEditing\Access::errorResponse($this->container, $e, $this->format === 'json');
+            if ($clientResponse) { return $this->send($clientResponse); }
             throw $e;
 
         } catch (\Exception $e) {
+            $clientResponse = \Gantry\Component\ClientEditing\Access::errorResponse($this->container, $e, $this->format === 'json');
+            if ($clientResponse) { return $this->send($clientResponse); }
             // Handle errors.
             if ($this->container->debug()) {
                 throw $e;
             }
             $response = $this->getErrorResponse($e, $this->format === 'json');
+        } catch (\Throwable $e) {
+            $clientResponse = \Gantry\Component\ClientEditing\Access::errorResponse($this->container, $e, $this->format === 'json');
+            if ($clientResponse) { return $this->send($clientResponse); }
+            throw $e;
         }
 
         return $this->send($response);
@@ -95,6 +112,10 @@ abstract class Router implements RouterInterface
      */
     public function execute($resource, $method = 'GET', $path = [], $params = [], $format = 'html')
     {
+        $denied = \Gantry\Component\ClientEditing\Access::guard($this->container, $resource, $method, $path, $format);
+        if ($denied) {
+            return $denied;
+        }
         $class = '\\Gantry\\Admin\\Controller\\' . ucfirst($format) . '\\' . str_replace(' ', '\\', ucwords(str_replace('/', ' ', $resource)));
         // Protect against CSRF Attacks.
         if (!in_array($method, ['GET', 'HEAD'], true) && !$this->checkSecurityToken()) {
@@ -198,6 +219,8 @@ abstract class Router implements RouterInterface
      */
     protected function getErrorResponse(\Exception $e, $json = false)
     {
+        $clientResponse = \Gantry\Component\ClientEditing\Access::errorResponse($this->container, $e, $json);
+        if ($clientResponse) { return $clientResponse; }
         $response = new HtmlResponse;
         $response->setStatusCode($e->getCode());
 

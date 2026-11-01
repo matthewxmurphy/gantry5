@@ -278,6 +278,20 @@ class Layout extends HtmlController
         $item->inherit = (object) $inherit;
 
         $this->params['id'] = $name;
+        if ($type === 'section' && $this->authorize('platform.settings.manage')) {
+            $styleBlocks = $this->container['styles']->all();
+            if (isset($styleBlocks[$item->id]) && ($styleBlocks[$item->id]['type'] ?? null) === 'section') {
+                $formId = 'g-section-styles-' . substr(hash('sha256', $outline . ':' . $item->id), 0, 24);
+                $stylesController = new Styles($this->container);
+                $stylesController->setParams($this->params);
+                $this->params['section_styles'] = [
+                    'form_id' => $formId,
+                    'id' => $item->id,
+                    'fields' => $stylesController->sectionFields($item->id, $formId),
+                    'url' => $this->container->route('configurations', $outline, 'styles', 'sections', $item->id)
+                ];
+            }
+        }
         $this->params += [
             'extra'         => $blockBlueprints,
             'inherit'       => !empty($inherit['outline']) ? $inherit['outline'] : null,
