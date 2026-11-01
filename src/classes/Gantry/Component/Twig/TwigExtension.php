@@ -68,6 +68,7 @@ class TwigExtension extends AbstractExtension implements GlobalsInterface
     public function getFilters(): array
     {
         $filters = [
+            new TwigFilter('client_text_escape', [\Gantry\Component\ClientEditing\SafeText::class, 'escape'], ['is_safe' => ['html']]),
             new TwigFilter('html', [$this, 'htmlFilter']),
             new TwigFilter('url', [$this, 'urlFunc']),
             new TwigFilter('trans_key', [$this, 'transKeyFilter']),

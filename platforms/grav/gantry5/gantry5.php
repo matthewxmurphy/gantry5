@@ -158,6 +158,7 @@ class Gantry5Plugin extends Plugin
 
         $gantry = Gantry::instance();
         $gantry['base_url'] = $this->base;
+        \Gantry\Component\ClientEditing\Access::restrictNative($gantry);
         $gantry['router'] = new Router($gantry);
         $gantry['router']->boot();
 
@@ -361,6 +362,19 @@ class Gantry5Plugin extends Plugin
     public function onAdminMenu()
     {
         $nonce = Utils::getNonce('gantry-admin');
+
+        try {
+            $gantry = Gantry::instance();
+            if (!$gantry['platform']->isSettingsAdministrator() && \Gantry\Component\ClientEditing\Access::mayEnter($gantry)) {
+                $this->grav['twig']->plugins_hooked_nav['Approved text'] = [
+                    'authorize' => ['admin.pages'], 'location' => 'gantry',
+                    'route' => "gantry/client?nonce={$nonce}", 'icon' => 'fa-font'
+                ];
+                return;
+            }
+        } catch (\Throwable $error) {
+            // Default-off and unavailable setup retain existing native admission.
+        }
 
         $this->grav['twig']->plugins_hooked_nav['Gantry 5'] = [
             'authorize' => ['admin.gantry', 'admin.themes', 'admin.super'],

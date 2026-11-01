@@ -36,6 +36,7 @@ class Router extends BaseRouter
         };
 
         $path = array_filter(explode('/', (string) $request->get->get('view')), function($var) { return $var !== ''; });
+        if (!$path && !empty($this->container['client.restricted_entry'])) { $path = ['client']; }
 
         $this->method = $request->getMethod();
         $this->path = $path ?: ['configurations', true];

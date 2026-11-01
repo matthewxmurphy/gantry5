@@ -1,0 +1,40 @@
+{% extends '@gantry-admin/partials/layout.html.twig' %}
+{% block gantry %}
+<section aria-labelledby="client-editing-heading">
+    <h2 id="client-editing-heading">Approved text editing</h2>
+    {% if client_status %}<p role="status">{{ client_status }}</p>{% endif %}
+    {% if client_admin %}
+    <p>You retain full Gantry administration. Client mode is off unless you explicitly enable it below.</p>
+    <p><a href="{{ gantry.route('configurations', 'default', 'layout') }}">Return to Layout Manager</a></p>
+    {% if client_policy_error %}<p role="alert">{{ client_policy_error }}</p>{% endif %}
+    <h3>Client editing policy</h3>
+    <p>Enabling permits users who already have <strong>{{ client_capability }}</strong> to open this restricted page. It grants no capabilities and changes no users. Other Gantry actions for non-settings administrators are blocked while enabled.</p>
+    <p>Only saved, non-inherited instances of the built-in Client text particle are eligible. Save explicit plain text in Layout Manager first. Theme overrides of its renderer or blueprint are not eligible.</p>
+    <form method="post" action="{{ gantry.route('client', 'policy') }}">
+        <input type="hidden" name="policy_revision" value="{{ client_policy.revision }}">
+        <input type="hidden" name="candidate_revision" value="{{ client_candidates.revision }}">
+        <p><label><input type="checkbox" name="enabled" value="yes"{{ client_policy.enabled ? ' checked' }}> Enable restricted client editing for this theme</label></p>
+        <fieldset><legend>Approve individual plain-text instances</legend>
+        {% for key, item in client_candidates.choices %}
+            <p><label><input type="checkbox" name="approvals[]" value="{{ key }}"{{ key in client_approved_keys ? ' checked' }}> {{ item.label }} — {{ item.outline }} / {{ item.instance }}</label></p>
+        {% else %}<p>No eligible saved Client text instances are available.</p>{% endfor %}
+        </fieldset>
+        <p><label><input type="checkbox" name="policy_confirm" value="yes" required> I confirm these existing native capabilities and approve only the selected plain-text fields.</label></p>
+        <button type="submit" class="button button-primary">Save client policy</button>
+    </form>
+    {% endif %}
+    <h3>Approved content</h3>
+    <p>Change plain text only. HTML and template syntax remain literal text. Reload after another editor changes the policy or layout.</p>
+    {% for key, item in client_items %}
+    <form method="post" action="{{ gantry.route('client', 'save') }}" style="margin-bottom:2rem">
+        <input type="hidden" name="policy_revision" value="{{ client_policy.revision }}">
+        <input type="hidden" name="layout_revision" value="{{ item.layout_revision }}">
+        <input type="hidden" name="outline" value="{{ item.outline }}">
+        <input type="hidden" name="instance" value="{{ item.instance }}">
+        <p><label for="client-text-{{ loop.index }}">{{ item.label }} ({{ item.outline }})</label></p>
+        <textarea id="client-text-{{ loop.index }}" name="text" maxlength="4000" rows="6" style="width:100%">{{ item.text }}</textarea>
+        <p><button type="submit" class="button button-primary">Save approved text</button></p>
+    </form>
+    {% else %}<p>No plain-text fields are currently approved.</p>{% endfor %}
+</section>
+{% endblock %}
