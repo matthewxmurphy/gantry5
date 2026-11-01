@@ -15,6 +15,11 @@
         <filename>composer.json</filename>
         <filename>composer.lock</filename>
         <filename>MD5SUMS</filename>
+        <filename>VERSION</filename>
+        <filename>RELEASE_REVISION</filename>
+        <filename>GPL-2.0.txt</filename>
+        <filename>Gantry-MIT.txt</filename>
+        <filename>NOTICE-GANTRY.txt</filename>
         <folder>compat</folder>
         <folder>src</folder>
         <folder>language</folder>

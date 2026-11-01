@@ -23,6 +23,14 @@
         <copy file="${project_dir}/README.md" tofile="${build_dir}/distribution/README.md" overwrite="true">
             <filterchain refid="filter"/>
         </copy>
+
+        <copy todir="${build_dir}/distribution" overwrite="true">
+            <fileset dir="${project_dir}/licenses"/>
+            <fileset dir="${project_dir}">
+                <include name="VERSION"/>
+                <include name="RELEASE_REVISION"/>
+            </fileset>
+        </copy>
     </target>
 
     <target name="build-joomla-component" depends="build-joomla-installer">
@@ -131,7 +139,6 @@
                 <exclude name="**/*.sh"/>
                 <exclude name="**/readme.txt"/>
                 <exclude name="**/CHANGELOG*"/>
-                <exclude name="**/LICENSE*"/>
                 <exclude name="**/Makefile"/>
                 <exclude name="**/todo"/>
                 <exclude name="**/composer.lock"/>
@@ -148,8 +155,49 @@
                 <exclude name="**/.*"/>
                 <exclude name="**/CHANGELOG"/>
                 <exclude name="**/drupal_test.sh"/>
-                <exclude name="**/LICENSE"/>
                 <exclude name="vendor/**/composer.lock"/>
+            </fileset>
+        </copy>
+
+        <!-- Keep release identity and original license/notice texts in installed frameworks. -->
+        <copy todir="${tmp_dir}/packages/lib_gantry5" overwrite="true">
+            <fileset dir="${project_dir}/licenses"/>
+            <fileset dir="${project_dir}">
+                <include name="VERSION"/>
+                <include name="RELEASE_REVISION"/>
+            </fileset>
+        </copy>
+        <!-- Retain legal files even when general vendor Markdown/docs are trimmed. -->
+        <copy todir="${tmp_dir}/packages/lib_gantry5/vendor" overwrite="true">
+            <fileset dir="${path.platforms}/joomla/lib_gantry5/vendor">
+                <include name="**/LICENSE*"/>
+                <include name="**/LICENCE*"/>
+                <include name="**/COPYING*"/>
+                <include name="**/NOTICE*"/>
+                <include name="**/license*"/>
+                <include name="**/licence*"/>
+                <include name="**/copying*"/>
+                <include name="**/notice*"/>
+                <include name="**/License*"/>
+                <include name="**/Licence*"/>
+                <include name="**/Copying*"/>
+                <include name="**/Notice*"/>
+            </fileset>
+        </copy>
+        <copy todir="${tmp_dir}/packages/lib_gantry5/compat" overwrite="true">
+            <fileset dir="${path.platforms}/joomla/lib_gantry5/compat">
+                <include name="**/LICENSE*"/>
+                <include name="**/LICENCE*"/>
+                <include name="**/COPYING*"/>
+                <include name="**/NOTICE*"/>
+                <include name="**/license*"/>
+                <include name="**/licence*"/>
+                <include name="**/copying*"/>
+                <include name="**/notice*"/>
+                <include name="**/License*"/>
+                <include name="**/Licence*"/>
+                <include name="**/Copying*"/>
+                <include name="**/Notice*"/>
             </fileset>
         </copy>
 

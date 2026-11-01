@@ -13,6 +13,15 @@ Gantry is a comprehensive set of building blocks to enable the rapid development
 
 == Description ==
 
+This independent Gantry 5.6.6 maintenance fork retains PHP 8.1-8.4 requirements.
+Its framework SemVer is 5.6.6; calendar release revision 2026.11.01.001 maps to
+GitHub tag v2026.11.01.001. Existing theme versions and site update channels are
+unchanged. PHP 8.5 work is on the separate Gantry 6 development line.
+
+Fork maintenance: Matthew X Murphy, https://MatthewxMurphy.com.
+Product/support: https://builtnotbegged.com.
+Upstream and bundled dependency copyrights and licenses are preserved.
+
 Gantry 5 is a comprehensive set of building blocks to enable the rapid development and realization of a design into a flexible and powerful web platform theme.
 
 > Please visit http://gantry.org to download a FREE WordPress Gantry 5 default theme which can be used as a base for your own themes!
@@ -112,6 +121,14 @@ Gantry 5 plugin is a framework working in the background providing the functiona
 Once you downloaded and installed Gantry 5 plugin, please download also a default theme (that is intended to be used as a basis for building your own themes) from [Gantry Framework](http://gantry.org/ "Gantry Framework") site.
 
 == Changelog ==
+
+= 5.6.6 (2026-11-01) =
+* Correct nullable DNF intersection and grouped-attribute rewriting for actual PHP 8.4 parsing while retaining references, existing nullability and function bodies.
+* Replace the three deprecated legacy SCSS operator-name interpolations without changing dispatch behavior.
+* Allow shared Font Awesome catalogues in native Joomla/Grav contexts while retaining the guard against direct execution outside a CMS.
+* Restore native Grav error-service admission; guest, unavailable and insufficiently privileged users remain denied.
+* Retain the PHP >=8.1.0 <8.5.0 framework dependency range and unchanged bundled dependency versions.
+* Preserve complete bundled license/notice files; unchanged Helium/Hydrogen theme versions remain separate.
 
 = 5.6.5 (2026-10-15) =
 * Security: fixed a sensitive data exposure issue where an unauthenticated particle AJAX request with an invalid outline could show the detailed debug error page. The debug error page is now only shown in debug mode or to administrators, the AJAX handler validates the outline and handles errors safely, and secret values are masked on the debug page.
