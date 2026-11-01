@@ -1,9 +1,30 @@
-# Gantry 6.0.0-dev dependency and theme migration
+# Gantry 6.0.0-alpha.1 dependency and theme migration
 
-This is an **unreleased development candidate** based on Gantry 5. It changes
-runtime dependencies and extension APIs. It creates no release tag, installs no
-CMS, and automatically upgrades no site, outline, theme or content. Keep existing
-Grav 1.7 installations on the separate Gantry 5.6.5 line.
+This is an **alpha testing build** based on Gantry 5. It changes runtime
+dependencies and extension APIs. Evaluate a copy of the site first; keep existing
+Grav 1.7 installations on the separate Gantry 5 maintenance line. A package install
+does not migrate every custom template, particle, outline, CMS database or media.
+
+The alpha's ecosystem version is `6.0.0-alpha.1`, calendar revision
+`2026.11.01.002`, and GitHub tag `v2026.11.01.002`. Use the matching framework and
+Helium/Hydrogen alpha packages. New-major theme metadata refuses an older
+framework, and the Grav themes require Grav 2. Keep a restorable backup of source,
+CMS database, theme custom files, uploads and configuration before testing.
+
+## Installation, updates and rollback
+
+Install reviewed packages manually from
+[the fork's GitHub releases](https://github.com/matthewxmurphy/gantry5/releases).
+No automatic alpha feed is published. Alpha Joomla package/theme manifests and
+WordPress Update URI headers keep these builds separate from official Gantry 5
+update channels. Historical Joomla feed templates remain source history and are
+not consumed or published for this alpha. Existing unrelated update-site links
+remain intact.
+
+For rollback, restore the complete pre-upgrade source and private-state backup.
+The Upgrade Assistant's selected-outline YAML snapshots do not reverse dependency
+or CMS changes, restore a database or replace a full site backup. Never copy the
+alpha's WordPress/Joomla vendors into Grav's host vendor directory.
 
 ## Runtime and package boundaries
 
@@ -12,6 +33,12 @@ plugin admission and the shared loader reflect that floor. Root/builder Composer
 graphs are build tools; their separate PHP 8.1 floor does not declare CMS runtime
 support. The existing runtime dependency versions remain pinned; widening the PHP
 upper bound does not upgrade those packages or an installed CMS.
+
+WordPress alpha metadata requires **7.1.4**, the currently verified native
+baseline. Earlier WordPress versions have not been accepted for this alpha;
+this conservative floor does not establish that every earlier version is
+inherently incompatible. Native Joomla and Grav baselines remain documented in
+the alpha release notes.
 
 WordPress and Joomla resolve these exact candidate versions:
 

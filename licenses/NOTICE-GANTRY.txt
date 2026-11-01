@@ -1,0 +1,27 @@
+Gantry Framework distribution notices
+
+This distribution continues the Gantry 5 codebase created by RocketTheme and
+maintained by Tiger12, LLC. Existing file-level copyrights, author credits,
+license choices and bundled third-party notices remain applicable.
+
+Gantry source files declare their MIT and/or GNU GPLv2-or-later terms in their
+headers. Platform components retain their own existing declarations, including
+the GPL declarations on WordPress and Joomla code. This notice does not change
+those terms or relicense upstream or third-party work.
+
+GPL-2.0.txt is the GNU General Public License version 2 text, retained verbatim
+from the Debian common-licenses distribution copy. Its canonical reference is:
+https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+
+Gantry-MIT.txt is the inherited MIT license text copied verbatim from the
+Gantry Grav plugin's LICENSE, retaining its Tiger12 copyright notice. Additional
+copyrights and license notices remain in their source files and dependencies.
+
+Fork maintenance contributions: Copyright (c) 2026 Matthew X Murphy.
+Developer: https://MatthewxMurphy.com
+Product/support: https://builtnotbegged.com
+Source and release history: https://github.com/matthewxmurphy/gantry5
+
+STATIC-THIRD-PARTY.txt retains bundled static font, SCSS and JavaScript
+component notices and their applicable full license texts. Original embedded
+notices remain in place; these texts do not relicense any component.

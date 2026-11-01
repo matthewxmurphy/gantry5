@@ -2,20 +2,20 @@
 Contributors: gantry
 Author URI: http://gantry.org
 Tags: gantry, gantry5, framework, theme, builder
-Requires at least: 5.2
-Tested up to: 7.1
-Requires PHP: 8.1.0
+Requires at least: 7.1.4
+Tested up to: 7.1.4
+Requires PHP: 8.3.0
 Stable tag: @version@
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Gantry is a comprehensive set of building blocks to enable the rapid development and realization of a design into a flexible and powerful web platform
+Gantry 6 alpha is an independent Gantry 5 based testing release for PHP 8.3–8.5. Use reviewed packages from https://github.com/matthewxmurphy/gantry5/releases for manual installation and updates. Existing Gantry and third-party licenses remain applicable.
 
 == Description ==
 
 Gantry 5 is a comprehensive set of building blocks to enable the rapid development and realization of a design into a flexible and powerful web platform theme.
 
-> Please visit http://gantry.org to download a FREE WordPress Gantry 5 default theme which can be used as a base for your own themes!
+> Download matching Gantry 6 alpha Helium or Hydrogen themes from https://github.com/matthewxmurphy/gantry5/releases. The official stable Gantry 5 themes require migration for this alpha.
 
 Gantry 5 is packed full of features created to empower the development of designs into fully functional layouts with the absolute minimum effort and fuss.
 
@@ -27,7 +27,7 @@ Gantry 5 uses the **Nucleus** grid system, built from scratch using Flexbox and 
 
 = Cross-platform Support =
 
-The new responsive Gantry 5 framework is available for **WordPress 5.2+**, **Joomla 5.0+** and **Grav 1.7.25+**.
+The current native verification baseline is **WordPress 7.1.4**, **Joomla 6.2.0** and **Grav 2.2.19/Admin2**. The alpha requires PHP 8.3–8.5; older CMS combinations need separate acceptance.
 
 = Intuitive YAML-driven Configuration =
 
@@ -35,7 +35,7 @@ The new responsive Gantry 5 framework is available for **WordPress 5.2+**, **Joo
 
 = Twig Templating =
 
-Gantry 5 utilizes [Twig](https://twig.symfony.com/doc/1.x/) and [Timber](http://upstatement.com/timber/) to make creating powerful, dynamic themes quick and easy.
+The alpha uses Twig 3 and WordPress Timber 2; third-party themes and extensions require the documented API migration.
 
 = New Administrative Interface =
 
@@ -88,7 +88,7 @@ Using FTP :
 1. Upload the plugin directory to the wp-content/plugins/
 1. Activate the plugin in Admin Dashboard > Plugins
 
-Please note that Gantry Framework plugin doesn't come up with the default theme. In order to download the Gantry Default theme please go to the [Gantry Framework](http://gantry.org/ "Gantry Framework") site.
+The framework ZIP does not include a theme. Install matching 6.0.0-alpha.1 Helium or Hydrogen from [this fork's releases](https://github.com/matthewxmurphy/gantry5/releases).
 
 == Frequently Asked Questions ==
 
@@ -96,8 +96,8 @@ Please note that Gantry Framework plugin doesn't come up with the default theme.
 
 We try to ensure that any Gantry theme and the Gantry Plugin specifically will work with any modern and secure server environment. The recommended minimum requirements are :
 
-* WordPress 5.2 or higher
-* PHP 8.1.0+ (8.2+ recommended)
+* WordPress 7.1.4 (the accepted alpha baseline; older versions need separate acceptance)
+* PHP 8.3, 8.4 or 8.5 (below 8.6)
 
 = Is there any documentation available ? =
 
@@ -105,11 +105,11 @@ Yes of course! And it's getting better and better with every day! Please visit o
 
 = Where are the options of the plugin ? =
 
-Gantry 5 plugin is a framework working in the background providing the functionality to the Gantry powered themes, allowing them to control everything per-theme basis. You can download a basic Gantry theme from the official [Gantry Framework](http://gantry.org/ "Gantry Framework") site.
+The framework provides the administration interface for each compatible theme. Install the matching alpha Helium or Hydrogen package from [this fork's releases](https://github.com/matthewxmurphy/gantry5/releases).
 
 = How can I test it ? =
 
-Once you downloaded and installed Gantry 5 plugin, please download also a default theme (that is intended to be used as a basis for building your own themes) from [Gantry Framework](http://gantry.org/ "Gantry Framework") site.
+Install the framework and a matching alpha theme from [this fork's releases](https://github.com/matthewxmurphy/gantry5/releases) in an isolated WordPress copy. Read docs/dependency-migration.md before porting third-party themes or extensions; this alpha changes Twig, Timber and event APIs.
 
 == Changelog ==
 

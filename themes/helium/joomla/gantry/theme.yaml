@@ -15,8 +15,7 @@ details:
     link: 'https://gitter.im/gantry/gantry5'
 
   updates:
-    link: 'https://gantry.org/downloads#joomla'
-    server: 'https://updates.gantry.org/5.0/joomla/tpl_g5_helium.xml'
+    link: 'https://github.com/matthewxmurphy/gantry5/releases'
 
   copyright: '(C) 2007 - 2022 Tiger12, LLC. All rights reserved.'
   license: GPLv2
@@ -80,7 +79,7 @@ configuration:
       - custom
 
   dependencies:
-    gantry: '5.5'
+    gantry: '6.0.0-alpha.1'
 
   section-variations:
     Padding Variations:

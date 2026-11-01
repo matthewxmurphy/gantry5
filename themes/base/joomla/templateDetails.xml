@@ -44,7 +44,6 @@
         </fields>
     </config>
 
-    <updateservers>
-        <server type="extension" priority="1" name="Base Template">https://updates.gantry.org/5.0/joomla/tpl_g5_base.xml</server>
-    </updateservers>
+    <!-- Alpha packages update manually from the fork GitHub releases. -->
+    <gantryUpdateChannel>manual-alpha</gantryUpdateChannel>
 </extension>

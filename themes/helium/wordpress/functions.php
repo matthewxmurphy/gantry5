@@ -24,7 +24,7 @@ defined('ABSPATH') or die;
 // Note: This file must be PHP 5.6 compatible.
 
 // Check min. required version of Gantry 5
-$requiredGantryVersion = '6.0.0-dev';
+$requiredGantryVersion = '6.0.0-alpha.1';
 $translationDomain = 'g5_helium';
 
 if (is_admin()) {

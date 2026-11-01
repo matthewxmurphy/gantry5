@@ -25,7 +25,7 @@ use Joomla\CMS\Language\Text;
 class G5_HydrogenInstallerScript
 {
     /** @var string */
-    public $requiredGantryVersion = '5.5';
+    public $requiredGantryVersion = '6.0.0-alpha.1';
 
     /**
      * @param string $type

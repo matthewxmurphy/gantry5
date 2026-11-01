@@ -15,7 +15,7 @@ details:
     link: 'https://gitter.im/gantry/gantry5'
 
   updates:
-    link: 'http://updates.rockettheme.com/themes/helium.yaml'
+    link: 'https://github.com/matthewxmurphy/gantry5/releases'
 
   copyright: '(C) 2007 - 2022 Tiger12, LLC. All rights reserved.'
   license: GPLv2
@@ -80,7 +80,7 @@ configuration:
       - custom
 
   dependencies:
-    gantry: '5.5'
+    gantry: '6.0.0-alpha.1'
 
   section-variations:
     Padding Variations:

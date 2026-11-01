@@ -40,6 +40,8 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
       - name: Build Gantry packages
         run: composer build-dev
+      - name: Check icon catalogues on all supported CMS bootstraps
+        run: php tests/php84/icon-catalogues.php
       - name: Run modern dependency and Twig integration checks
         run: php tests/modern/dependencies.php platforms/wordpress/gantry5/vendor/autoload.php
       - name: Run download and Unicode runtime regression checks

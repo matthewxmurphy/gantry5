@@ -5,7 +5,9 @@
  * Plugin URI: http://gantry.org/
  * Description: Framework for Gantry 5 based themes.
  * Version: @version@
+ * Requires at least: 7.1.4
  * Requires PHP: 8.3
+ * Update URI: https://github.com/matthewxmurphy/gantry5
  * Author: Tiger12, LLC
  * Author URI: http://tiger12.com/
  * License: GNU General Public License v2 or later

@@ -167,6 +167,8 @@ class Pkg_Gantry5InstallerScript
         // Enable and lock extensions to prevent uninstalling them individually.
         $this->prepareExtensions($manifest, 1);
 
+        $this->removeAlphaPackageUpdateSites($manifest);
+
         // Repair missing update-site registrations for installed Gantry templates.
         $this->registerTemplateUpdateSites();
 
@@ -300,6 +302,15 @@ class Pkg_Gantry5InstallerScript
         }
 
         $manifest = simplexml_load_file($manifestFile);
+        if ($manifest && (string) $manifest->gantryUpdateChannel === 'manual-alpha') {
+            $this->removeOfficialAlphaUpdateSites($extensionId, [
+                "http://updates.gantry.org/5.0/joomla/tpl_{$template}.xml",
+                "https://updates.gantry.org/5.0/joomla/tpl_{$template}.xml",
+                'http://updates.gantry.org/5.0/joomla/list.xml',
+                'https://updates.gantry.org/5.0/joomla/list.xml'
+            ]);
+            return;
+        }
         if (!$manifest || empty($manifest->updateservers->server)) {
             return;
         }
@@ -388,6 +399,62 @@ class Pkg_Gantry5InstallerScript
                 'extension_id' => (int) $extensionId
             );
             $db->insertObject('#__update_sites_extensions', $link);
+        }
+    }
+
+    /** Detach only this alpha package from its inherited official Gantry 5 feeds. */
+    protected function removeAlphaPackageUpdateSites($manifest)
+    {
+        if ((string) $manifest->gantryUpdateChannel !== 'manual-alpha') {
+            return;
+        }
+        $db = Factory::getContainer()->get(DatabaseInterface::class);
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('extension_id'))
+            ->from($db->quoteName('#__extensions'))
+            ->where($db->quoteName('type') . ' = ' . $db->quote('package'))
+            ->where($db->quoteName('element') . ' = ' . $db->quote('pkg_gantry5'));
+        $db->setQuery($query);
+        $extensionId = (int) $db->loadResult();
+        $this->removeOfficialAlphaUpdateSites($extensionId, [
+            'http://updates.gantry.org/5.0/joomla/pkg_gantry5.xml',
+            'https://updates.gantry.org/5.0/joomla/pkg_gantry5.xml',
+            'http://updates.gantry.org/5.0/joomla/list.xml',
+            'https://updates.gantry.org/5.0/joomla/list.xml'
+        ]);
+    }
+
+    /**
+     * Remove scoped associations/cached offers, never the shared feed records.
+     * Unrelated extension links and custom feed locations are preserved.
+     *
+     * @param int $extensionId Installed package/template ID owned by this alpha.
+     * @param string[] $locations Exact inherited official Gantry 5 feed URLs.
+     */
+    protected function removeOfficialAlphaUpdateSites($extensionId, array $locations)
+    {
+        if (!$extensionId || !$locations) {
+            return;
+        }
+        $db = Factory::getContainer()->get(DatabaseInterface::class);
+        $quoted = array_map([$db, 'quote'], $locations);
+        // Cached offers can outlive their association; delete only this extension's rows below.
+        $query = $db->getQuery(true)
+            ->select($db->quoteName('us.update_site_id'))
+            ->from($db->quoteName('#__update_sites', 'us'))
+            ->where($db->quoteName('us.location') . ' IN (' . implode(',', $quoted) . ')');
+        $db->setQuery($query);
+        $siteIds = array_map('intval', (array) $db->loadColumn());
+        if (!$siteIds) {
+            return;
+        }
+        foreach (['#__update_sites_extensions', '#__updates'] as $table) {
+            $query = $db->getQuery(true)
+                ->delete($db->quoteName($table))
+                ->where($db->quoteName('extension_id') . ' = ' . (int) $extensionId)
+                ->where($db->quoteName('update_site_id') . ' IN (' . implode(',', $siteIds) . ')');
+            $db->setQuery($query);
+            $db->execute();
         }
     }
 
