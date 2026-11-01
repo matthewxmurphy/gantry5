@@ -813,12 +813,10 @@ class ThemeInstaller extends AbstractInstaller
         ];
         $db = Factory::getContainer()->get(DatabaseInterface::class);
         $quoted = array_map([$db, 'quote'], $locations);
+        // Cached offers can outlive their association; delete only this extension's rows below.
         $query = $db->getQuery(true)
             ->select($db->quoteName('us.update_site_id'))
             ->from($db->quoteName('#__update_sites', 'us'))
-            ->innerJoin($db->quoteName('#__update_sites_extensions', 'usex') .
-                ' ON ' . $db->quoteName('usex.update_site_id') . ' = ' . $db->quoteName('us.update_site_id'))
-            ->where($db->quoteName('usex.extension_id') . ' = ' . $extensionId)
             ->where($db->quoteName('us.location') . ' IN (' . implode(',', $quoted) . ')');
         $db->setQuery($query);
         $siteIds = array_map('intval', (array) $db->loadColumn());
