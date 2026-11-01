@@ -67,6 +67,9 @@ abstract class Router implements RouterInterface
         try {
             $this->boot();
             $this->load();
+            // Some native adapters initialize before their selected-theme streams exist.
+            // Preserve any early scope binding; otherwise bind the now-loaded policy.
+            \Gantry\Component\ClientEditing\Access::restrictNative($this->container);
         } catch (\Throwable $e) {
             $clientResponse = \Gantry\Component\ClientEditing\Access::errorResponse($this->container, $e, $this->format === 'json');
             if ($clientResponse) { return $this->send($clientResponse); }
