@@ -20,6 +20,7 @@
         <filename>GPL-2.0.txt</filename>
         <filename>Gantry-MIT.txt</filename>
         <filename>NOTICE-GANTRY.txt</filename>
+        <filename>STATIC-THIRD-PARTY.txt</filename>
         <folder>compat</folder>
         <folder>src</folder>
         <folder>language</folder>

@@ -21,3 +21,7 @@ Fork maintenance contributions: Copyright (c) 2026 Matthew X Murphy.
 Developer: https://MatthewxMurphy.com
 Product/support: https://builtnotbegged.com
 Source and release history: https://github.com/matthewxmurphy/gantry5
+
+STATIC-THIRD-PARTY.txt retains bundled static font, SCSS and JavaScript
+component notices and their applicable full license texts. Original embedded
+notices remain in place; these texts do not relicense any component.
