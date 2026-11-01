@@ -1,0 +1,3 @@
+{% extends '@nucleus/partials/particle.html.twig' %}
+{# Safe plain text. Copyright 2026 Matthew C. Murphy. MIT. #}
+{% block particle %}<div class="g-client-text" style="white-space:pre-wrap">{{ particle.text|client_text_escape }}</div>{% endblock %}

@@ -3,23 +3,22 @@
 var ready = require('domready'),
     $     = require('../utils/dollar-extras');
 
-var timeOut,
-    scrollToTop = function() {
-        if (document.body.scrollTop != 0 || document.documentElement.scrollTop != 0) {
-            window.scrollBy(0, -50);
-            timeOut = setTimeout(scrollToTop, 10);
-        } else {
-            clearTimeout(timeOut);
-        }
-    };
-
 ready(function() {
     var totop = $('#g-totop');
     if (!totop) { return; }
 
     totop.on('click', function(e) {
         e.preventDefault();
-        scrollToTop();
+        var scroller = document.scrollingElement || document.documentElement,
+            body = document.body,
+            reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (body.scrollTop > 0 && body.scrollHeight > body.clientHeight) { scroller = body; }
+        if (typeof scroller.scrollTo === 'function') {
+            scroller.scrollTo({ top: 0, left: scroller.scrollLeft, behavior: reduced ? 'instant' : 'smooth' });
+        } else {
+            scroller.scrollTop = 0;
+        }
     });
 });
 

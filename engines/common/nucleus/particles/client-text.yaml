@@ -1,0 +1,18 @@
+name: Client text
+description: Explicit plain text for administrator-approved client editing.
+type: particle
+icon: fa-font
+form:
+  fields:
+    enabled:
+      type: input.checkbox
+      label: Enabled
+      default: true
+    text:
+      type: textarea.textarea
+      label: Plain text
+      description: Literal text only. HTML, Twig and links are not evaluated. Save explicit text before approving this instance for client editing.
+      default: ''
+      validate:
+        type: string
+        max: 4000

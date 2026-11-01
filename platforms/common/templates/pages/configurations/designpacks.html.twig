@@ -1,0 +1,61 @@
+{% extends "@gantry-admin/partials/base.html.twig" %}
+
+{% block gantry %}
+<section aria-labelledby="design-packs-heading">
+    <h2 id="design-packs-heading">Design packs</h2>
+    <p>Share a reviewed palette, font choices, page structure and selected visual defaults. Import creates a new outline without changing the site's assignments.</p>
+    <p>Only installed compatible fields and particle types are supported. Page content, atoms, custom HTML, SVG, scripts, CMS modules, menus and account/API settings are excluded. Images may contain embedded metadata; review their contents and redistribution rights before sharing.</p>
+    {% if design_result %}
+    <p role="status"><strong>{{ design_result.title }} created.</strong> The new outline {{ design_result.id }} is unassigned. Review its settings and compile its styles before assigning it to a page.</p>
+    <p><a href="{{ gantry.route('configurations', design_result.id, 'layout') }}">Open new outline</a></p>
+    {% endif %}
+    <h3>Create a shareable pack</h3>
+    <p>Choose only values intended for redistribution. This is a design definition, not an export of the current layout or a private backup.</p>
+    <form method="post" action="{{ gantry.route('configurations', outline, 'designpacks', 'download') }}">
+        <p><label>Pack ID <input name="id" pattern="[a-z][a-z0-9-]{0,47}" maxlength="48" required placeholder="studio-palette"></label>
+        <label>Version <input name="version" value="1.0.0" pattern="[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}" required></label></p>
+        <p><label>Title <input name="title" maxlength="120" required></label>
+        <label>Author <input name="author" maxlength="200" required></label></p>
+        <p><label>License: full required text or applicable identifier<br><textarea name="license" rows="4" cols="70" maxlength="32768" required></textarea></label></p>
+        <p><label>Complete attribution and notices<br><textarea name="notices" rows="4" cols="70" maxlength="65536"></textarea></label></p>
+        <fieldset><legend>Selected outline palette and font fields</legend>
+            <p>Only checked fields are read from this outline. Colors and font-family names must fit the supported visual formats.</p>
+            {% for field, definition in design_fields %}
+            <label style="display:inline-block;margin:0 .8em .4em 0"><input type="checkbox" name="style_fields[]" value="{{ field }}"> {{ field }} ({{ definition.kind }})</label>
+            {% endfor %}
+        </fieldset>
+        <p><label>Structure JSON: sections, rows and visual placements<br><textarea name="layout_json" rows="18" cols="80" maxlength="32768" required>{{ layout_example }}</textarea></label></p>
+        <p>Available section names: {{ design_sections|join(', ') }}. Each row totals 100. Placement types: installed logo, totop, or system-content. No menus, module bindings, content or inherited layout data are copied. Adapt the example to the available sections.</p>
+        <p><label>Visual particle defaults JSON<br><textarea name="particle_json" rows="5" cols="80" maxlength="32768" required>{"logo":{"height":"4rem","link":true},"totop":{"icon":"fa fa-chevron-up"}}</textarea></label></p>
+        <p>Supported fields: logo image (asset:ID), height, link, target, class; totop css.class and icon. Omit types not installed here. Text, SVG and links to other pages are not exported.</p>
+        <p><label>Explicit custom bitmap selections JSON<br><textarea name="asset_json" rows="5" cols="80" maxlength="131072" required>{}</textarea></label></p>
+        <p>Optional example: <code>{"mark":{"path":"branding/mark.png","license":"Full applicable license text","notice":"Complete original attribution"}}</code>. Paths are relative to this theme's custom/images directory. Select PNG, JPEG or WebP only: at most 8 files, 512 KiB each, 1 MiB combined. Reference one as <code>"image":"asset:mark"</code> in logo defaults. Packaged theme/vendor/font files are never collected.</p>
+        <p><label><input type="checkbox" name="share_ack" value="yes" required> I selected only intended visual fields and images, have permission to redistribute them, supplied complete required licenses and notices, and will review the downloaded pack before sharing.</label></p>
+        <button class="button button-primary" type="submit">Download design pack</button>
+    </form>
+    <h3>Check an existing pack</h3>
+    <p>Compatibility preview changes no outlines or assets. Maximum JSON size: {{ pack_limit }} bytes. Unsupported fields, missing types or missing section styles are refused rather than silently remapped.</p>
+    <form method="post" enctype="multipart/form-data" action="{{ gantry.route('configurations', outline, 'designpacks', 'preview') }}">
+        <label>Design pack JSON <input type="file" name="designpack" accept="application/json,.json" required></label>
+        <button class="button" type="submit">Preview design pack</button>
+    </form>
+    {% if design_preview %}
+    <h3>Compatible design preview</h3>
+    <dl><dt>Pack</dt><dd>{{ design_preview.title }} / {{ design_preview.id }} {{ design_preview.version }}</dd>
+        <dt>Author</dt><dd>{{ design_preview.author }}</dd>
+        <dt>Style fields</dt><dd>{{ design_preview.styles|join(', ') ?: 'None' }}</dd>
+        <dt>Sections</dt><dd>{{ design_preview.sections|join(', ') }}</dd>
+        <dt>Visual defaults</dt><dd>{{ design_preview.particles|join(', ') ?: 'None' }}</dd></dl>
+    <h4>Pack license and notices</h4><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ design_preview.license }}
+{{ design_preview.notices }}</pre>
+    {% for asset in design_preview.assets %}<h4>{{ asset.name }}</h4><p>{{ asset.mime }} · {{ asset.width }} × {{ asset.height }}</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ asset.license }}
+{{ asset.notice }}</pre>{% endfor %}
+    <form method="post" enctype="multipart/form-data" action="{{ gantry.route('configurations', outline, 'designpacks', 'apply') }}">
+        <input type="hidden" name="pack_digest" value="{{ design_preview.digest }}">
+        <p><label>Choose the same JSON again <input type="file" name="designpack" accept="application/json,.json" required></label></p>
+        <p><label><input type="checkbox" name="apply_confirm" value="yes" required> Create a new unassigned outline and new image copies. Preserve existing outlines, assets and assignments.</label></p>
+        <button class="button button-primary" type="submit">Create new outline from pack</button>
+    </form>
+    {% endif %}
+</section>
+{% endblock %}

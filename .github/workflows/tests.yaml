@@ -48,6 +48,15 @@ jobs:
       - name: Run targeted PHP 8.4 nullable-rewriter checks
         if: matrix.php == '8.4'
         run: php tests/php84/nullable-rewriter.php
+      - name: Run outline snapshot filesystem checks
+        if: matrix.php == '8.4'
+        run: php tests/php84/upgrade-snapshot.php platforms/joomla/lib_gantry5/vendor/autoload.php
+      - name: Run design-pack filesystem and bitmap checks
+        if: matrix.php == '8.4'
+        run: php tests/php84/design-pack.php
+      - name: Run approved client-text filesystem checks
+        if: matrix.php == '8.4'
+        run: php tests/php84/client-editing.php platforms/joomla/lib_gantry5/vendor/autoload.php
 
 #  slack:
 #      name: Slack

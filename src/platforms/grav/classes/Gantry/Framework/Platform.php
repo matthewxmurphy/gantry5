@@ -282,6 +282,34 @@ class Platform extends BasePlatform
         return null;
     }
 
+    public function getSavedSiteUrl()
+    {
+        return rtrim(Grav::instance()['uri']->rootUrl(), '/') . '/';
+    }
+
+    private function clientEditingUser()
+    {
+        $grav = Grav::instance();
+        $user = isset($grav['admin']) ? $grav['admin']->user : ($grav['user'] ?? null);
+        return $user instanceof UserInterface && $user->authenticated && $user->get('authorized', true)
+            && $user->authorize('admin.login') ? $user : null;
+    }
+
+    public function isSettingsAdministrator()
+    {
+        $user = $this->clientEditingUser();
+        return $user && $user->authorize('admin.plugins');
+    }
+
+    public function canEditClientContent()
+    {
+        $user = $this->clientEditingUser();
+        return $user && $user->authorize('admin.pages');
+    }
+
+    public function clientEditingCapabilityLabel() { return 'Grav admin.login and admin.pages on a fully authenticated account'; }
+    public function clientEditingNonceFields() { return ['admin-nonce', 'nonce']; }
+
     /**
      * Get administrator url for individual theme.
      *

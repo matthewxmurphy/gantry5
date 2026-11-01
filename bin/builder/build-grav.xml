@@ -63,6 +63,7 @@
             <fileset dir="${project_dir}">
                 <include name="VERSION"/>
                 <include name="RELEASE_REVISION"/>
+                <include name="release.json"/>
             </fileset>
         </copy>
         <!-- Retain legal files even when general vendor Markdown/docs are trimmed. -->

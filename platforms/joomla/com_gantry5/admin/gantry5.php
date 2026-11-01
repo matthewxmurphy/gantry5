@@ -23,12 +23,36 @@ use Joomla\CMS\Language\Text;
 $app = Factory::getApplication();
 $user = $app->getIdentity();
 
+// An explicitly enabled client policy admits only its narrow resource, never a legacy action.
+$clientEntry = false;
+if ($user && !$user->guest && $user->authorise('core.edit', 'com_content') && class_exists(Loader::class)) {
+    $clientView = $app->input->getString('view', '');
+    if (in_array(trim($clientView, '/'), ['client', 'client/save'], true)) {
+        try {
+            Loader::setup();
+            $clientGantry = Gantry::instance();
+            if (!defined('GANTRYADMIN_PATH')) {
+                define('GANTRYADMIN_PATH', JPATH_COMPONENT_ADMINISTRATOR);
+            }
+            // Resolve the requested native theme before checking its persistent policy.
+            // This is preparation only: no controller is dispatched before admission.
+            $clientRouter = new Router($clientGantry);
+            $clientRouter->boot()->load();
+            $clientEntry = \Gantry\Component\ClientEditing\Access::mayEnter($clientGantry);
+            if ($clientEntry) { \Gantry\Component\ClientEditing\Access::restrictNative($clientGantry); }
+        } catch (\Throwable $error) {
+            $clientEntry = false;
+        }
+    }
+}
+
 // ACL for Gantry admin access.
 if (!$user || (
     !$user->authorise('core.manage', 'com_gantry5')
     && !$user->authorise('core.manage', 'com_templates')
     // Editing particle module makes AJAX call to Gantry component, but has restricted access to json only.
     && !($user->authorise('core.manage', 'com_modules') && strtolower($app->input->getCmd('format', 'html')) === 'json')
+    && !$clientEntry
 )) {
     $app->enqueueMessage(Text::_('JERROR_ALERTNOAUTHOR'), 'error');
 
@@ -53,6 +77,7 @@ try {
     Loader::setup();
 
     $gantry = Gantry::instance();
+    \Gantry\Component\ClientEditing\Access::restrictNative($gantry);
     $gantry['router'] = function ($c) {
         return new Router($c);
     };

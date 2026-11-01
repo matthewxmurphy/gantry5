@@ -1,3 +1,25 @@
+# 5.7.0
+## 2026-11-01 — feature release; real-content proving-site gate passed
+
+Calendar identity: `2026.11.01.003`; release tag: `v2026.11.01.003`.
+Real-content proving-site acceptance and private backup restoration passed before
+publication. Temporary test identities/outlines were removed; original state was verified.
+
+- Add selected-outline compatibility preflight and acknowledged private YAML
+  snapshots, read-only restore preview, stale-state refusal and guarded recovery.
+- Add independent blueprint-bound section Styles in Layout, preserving the editor
+  draft, and saved-site preview at desktop/tablet/mobile CSS viewport widths.
+- Add visual design-pack export, compatibility preview and import into new
+  unassigned outlines, with bounded bitmap assets and complete supplied notices.
+- Add default-off approved client text editing using existing native page-editing
+  authority, explicit instance approvals, fresh tokens and policy/layout revisions.
+- Improve menu keyboard/focus behavior, submenu Escape, current-level Tab handling,
+  reduced motion, off-canvas transition state, observers, touch/breakpoints and scrolling.
+- Retain the 5.6.6 PHP 8.4 compatibility fixes and original dependency pins; PHP 8.5
+  and modern dependency/theme APIs stay on the Gantry 6 line.
+- Ship framework-only Joomla/WordPress/Grav packages; unchanged official Helium
+  and Hydrogen remain independently versioned 5.6.4.
+
 # 5.6.6
 ## 2026-11-01 — maintenance release
 
