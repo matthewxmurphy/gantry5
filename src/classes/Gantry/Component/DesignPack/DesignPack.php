@@ -365,7 +365,8 @@ class DesignPack
         if (!function_exists('imagecreatefromstring') || !($decoded = @imagecreatefromstring($bytes))) {
             throw new \RuntimeException('The bitmap cannot be decoded; a working GD image decoder is required.', 400);
         }
-        imagedestroy($decoded);
+        // GdImage is released with its last reference on all supported PHP versions.
+        unset($decoded);
         return ['mime' => $mime, 'width' => $info[0], 'height' => $info[1]];
     }
 

@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        php: [ 8.4, 8.3 ]
+        php: [ 8.5, 8.4, 8.3 ]
         os: [ubuntu-latest]
     timeout-minutes: 10
     steps:
@@ -42,17 +42,19 @@ jobs:
         run: composer build-dev
       - name: Run modern dependency and Twig integration checks
         run: php tests/modern/dependencies.php platforms/wordpress/gantry5/vendor/autoload.php
-      - name: Run targeted PHP 8.4 nullable-rewriter checks
-        if: matrix.php == '8.4'
+      - name: Run download and Unicode runtime regression checks
+        run: php tests/php85/runtime.php
+      - name: Run targeted PHP 8.4/8.5 nullable-rewriter checks
+        if: matrix.php == '8.4' || matrix.php == '8.5'
         run: php tests/php84/nullable-rewriter.php
       - name: Run outline snapshot filesystem checks
-        if: matrix.php == '8.4'
+        if: matrix.php == '8.4' || matrix.php == '8.5'
         run: php tests/php84/upgrade-snapshot.php platforms/joomla/lib_gantry5/vendor/autoload.php
       - name: Run design-pack filesystem and bitmap checks
-        if: matrix.php == '8.4'
+        if: matrix.php == '8.4' || matrix.php == '8.5'
         run: php tests/php84/design-pack.php
       - name: Run approved client-text filesystem checks
-        if: matrix.php == '8.4'
+        if: matrix.php == '8.4' || matrix.php == '8.5'
         run: php tests/php84/client-editing.php platforms/joomla/lib_gantry5/vendor/autoload.php
 
 #  slack:

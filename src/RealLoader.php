@@ -52,8 +52,8 @@ abstract class RealLoader
         if (version_compare($phpVersion = PHP_VERSION, '8.3.0', '<')) {
             throw new \RuntimeException(sprintf(self::$errorMessagePhpMin, $phpVersion, '8.3.0'));
         }
-        if (PHP_VERSION_ID >= 80500) {
-            throw new \RuntimeException('This Gantry candidate supports PHP 8.3 and 8.4. A newer PHP version is not yet supported.');
+        if (PHP_VERSION_ID >= 80600) {
+            throw new \RuntimeException('This Gantry candidate supports PHP 8.3 through 8.5. A newer PHP version is not yet supported.');
         }
 
         if (defined('GANTRY5_VERSION')) {

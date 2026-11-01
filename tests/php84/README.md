@@ -1,6 +1,6 @@
 # PHP 8.4 nullable-rewriter checks
 
-Run with **actual PHP 8.4 CLI**:
+Run with **actual PHP 8.4 or 8.5 CLI** for the Gantry 6 development candidate:
 
 ```sh
 php tests/php84/nullable-rewriter.php
@@ -9,14 +9,14 @@ php tests/php84/nullable-rewriter.php
 The standalone test loads the existing rewriter without invoking its file-writing
 main function. It covers nullable intersections and DNF unions, references,
 grouped attributes, scalar/array types, promoted parameters, idempotence and
-unchanged function bodies. Rewritten fixtures are parsed by PHP 8.4; function
-cases exercise accepted/omitted-null/rejected calls under E_ALL, while the
+unchanged function bodies. Rewritten fixtures are parsed by the actual selected
+runtime; function cases exercise accepted/omitted-null/rejected calls under E_ALL, while the
 promotion case checks default/data preservation.
 
 The existing self-tests also parse their expected output on PHP 8.2+, where DNF
-syntax exists. Earlier builders retain their textual self-tests. The existing
-Composer upper bound remains below PHP 8.5; this suite does not extend that bound
-or establish whole-platform compatibility on other PHP versions.
+syntax exists. Earlier builders retain their textual self-tests. The Gantry 6
+candidate admits PHP below 8.6 and runs this suite on PHP 8.4 and 8.5. The retained Gantry 5.6.5 compatibility line remains separate. These shared
+checks do not establish whole-platform compatibility or custom-theme acceptance.
 
 The standalone rewriter test loads no CMS, database, network or installed-site files. Joomla, WordPress,
 Grav and real template/particle rendering require separate integration tests.

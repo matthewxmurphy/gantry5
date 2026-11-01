@@ -1,8 +1,14 @@
 # 6.0.0-dev
 ## Unreleased development candidate
 
-- Move the isolated next-major line to PHP 8.3–8.4, Toolbox 2, Symfony 7.4,
+- Move the isolated next-major line to PHP 8.3–8.5, Toolbox 2, Symfony 7.4,
   Twig 3.30 and WordPress Timber 2.5, preserving the separate Gantry 5.6.5 line.
+- Admit PHP 8.5 in the loader, WordPress entrypoint and Composer bounds, with
+  an 8.5 CI build and runtime regressions while retaining the dependency pins.
+- Replace deprecated cURL/GD cleanup and Joomla reflection accessibility calls;
+  decode Unicode attribute escapes without passing multiple bytes to ord().
+- Restore download progress on CurlHandle objects, use fully qualified callbacks
+  and distinguish stream progress/completion from unrelated notifications.
 - Replace the removed Toolbox dispatcher with a Gantry-owned Symfony Contracts
   event payload and event-first dispatch while retaining array payload behavior.
 - Migrate Twig parser/capture/cache APIs and shipped WordPress theme factories,

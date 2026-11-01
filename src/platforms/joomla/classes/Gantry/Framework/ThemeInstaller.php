@@ -69,7 +69,7 @@ class ThemeInstaller extends AbstractInstaller
         // We need access to a protected variable $install->extension.
         $reflectionClass = new \ReflectionClass($install);
         $property = $reflectionClass->getProperty('extension');
-        $property->setAccessible(true);
+        // Reflection can read protected properties directly since PHP 8.1.
         $this->extension = $property->getValue($install);
         $this->name = $this->extension->name;
 

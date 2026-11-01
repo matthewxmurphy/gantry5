@@ -1,7 +1,7 @@
 ## Gantry 6.0.0-dev: unreleased development candidate
 
 This fork preserves the Gantry 5 codebase and its original licenses. This separate
-next-major candidate targets PHP 8.3–8.4 and modern dependencies; it is not a
+next-major candidate targets PHP 8.3–8.5 and modern dependencies; it is not a
 published release or an automatic upgrade for existing themes. The retained
 5.6.5 compatibility line is tracked in
 [PR #10](https://github.com/matthewxmurphy/gantry5/pull/10) and
@@ -171,8 +171,9 @@ After that, you need to properly symlink Gantry into your CMS installation.
 The nullable rewriter handles intersections/DNF unions and grouped attributes
 while preserving reference parameters and function bodies. See
 [the PHP 8.4 rewriter checks](tests/php84/README.md) for the actual parser/runtime
-command, coverage and integration limits. Existing Composer runtime bounds,
-including the upper bound below PHP 8.5, are unchanged.
+command, coverage and integration limits. The Gantry 6 development candidate
+admits PHP 8.3–8.5; the retained Gantry 5.6.5 line and its PHP 8.4 scope are
+separate. A permitted Composer range is not whole-CMS or custom-theme acceptance.
 
 ## Testing PHP 8.3 Compatibility
 

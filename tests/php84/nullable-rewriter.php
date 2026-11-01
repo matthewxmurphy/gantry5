@@ -8,8 +8,8 @@ declare(strict_types=1);
 
 namespace GantryPhp84Native;
 
-if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500) {
-    fwrite(STDERR, "This test requires actual PHP 8.4 CLI.\n");
+if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80600) {
+    fwrite(STDERR, "This test requires actual PHP 8.4/8.5 CLI.\n");
     exit(1);
 }
 
@@ -91,7 +91,7 @@ try {
         [$output, $count] = \gantry_php84_fix_code("<?php\n" . $input);
         check($output === "<?php\n" . $expected && $count === $edits, $label . ': preserved source and edit count');
         token_get_all($output, TOKEN_PARSE);
-        check(true, $label . ': actual PHP 8.4 compilation');
+        check(true, $label . ': actual PHP compilation');
         [$again, $secondCount] = \gantry_php84_fix_code($output);
         check($again === $output && $secondCount === 0, $label . ': idempotence');
         $namespace = 'GantryPhp84Case' . ++$index;

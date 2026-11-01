@@ -7,9 +7,9 @@
  */
 use Gantry\Component\Upgrade\OutlineSnapshot;
 
-if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80500
+if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80400 || PHP_VERSION_ID >= 80600
     || !isset($argv[1]) || !is_file($argv[1])) {
-    throw new RuntimeException('Use actual PHP 8.4 CLI with an installed dependency autoloader.');
+    throw new RuntimeException('Use actual PHP 8.4/8.5 CLI with an installed dependency autoloader.');
 }
 require $argv[1];
 require dirname(__DIR__, 2) . '/src/classes/Gantry/Component/Upgrade/OutlineSnapshot.php';
