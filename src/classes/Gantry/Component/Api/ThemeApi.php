@@ -16,6 +16,7 @@ use Gantry\Component\Config\BlueprintForm;
 use Gantry\Component\File\CompiledYamlFile;
 use Gantry\Component\Layout\Layout;
 use Gantry\Framework\Gantry;
+use Gantry\Framework\Outlines;
 use Gantry\Framework\Services\ConfigServiceProvider;
 use RocketTheme\Toolbox\File\YamlFile;
 
@@ -27,11 +28,14 @@ use RocketTheme\Toolbox\File\YamlFile;
 final class ThemeApi
 {
     private readonly string $theme;
+    private readonly Outlines $outlines;
     private array $collections;
 
     public function __construct(private readonly Gantry $gantry)
     {
         $this->theme = Input::id($gantry['theme.name']);
+        // The container intentionally returns a fresh clone on every outlines lookup.
+        $this->outlines = $gantry['outlines'];
         $this->collections = [
             'styles' => new \Gantry\Admin\Styles($gantry),
             'page' => new \Gantry\Admin\Page($gantry),
@@ -42,7 +46,7 @@ final class ThemeApi
     public function listOutlines(): array
     {
         $items = [];
-        foreach ($this->gantry['outlines'] as $id => $title) {
+        foreach ($this->outlines as $id => $title) {
             $items[] = $this->getOutline((string) $id);
         }
         return ['items' => $items];
@@ -52,7 +56,7 @@ final class ThemeApi
     {
         return $this->fresh(function () use ($id): array {
             $this->requireOutline($id);
-            $outlines = $this->gantry['outlines'];
+            $outlines = $this->outlines;
             return $this->resource($id) + [
                 'title' => $outlines->title($id),
                 'preset' => $outlines->preset($id),
@@ -73,7 +77,7 @@ final class ThemeApi
         }
         return $this->locked(function () use ($title, $preset): array {
             // The native Joomla collection reserves its actual style ID before writing layout data.
-            $id = $this->gantry['outlines']->create(null, $title, $preset, function ($id): void {
+            $id = $this->outlines->create(null, $title, $preset, function ($id): void {
                 $path = $this->path((string) $id);
                 if (file_exists($path)) {
                     throw new ApiException('The new outline path is already in use.', 409, 'outline_conflict');
@@ -94,7 +98,7 @@ final class ThemeApi
             if ($id === 'default' || str_starts_with($id, '_')) {
                 throw new ApiException('System outlines cannot be renamed.', 409, 'protected_outline');
             }
-            $newId = $this->gantry['outlines']->rename($id, $title);
+            $newId = $this->outlines->rename($id, $title);
             $this->refreshOutlines();
             return $this->getOutline((string) ($newId ?: $id));
         });
@@ -105,7 +109,7 @@ final class ThemeApi
         Input::shape($payload, ['revision'], ['revision']);
         return $this->locked(function () use ($id, $payload): array {
             $this->requireRevision($id, $payload['revision']);
-            $outlines = $this->gantry['outlines'];
+            $outlines = $this->outlines;
             if ($id === 'default' || str_starts_with($id, '_') || $outlines->isDefault($id) || !$outlines->canDelete($id)) {
                 throw new ApiException('Base, system and default outlines cannot be deleted.', 409, 'protected_outline');
             }
@@ -146,7 +150,7 @@ final class ThemeApi
             $layout->init(false, false);
             $elements = $layout->sections() + $layout->particles(false);
             $changed = [$id];
-            foreach ($this->gantry['outlines']->getInheritingOutlines($id) as $dependent => $title) {
+            foreach ($this->outlines->getInheritingOutlines($id) as $dependent => $title) {
                 $this->path((string) $dependent);
                 Layout::instance($dependent)->updateInheritance($id, $id, $elements)->save()->saveIndex();
                 $changed[] = (string) $dependent;
@@ -256,7 +260,7 @@ final class ThemeApi
     private function requireOutline(string $id): void
     {
         Input::id($id);
-        if (!isset($this->gantry['outlines'][$id])) {
+        if (!isset($this->outlines[$id])) {
             throw new ApiException('The outline was not found in the selected theme.', 404, 'outline_not_found');
         }
         $this->path($id);
@@ -277,7 +281,7 @@ final class ThemeApi
 
     private function revision(string $id): string
     {
-        $parts = [$this->theme, $id, $this->gantry['outlines']->title($id), (string) $this->gantry['outlines']->isDefault($id)];
+        $parts = [$this->theme, $id, $this->outlines->title($id), (string) $this->outlines->isDefault($id)];
         foreach (array_unique([$id, 'default']) as $outline) {
             foreach ($this->gantry['locator']->findResources("gantry-config://$outline") as $directory) {
                 if (!is_dir($directory)) { continue; }
@@ -429,12 +433,12 @@ final class ThemeApi
         if (class_exists(\Joomla\CMS\Factory::class)) {
             \Gantry\Admin\ThemeList::getStyles($this->theme, true);
         }
-        $this->gantry['outlines']->load();
+        $this->outlines->load();
     }
 
     private function compile(string $id): void
     {
-        if ($this->gantry['theme']->updateCss($id === 'default' ? null : [$id => $this->gantry['outlines']->title($id)])) {
+        if ($this->gantry['theme']->updateCss($id === 'default' ? null : [$id => $this->outlines->title($id)])) {
             throw new ApiException('The native CSS compiler reported warnings.', 422, 'css_compile_failed');
         }
     }
@@ -521,7 +525,7 @@ final class ThemeApi
             if (!empty($node['inherit']['outline'])) {
                 $source = $node['inherit']['outline'];
                 $this->requireOutline($source);
-                if ($source === $outline || isset($this->gantry['outlines']->getInheritingOutlines($outline)[$source])) {
+                if ($source === $outline || isset($this->outlines->getInheritingOutlines($outline)[$source])) {
                     throw new ApiException('Layout inheritance cannot form a cycle.', 422, 'invalid_inheritance');
                 }
             }

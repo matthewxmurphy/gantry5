@@ -61,7 +61,9 @@ try {
     $gantry['blueprints'] = new BlueprintSchema();
     $gantry['locator'] = static fn () => $locator;
     $gantry['theme.name'] = 'g6_fixture';
-    $gantry['outlines'] = new Outlines($gantry, ['20' => 'Owned cache fixture']);
+    $outlines = new Outlines($gantry, ['20' => 'Owned cache fixture']);
+    // Match the real Gantry container: every lookup returns a fresh collection clone.
+    $gantry['outlines'] = $gantry->factory(static fn () => $outlines->copy());
     $instance = new ReflectionProperty(Gantry::class, 'instance');
     $instance->setValue(null, $gantry);
     CompiledYamlFile::$defaultCaching = true;
@@ -133,6 +135,14 @@ try {
             $expect($expected->getErrorCode() === $code && $expected->getCode() === 422, 'real native blueprint refuses ' . $code);
         }
     }
+    mkdir($temporary . '/layouts', 0700);
+    file_put_contents($temporary . '/layouts/default.yaml', "version: 2\npreset:\n  name: default\n  timestamp: 0\n  image: gantry-admin://images/layouts/default.png\nlayout: {}\n");
+    $locator->addPath('gantry-layouts', '', $temporary . '/layouts');
+    $created = $api->createOutline(['title' => 'Owned API Fixture']);
+    $expect($created['id'] === 'owned_api_fixture', 'native outline create returns its actual allocated ID with factory-cloned collection');
+    $expect($api->getOutline($created['id'])['revision'] === $created['revision'], 'immediate native create/get revisions agree despite container clone factory');
+    $expect(!isset($gantry['outlines'][$created['id']]), 'API retains its native collection without mutating the shared factory prototype');
+    $expect(is_file($temporary . '/config/' . $created['id'] . '/layout.yaml') && is_file($temporary . '/config/' . $created['id'] . '/index.yaml'), 'factory-clone regression uses real native layout and index persistence');
     echo 'PASS ' . $checks . ' native core API cache/blueprint regression checks on PHP ' . PHP_VERSION . "\n";
 } finally {
     if (is_dir($temporary)) {
