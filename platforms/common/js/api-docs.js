@@ -10,7 +10,8 @@
     window.SwaggerUIBundle({
         spec: JSON.parse(source.textContent),
         dom_id: '#gantry-swagger-ui',
-        deepLinking: true,
+        // Gantry owns location.hash for its native routes and modal previews.
+        deepLinking: false,
         validatorUrl: null,
         persistAuthorization: false,
         queryConfigEnabled: false,

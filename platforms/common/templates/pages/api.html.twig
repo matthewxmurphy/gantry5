@@ -3,7 +3,28 @@
 {% block stylesheets %}
     {{ parent() }}
     <link rel="stylesheet" href="{{ url('gantry-admin://assets/js/swagger-ui/swagger-ui.css') }}">
-    <style>#gantry-api-docs { background: #fff; color: #20242a; padding: 1rem; } #gantry-api-docs .swagger-ui { max-width: 100%; } #gantry-api-docs .swagger-ui input { color: #20242a; } #gantry-api-docs a:focus-visible, #gantry-api-docs button:focus-visible { outline: 3px solid #1769aa; outline-offset: 3px; }</style>
+    <style>
+        #gantry-api-docs { background: #fff; color: #20242a; padding: 1rem; overflow-wrap: anywhere; }
+        #gantry-api-docs .swagger-ui { max-width: 100%; }
+        #gantry-api-docs .swagger-ui input { color: #20242a; }
+        #gantry-api-docs .swagger-ui .opblock-summary-control,
+        #gantry-api-docs .swagger-ui .opblock-summary-path-description-wrapper { min-width: 0; }
+        #gantry-api-docs .swagger-ui .opblock-summary-path { min-width: 0; overflow-wrap: anywhere; }
+        #gantry-api-docs .swagger-ui .opblock-summary-path span { overflow-wrap: anywhere; }
+        #gantry-api-docs .swagger-ui .info .title small { padding: 2px 6px; line-height: 1.4; vertical-align: middle; }
+        #gantry-api-docs .swagger-ui .info .title small pre { padding: 0; margin: 0; font-size: 12px; line-height: 1.4; }
+        #gantry-api-docs .swagger-ui .responses-inner { overflow-x: auto; }
+        #gantry-api-docs a:focus-visible, #gantry-api-docs button:focus-visible { outline: 3px solid #1769aa; outline-offset: 3px; }
+        @media (max-width: 600px) {
+            #gantry-api-docs { padding: 0.5rem; }
+            #gantry-api-docs .swagger-ui .opblock-summary-control { flex-wrap: wrap; }
+            #gantry-api-docs .swagger-ui .opblock-summary-path-description-wrapper { flex: 1 1 100%; }
+            #gantry-api-docs .swagger-ui .opblock-summary-path,
+            #gantry-api-docs .swagger-ui .opblock-summary-path a,
+            #gantry-api-docs .swagger-ui .opblock-summary-path span { white-space: normal; max-width: 100%; }
+            #gantry-api-docs .swagger-ui .opblock-summary-description { overflow-wrap: anywhere; }
+        }
+    </style>
 {% endblock %}
 
 {% block javascript %}
