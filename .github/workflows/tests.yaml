@@ -40,6 +40,8 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
       - name: Build Gantry packages
         run: composer build-dev
+      - name: Production vendors guard
+        run: php tests/php85/production-vendors.php platforms/joomla/lib_gantry5 platforms/wordpress/gantry5
       - name: "Issue #2282: visible and selectable contact radios"
         run: node tests/frontend/issue-2282.js platforms/joomla/lib_gantry5/vendor/autoload.php
         env:

@@ -104,6 +104,23 @@ a standard path. Missing browsers or incomplete assertions fail the check.
 The FA6 payload comes from the official Font Awesome 6.5.1 distribution; its
 saved selector keys, existing FA5/FA7 files and complete license texts remain.
 
+## Production dependency admission
+
+Production builds reject development Composer vendors before packaging, including
+direct `php bin/build joomla-prod` calls that skip `bin/composer-install`. Prepare
+an isolated build checkout with `composer install --no-dev` in each selected
+runtime/compat package, or use the existing `composer build-prod` dependency step.
+Development test checkouts are preserved. An alternate `-Dproject_dir` is checked
+at its resolved source location; use it instead of overriding `path.platforms`.
+
+Run `php tests/php85/production-vendors.php` for contaminated-metadata, stale
+autoload-map, virtual-package and source-root regressions. Append an actual clean
+runtime directory to also verify its native autoloader, exact minifier and Twig
+bootstrap, for example `platforms/joomla/lib_gantry5`. The guard reads Composer 2
+metadata and the lockfile; it does not install, remove or execute dependencies.
+Final package checks must apply the same guard to the extracted runtime ZIP and
+confirm that locked development package directories are absent.
+
 ## Compiled production readers
 
 ```sh

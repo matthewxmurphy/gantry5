@@ -134,6 +134,11 @@ try {
     $expect($theme->renderer()->statistics()['artifact_loads'] === 0, 'compiled templates are loaded lazily');
     $expect($theme->render('index.html.twig', ['name' => 'Alice']) === 'base:context:ALICE|JoomlaMafia|native|live-context|12:30', 'native inheritance/includes/filters/timezone/context execute with every source directory removed');
     $expect($theme->render('@alias/index.html.twig', ['name' => 'Bob']) === 'base:context:BOB|JoomlaMafia|native|live-context|12:30', 'compiled aliases retain fresh person context');
+    $expect($theme->render('@alias/extra/.././index.html.twig', ['name' => 'Alias']) === 'base:context:ALIAS|JoomlaMafia|native|live-context|12:30', 'noncanonical logical aliases still resolve against the immutable map without source');
+    $closedLoader = $theme->renderer()->getLoader();
+    $expect($closedLoader->exists('@alias/index.html.twig') && $closedLoader->exists('@alias//./index.html.twig'), 'canonical and normalized existence checks agree');
+    $expect(!$closedLoader->exists('@alias/../../index.html.twig') && !$closedLoader->exists("index.html.twig\0"), 'traversal and null-byte names remain outside the closed map');
+    $refuse(fn () => $theme->render('@alias/../../index.html.twig'), 'logical traversal cannot escape the compiled loader fast path');
     $expect($theme->render('embed.html.twig', ['name' => 'Alice']) === 'base:embedded:Alice', 'embedded native template classes load from their immutable main file');
     $expect($theme->compile($inline, ['name' => 'Alice']) === '<b>ALICE JoomlaMafia</b>', 'registered inline Twig uses its compiled hash lookup');
     $expect($theme->compile('<p>literal HTML</p>') === '<p>literal HTML</p>', 'plain unprocessed HTML remains literal');

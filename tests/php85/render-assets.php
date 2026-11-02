@@ -113,6 +113,18 @@ try {
     $check(ImagesRuntime::html($changed, $manifest) === $changed, 'responsive image conversion idempotent');
     $protected = '<script>const x="<img src=\'/images/main.png\'>";</script><pre><img src="/images/main.png"></pre><!--<img src="/images/main.png">--><img src="/images/main.png" srcset="/custom.png 2x">';
     $check(ImagesRuntime::html($protected, $manifest) === $protected, 'script/code/comment/authored image markup untouched');
+    $literal = '<div title="<img src=\'/images/main.png\'>">JoomlaMafia</div>';
+    $check(ImagesRuntime::html($literal, $manifest) === $literal, 'image-like text inside another tag attribute is untouched');
+    $quoted = '<img data-note=" src=\'/images/unknown.png\' " src="/images/main.png">';
+    $check(str_contains(ImagesRuntime::html($quoted, $manifest), '<picture>'), 'quoted attribute contents cannot hide the actual admitted src');
+    $duplicateUnknown = '<img src="/images/unknown.png" src="/images/main.png">';
+    $check(ImagesRuntime::html($duplicateUnknown, $manifest) === $duplicateUnknown, 'first duplicate src retains native HTML semantics for unknown images');
+    $check(str_contains(ImagesRuntime::html('<img src="/images/main.png" src="/images/unknown.png">', $manifest), '<picture>'), 'first duplicate admitted src retains native HTML semantics');
+    $check(str_contains(ImagesRuntime::html('<img src="&#47;images/main.png">', $manifest), '<picture>'), 'encoded source attributes remain admitted');
+    $check(str_contains(ImagesRuntime::html('<img src="&#47images/main.png">', $manifest), '<picture>'), 'ambiguous entity syntax delegates to native HTML parsing');
+    $unknownLogo = '<html><body><main>' . str_repeat('<div class="row"><span>JoomlaMafia</span></div>', 100) . '<img src="/images/logo.svg" alt="JoomlaMafia"></main></body></html>';
+    $check(ImagesRuntime::html($unknownLogo, $manifest) === $unknownLogo, 'unknown SVG logo and unrelated rendered tags stay byte-for-byte exact');
+
     $indexTimes = [];
     foreach (glob($temporary . '/theme/custom/compiled-assets/.prepared/*.php') as $file) { touch($file, 1234567890); $indexTimes[$file] = filemtime($file); }
     $again = new AssetCompiler($gantry, $temporary . '/theme/custom/compiled-assets', '/theme/custom/compiled-assets');
@@ -202,6 +214,19 @@ try {
         if (!$file->isFile()) { continue; }
         $check(!str_contains(file_get_contents($file->getPathname()), 'PRIVATE-CSS-SENTINEL') && !str_contains(file_get_contents($file->getPathname()), 'PRIVATE-JS-SENTINEL'), 'no denied source bytes published');
     }
+    $runtimeSource = dirname(__DIR__, 2) . '/src/classes/Gantry';
+    $runtimeOnly = '$loader=require ' . var_export(realpath($argv[1]), true) . ';$loader->addPsr4("Gantry\\\\",' . var_export($runtimeSource, true) . ',true);'
+        . '$before=class_exists(\\Gantry\\Component\\Render\\Assets\\AssetCompiler::class,false);'
+        . '$first=str_repeat("a",64);$second=str_repeat("b",64);$key=hash("sha256","style\\0$first\\0$second");'
+        . '$manifest=["options"=>["version"=>true,"combine"=>true],"files"=>["/a.css"=>["id"=>$first,"url"=>"/prepared-a.css"],"/b.css"=>["id"=>$second,"url"=>"/prepared-b.css"]],"pairs"=>[$key=>["url"=>"/prepared-pair.css"]]];'
+        . '$records=[[":type"=>"file","href"=>"/a.css"],[":type"=>"file","href"=>"/b.css"]];'
+        . '$out=\\Gantry\\Component\\Render\\Assets\\AssetRuntime::substitute($records,"style",$manifest);'
+        . 'echo json_encode(["before"=>$before,"after"=>class_exists(\\Gantry\\Component\\Render\\Assets\\AssetCompiler::class,false),"count"=>count($out),"url"=>$out[0]["href"]]);';
+    $process = proc_open([PHP_BINARY, '-r', $runtimeOnly], [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+    if (!is_resource($process)) { throw new RuntimeException('The isolated runtime autoload regression could not start.'); }
+    $runtimeOutput = stream_get_contents($pipes[1]); $runtimeError = stream_get_contents($pipes[2]); fclose($pipes[1]); fclose($pipes[2]); $runtimeExit = proc_close($process);
+    $runtimeResult = $runtimeExit === 0 ? json_decode($runtimeOutput, true) : null;
+    $check($runtimeExit === 0 && $runtimeError === '' && $runtimeResult === ['before' => false, 'after' => false, 'count' => 1, 'url' => '/prepared-pair.css'], 'runtime combination uses the exact shared key without loading the offline compiler');
     // Exercise the real HtmlBlock after pinning a native immutable artifact.
     // Stream source files disappear; prepared URLs must bypass timestamp/stat resolution.
     $artifact = $temporary . '/assets-manifest.php';
@@ -215,6 +240,17 @@ try {
     $actualStyle = $block->getStyles(); $actualScript = $block->getScripts();
     $check(count($actualStyle) === 1 && array_values($actualStyle)[0]['href'] === $manifest['files']['gantry-assets://css/a.css']['url'], 'real HtmlBlock substitutes CSS stream before timestamp/source lookup');
     $check(count($actualScript) === 1 && array_values($actualScript)[0]['src'] === $manifest['files']['gantry-assets://js/a.js']['url'], 'real HtmlBlock substitutes JS stream before timestamp/source lookup');
+    $combinedBlock = new \Gantry\Component\Content\Block\HtmlBlock();
+    $combinedBlock->addStyle('gantry-assets://css/a.css'); $combinedBlock->addStyle('gantry-assets://css/b.css');
+    $actualCombined = $combinedBlock->getStyles();
+    $check(count($actualCombined) === 1 && array_values($actualCombined)[0]['href'] === $combined[0]['href'], 'one-pass HtmlBlock normalization preserves prepared adjacent combination');
+    $barrierBlock = new \Gantry\Component\Content\Block\HtmlBlock();
+    $barrierBlock->addStyle(['href' => 'gantry-assets://css/a.css', 'integrity' => 'sha384-fixture', 'crossorigin' => 'anonymous']);
+    $barrierStyle = array_values($barrierBlock->getStyles())[0];
+    $check($barrierStyle['href'] === '/assets/css/a.css' && $barrierStyle['element']['integrity'] === 'sha384-fixture' && $barrierStyle['element']['crossorigin'] === 'anonymous', 'one-pass HtmlBlock preserves native integrity/CORS URL and attributes');
+    $check(AssetRuntime::preparedUrl($style('gantry-assets://css/a.css', ['element' => ['integrity' => 'sha384-fixture']]), 'style', $manifest) === null && AssetRuntime::preparedUrl($script('gantry-assets://js/a.js', ['async' => true]), 'script', $manifest) === null, 'prepared-URI fast path refuses attribute and async barriers');
+    $check(AssetRuntime::preparedUrl($style('gantry-assets://css/a.css'), 'style', $off) === null, 'prepared-URI fast path preserves version toggle');
+
     $renderedBlock = new \Gantry\Component\Content\Block\HtmlBlock();
     $renderedBlock->addStyle(\Gantry\Component\Content\Document\HtmlDocument::url('gantry-assets://css/a.css'));
     $renderedBlock->addScript(\Gantry\Component\Content\Document\HtmlDocument::url('gantry-assets://js/a.js'));
@@ -226,5 +262,8 @@ try {
     $check(\Gantry\Component\Content\Document\HtmlDocument::urlFilter($fragment, false, 0, true) === $fragment && \Gantry\Component\Content\Document\HtmlDocument::urlFilter($fragment, false, 0) === $fragment, 'partial/captured HTML never selects an eager responsive image');
     $finalHtml = \Gantry\Component\Content\Document\HtmlDocument::urlFilter('<html><body>' . $fragment . $fragment . '</body></html>', false, 0, true);
     $check(substr_count($finalHtml, 'loading="eager"') === 1 && substr_count($finalHtml, 'loading="lazy"') === 1, 'one final document selects only one primary across captured fragments');
+    $streamHtml = '<html><body><a href="gantry-assets://css/a.css">JoomlaMafia</a><script>const untouched="gantry-assets://css/a.css";</script></body></html>';
+    $resolvedHtml = \Gantry\Component\Content\Document\HtmlDocument::urlFilter($streamHtml, false, 0, true);
+    $check(str_contains($resolvedHtml, 'href="/assets/css/a.css"') && str_contains($resolvedHtml, '<script>const untouched="gantry-assets://css/a.css";</script>'), 'remaining stream URLs still resolve while script content stays protected');
     echo "PASS $checks immutable asset/image checks on PHP " . PHP_VERSION . "\n";
 } finally { $remove($temporary); }

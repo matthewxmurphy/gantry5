@@ -81,8 +81,7 @@ class HtmlBlock extends ContentBlock implements HtmlBlockInterface
         /** @var Document $document */
         $document = $gantry['document'];
 
-        // Resolve admitted original stream identities before native URL timestamping.
-        $styles = AssetRuntime::records($styles, 'style', $gantry);
+        $manifest = AssetRuntime::manifest($gantry);
         foreach ($styles as $key => $style) {
             if (isset($style['href'])) {
                 $url = $style['href'];
@@ -90,14 +89,17 @@ class HtmlBlock extends ContentBlock implements HtmlBlockInterface
                     // Compile SCSS files.
                     $url = $theme->css(Gantry::basename($url, '.scss'));
                 }
-                // Deal with streams and relative paths.
-                $url = $document::url($url, null, null, false);
+                // Resolve approved immutable identities before native timestamping;
+                // all other records retain the native URL/attribute semantics.
+                $style['href'] = $url;
+                $prepared = $manifest !== null ? AssetRuntime::preparedUrl($style, 'style', $manifest) : null;
+                $url = $prepared ?? $document::url($url, null, null, false);
 
                 $styles[$key]['href'] = $url;
             }
         }
 
-        return AssetRuntime::records($styles, 'style', $gantry);
+        return $manifest !== null ? AssetRuntime::substitute($styles, 'style', $manifest) : $styles;
     }
 
     /**
@@ -118,16 +120,15 @@ class HtmlBlock extends ContentBlock implements HtmlBlockInterface
         /** @var Document $document */
         $document = $gantry['document'];
 
-        // Prepared URIs are already absolute public paths and need no source probe.
-        $scripts = AssetRuntime::records($scripts, 'script', $gantry);
+        $manifest = AssetRuntime::manifest($gantry);
         foreach ($scripts as $key => $script) {
             if (isset($script['src'])) {
-                // Deal with streams and relative paths.
-                $scripts[$key]['src'] = $document::url($script['src'], null, null, false);
+                $prepared = $manifest !== null ? AssetRuntime::preparedUrl($script, 'script', $manifest) : null;
+                $scripts[$key]['src'] = $prepared ?? $document::url($script['src'], null, null, false);
             }
         }
 
-        return AssetRuntime::records($scripts, 'script', $gantry);
+        return $manifest !== null ? AssetRuntime::substitute($scripts, 'script', $manifest) : $scripts;
     }
 
     /**

@@ -129,7 +129,7 @@ final class AssetCompiler
 
     public static function pairKey(string $kind, string $first, string $second): string
     {
-        return hash('sha256', "$kind\0$first\0$second");
+        return AssetRuntime::pairKey($kind, $first, $second);
     }
 
     private function file(string $uri, string $kind, bool $minify): ?array

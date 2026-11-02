@@ -59,10 +59,18 @@ final class AssetRuntime
         return $manifest === null ? $records : self::substitute($records, $kind, $manifest);
     }
 
+    /** A verified immutable replacement needs no native URL parsing or source probe. */
+    public static function preparedUrl(array $record, string $kind, array $manifest): ?string
+    {
+        if (!($manifest['options']['version'] ?? true) || !self::eligible($record, $kind)) { return null; }
+        $entry = $manifest['files'][$record[$kind === 'style' ? 'href' : 'src'] ?? ''] ?? null;
+        return is_array($entry) ? $entry['url'] : null;
+    }
+
     public static function substitute(array $records, string $kind, array $manifest): array
     {
         $key = $kind === 'style' ? 'href' : 'src';
-        $records = array_values($records);
+        $records = array_is_list($records) ? $records : array_values($records);
         $output = [];
         for ($i = 0, $length = count($records); $i < $length; ++$i) {
             $record = $records[$i];
@@ -70,7 +78,7 @@ final class AssetRuntime
             if (!$asset || !($manifest['options']['version'] ?? true)) { $output[] = $record; continue; }
             $next = $records[$i + 1] ?? null;
             $nextAsset = $next && self::eligible($next, $kind) ? ($manifest['files'][$next[$key] ?? ''] ?? null) : null;
-            $pair = $nextAsset ? ($manifest['pairs'][AssetCompiler::pairKey($kind, $asset['id'], $nextAsset['id'])] ?? null) : null;
+            $pair = $nextAsset ? ($manifest['pairs'][self::pairKey($kind, $asset['id'], $nextAsset['id'])] ?? null) : null;
             if (($manifest['options']['combine'] ?? false) && $pair && ($record[':priority'] ?? 0) === ($next[':priority'] ?? 0)
                 && ($record['media'] ?? null) === ($next['media'] ?? null)
                 && ($record['defer'] ?? false) === ($next['defer'] ?? false)) {
@@ -80,6 +88,12 @@ final class AssetRuntime
             $output[] = $record;
         }
         return $output;
+    }
+
+    /** Shared build/runtime identity; frontend never autoloads the offline compiler. */
+    public static function pairKey(string $kind, string $first, string $second): string
+    {
+        return hash('sha256', "$kind\0$first\0$second");
     }
 
     /** Attribute, integrity, identity, module and dependency barriers stay native. */

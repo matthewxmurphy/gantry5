@@ -38,6 +38,9 @@
   images offline, preserving fallback formats, dimensions and primary eager
   loading. Preserve private, animated and color-profile-sensitive originals.
 - Fix the PHP 8.5 null menu-offset deprecation without suppressing diagnostics.
+- Reject development dependencies and autoload maps before production packaging.
+- Avoid repeated URL processing, unrelated image parsing and offline compiler
+  loading during compiled frontend delivery; retain native ordering and barriers.
 - See docs/compiled-rendering.md for activation, recovery and delivery limits.
 
 # 6.0.1

@@ -542,6 +542,12 @@ class HtmlDocument
     {
         static::$urlFilterParams = [$domain, $timestamp_age, $streamOnly];
 
+        // Fully resolved output needs no stream tokenization or URL callbacks.
+        // Keep the one final-document responsive-image pass independent of that.
+        if ($streamOnly && !preg_match('/gantry-[^\s"\'<>]+:\/\//', $html)) {
+            return stripos($html, '<html') !== false ? AssetRuntime::html($html, static::gantry()) : $html;
+        }
+
         // Tokenize all PRE, CODE and SCRIPT tags to avoid modifying any src|href|url in them
         $tokens = [];
 

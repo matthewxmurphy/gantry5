@@ -54,6 +54,8 @@ final class CompiledLoader implements LoaderInterface
 
     public function entry(string $name): array
     {
+        // The immutable map was checked for canonical names at construction.
+        if (isset($this->templates[$name])) { return $this->templates[$name]; }
         $name = self::normalize($name);
         if (!isset($this->templates[$name])) { throw new LoaderError('Template is absent from the active render bundle: ' . $name); }
         return $this->templates[$name];
@@ -67,6 +69,7 @@ final class CompiledLoader implements LoaderInterface
     }
     public function exists(string $name): bool
     {
+        if (isset($this->templates[$name])) { return true; }
         try { return isset($this->templates[self::normalize($name)]); }
         catch (LoaderError) { return false; }
     }
