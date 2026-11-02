@@ -222,5 +222,9 @@ try {
     $check(array_values($renderedBlock->getScripts())[0]['src'] === $manifest['files']['gantry-assets://js/a.js']['url'], 'Twig-style URL resolution retains JS manifest identity without original file');
     $check(\Gantry\Component\Render\Assets\AssetRuntime::sourceUrl('gantry-assets://css/a.css?v=declared') === null, 'query-bearing native stream retains declared semantics');
     $check(\Gantry\Component\Render\Assets\AssetRuntime::sourceUrl('gantry-media://main.png') === '/images/main.png', 'prepared image stream resolves canonical URL from frozen manifest');
+    $fragment = '<section><img src="/images/main.png"></section>';
+    $check(\Gantry\Component\Content\Document\HtmlDocument::urlFilter($fragment, false, 0, true) === $fragment && \Gantry\Component\Content\Document\HtmlDocument::urlFilter($fragment, false, 0) === $fragment, 'partial/captured HTML never selects an eager responsive image');
+    $finalHtml = \Gantry\Component\Content\Document\HtmlDocument::urlFilter('<html><body>' . $fragment . $fragment . '</body></html>', false, 0, true);
+    $check(substr_count($finalHtml, 'loading="eager"') === 1 && substr_count($finalHtml, 'loading="lazy"') === 1, 'one final document selects only one primary across captured fragments');
     echo "PASS $checks immutable asset/image checks on PHP " . PHP_VERSION . "\n";
 } finally { $remove($temporary); }

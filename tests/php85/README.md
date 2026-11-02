@@ -50,7 +50,7 @@ php tests/php85/joomla-change-state.php platforms/joomla/lib_gantry5/vendor/auto
 
 The real Joomla Database driver, DI container, CMS Factory and Gantry Joomla
 adapter operate on a private SQLite memory database. No database behavior is
-mocked. The 64 checks cover by-reference row insertion, exact NULL restoration,
+mocked. The 100 checks cover by-reference row insertion, exact NULL restoration,
 create/delete/rename undo metadata, transactions, unrelated rows and protection
 against changed assignments/defaults or reused IDs. Native Joomla Access reads
 real SQLite viewlevel rules, nested-set groups and com_users guest parameters.
@@ -61,13 +61,19 @@ modules, future/expired rows and content beneath hidden ancestors are excluded.
 Orphaned and cyclic categories fail closed. No authorisation implementation is
 mocked. The fixture uses native application configuration and identity handling;
 it does not bootstrap an installed CMS request, session or authentication plugin.
+Article `images` JSON contributes only public/guest `image_intro` and
+`image_fulltext` strings. Joomla metadata fragment cleaning is checked against
+the native HTMLHelper; ordinary query/fragment data stays exact. Captions, alt
+text, float fields, arbitrary/nested JSON, nonstring values, malformed JSON and
+all nonpublic article images add no public source. Existing article text remains
+present when image metadata is malformed.
 The preparation helper verifies the official archive and every extracted file;
 native source and Composer vendors remain outside the repository and packages.
 
 The installed Joomla SQLite connector emits one PHP 8.5 deprecation while
 registering `ROW_NUMBER` with `PDO::sqliteCreateFunction`. This exact bootstrap
 diagnostic is counted and reported; every other enabled diagnostic throws.
-No vendor compatibility shim is installed. These 64 checks do not certify the
+No vendor compatibility shim is installed. These 100 checks do not certify the
 staging MariaDB path; the installed token-authenticated metadata round-trip is
 the required runtime gate.
 

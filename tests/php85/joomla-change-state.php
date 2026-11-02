@@ -19,6 +19,7 @@ use Joomla\CMS\Cache\CacheControllerFactory;
 use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
+use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\User\UserFactory;
 use Joomla\CMS\User\UserFactoryInterface;
 use Joomla\CMS\User\User;
@@ -225,7 +226,7 @@ try {
     $expect(Factory::getApplication()->getIdentity() === $actor && $actor->id === 999 && !in_array(3, $guestLevels, true), 'a native administrator build identity cannot add its Special view level to guest render inputs');
 
     $db->setQuery('CREATE TABLE #__categories (id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL, published INTEGER NOT NULL, access INTEGER NOT NULL, description TEXT NOT NULL)')->execute();
-    $db->setQuery('CREATE TABLE #__content (id INTEGER PRIMARY KEY, state INTEGER NOT NULL, access INTEGER NOT NULL, catid INTEGER NOT NULL, introtext TEXT NOT NULL, fulltext TEXT NOT NULL, publish_up TEXT NULL, publish_down TEXT NULL)')->execute();
+    $db->setQuery("CREATE TABLE #__content (id INTEGER PRIMARY KEY, state INTEGER NOT NULL, access INTEGER NOT NULL, catid INTEGER NOT NULL, introtext TEXT NOT NULL, fulltext TEXT NOT NULL, images TEXT NOT NULL DEFAULT '{}', attribs TEXT NOT NULL DEFAULT '{}', publish_up TEXT NULL, publish_down TEXT NULL)")->execute();
     $db->setQuery('CREATE TABLE #__modules (id INTEGER PRIMARY KEY, published INTEGER NOT NULL, access INTEGER NOT NULL, client_id INTEGER NOT NULL, content TEXT NOT NULL, publish_up TEXT NULL, publish_down TEXT NULL)')->execute();
     foreach ([
         [1, 0, 1, 1, 'PUBLIC_CATEGORY_ROOT'],
@@ -295,6 +296,60 @@ try {
     foreach (['UNPUBLISHED_CATEGORY', 'CHILD_OF_UNPUBLISHED_CATEGORY', 'PRIVATE_CATEGORY', 'CHILD_OF_PRIVATE_CATEGORY', 'ORPHAN_CATEGORY', 'CYCLIC_CATEGORY_ONE', 'CYCLIC_CATEGORY_TWO', 'TRASHED_CATEGORY'] as $marker) { $expect(!in_array($marker, $publicSources, true), 'hidden native category description is absent: ' . $marker); }
     $expect(count($publicSources) === 15, 'offline render inputs contain exactly the guest-public article/module/category strings');
     $expect($adapter->capture() === $baseline, 'offline guest content collection does not mutate native outline/assignment metadata');
+
+    // The two native article image fields are guest-rendered independently of
+    // intro/fulltext HTML. Only these declared fields may enter public assets.
+    $nativeIntro = 'images/public-intro.jpg#joomlaImage://local-images/public-intro.jpg?width=640&height=480';
+    $nativeFull = 'images/public-full.jpg?revision=12#joomlaImage://local-images/public-full.jpg?width=1280&height=960';
+    $ordinaryFragment = 'images/window-intro.svg?revision=7#section-two';
+    $ordinaryFull = 'images/window-full.webp';
+    $guestIntro = 'images/guest-intro.avif#joomlaImage://local-images/guest-intro.avif?width=320&height=240';
+    $ignored = [
+        'image_intro_caption' => 'images/caption-intro-not-an-asset.jpg',
+        'image_fulltext_caption' => 'images/caption-full-not-an-asset.jpg',
+        'image_intro_alt' => 'images/alt-intro-not-an-asset.jpg',
+        'image_fulltext_alt' => 'images/alt-full-not-an-asset.jpg',
+        'float_intro' => 'images/float-intro-not-an-asset.jpg',
+        'float_fulltext' => 'images/float-full-not-an-asset.jpg',
+        'unrelated' => 'images/arbitrary-json-not-an-asset.jpg',
+    ];
+    $imageValues = [
+        json_encode(['image_intro' => $nativeIntro, 'image_fulltext' => $nativeFull] + $ignored + ['params' => ['image_intro' => 'images/nested-not-an-asset.jpg']], JSON_THROW_ON_ERROR),
+        '{"image_intro":"images/malformed-not-an-asset.jpg","extra":',
+        json_encode(['image_intro' => $ordinaryFragment, 'image_fulltext' => $ordinaryFull], JSON_THROW_ON_ERROR),
+        json_encode(['image_intro' => $guestIntro, 'image_fulltext' => ['images/nonstring-not-an-asset.jpg']], JSON_THROW_ON_ERROR),
+    ];
+    foreach ($articles as $offset => [$marker]) {
+        $images = $imageValues[$offset] ?? json_encode(['image_intro' => 'images/' . $marker . '-INTRO.jpg', 'image_fulltext' => 'images/' . $marker . '-FULL.jpg'], JSON_THROW_ON_ERROR);
+        $record = (object) ['id' => $offset + 1, 'images' => $images, 'attribs' => '{"image_intro":"images/arbitrary-attribs-not-an-asset.jpg"}'];
+        $db->updateObject('#__content', $record, 'id');
+    }
+    $imageSources = $adapter->renderSources();
+    $expectedImages = [
+        'images/public-intro.jpg', 'images/public-full.jpg?revision=12',
+        $ordinaryFragment, $ordinaryFull, 'images/guest-intro.avif',
+    ];
+    foreach ($expectedImages as $image) { $expect(in_array($image, $imageSources, true), 'declared public/guest article image URI is collected: ' . $image); }
+    foreach ([$nativeIntro, $nativeFull, $guestIntro] as $native) {
+        $clean = HTMLHelper::cleanImageURL($native);
+        $expect(in_array($clean->url, $imageSources, true) && !in_array($native, $imageSources, true), 'native Joomla image metadata cleaning matches HTMLHelper for a declared image');
+    }
+    $expect(in_array($ordinaryFragment, $imageSources, true), 'an ordinary query/fragment remains exact; only the native Joomla metadata fragment is removed');
+    foreach ($ignored as $field => $value) { $expect(!in_array($value, $imageSources, true), 'non-image JSON field is not collected: ' . $field); }
+    foreach (['images/nested-not-an-asset.jpg', 'images/nonstring-not-an-asset.jpg', 'images/arbitrary-attribs-not-an-asset.jpg'] as $value) {
+        $expect(!in_array($value, $imageSources, true), 'nested/nonstring/arbitrary article JSON does not add an image source: ' . $value);
+    }
+    $expect(!in_array($imageValues[1], $imageSources, true) && !in_array('images/malformed-not-an-asset.jpg', $imageSources, true), 'malformed images JSON is ignored without leaking the raw JSON or a partial value');
+    $expect(in_array('PUBLIC_ARTICLE_ZERO_INTRO', $imageSources, true) && in_array('PUBLIC_ARTICLE_ZERO_FULL', $imageSources, true), 'malformed image metadata preserves the public article text');
+    foreach (array_slice($articles, 4) as [$marker]) {
+        $expect(!in_array('images/' . $marker . '-INTRO.jpg', $imageSources, true) && !in_array('images/' . $marker . '-FULL.jpg', $imageSources, true), 'nonpublic article images remain absent: ' . $marker);
+    }
+    $addedImages = array_values(array_diff($imageSources, $publicSources));
+    sort($addedImages);
+    sort($expectedImages);
+    $expect($addedImages === $expectedImages && count($imageSources) === 20, 'only the five declared guest-public image URIs are added to the exact previous content sources');
+    $expect(array_values(array_diff($publicSources, $imageSources)) === [], 'collecting image metadata preserves every existing guest-public source');
+    $expect($adapter->capture() === $baseline, 'image source collection leaves native outline and assignment metadata unchanged');
     echo 'PASS ' . $checks . ' real Joomla Database SQLite adapter checks on PHP ' . PHP_VERSION
         . '; observed ' . count($upstreamDeprecations) . " upstream SQLite bootstrap deprecation(s)\n";
 } finally {

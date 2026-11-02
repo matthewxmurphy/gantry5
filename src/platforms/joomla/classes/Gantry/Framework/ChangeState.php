@@ -77,7 +77,7 @@ final class ChangeState extends StateAdapter
             if ($visible((int) $id)) { $publicCategories[] = (int) $id; }
         }
         $now = $this->db->quote(gmdate('Y-m-d H:i:s'));
-        foreach (['#__content' => ['introtext', 'fulltext'], '#__modules' => ['content']] as $table => $columns) {
+        foreach (['#__content' => ['introtext', 'fulltext', 'images'], '#__modules' => ['content']] as $table => $columns) {
             $query = $this->db->getQuery(true)->select($this->db->quoteName($columns))->from($this->db->quoteName($table))->order('id')
                 ->where('access IN (' . implode(',', $levels) . ')')
                 ->where(($table === '#__content' ? 'state' : 'published') . '=1');
@@ -90,6 +90,21 @@ final class ChangeState extends StateAdapter
             }
             $rows = $this->db->setQuery($query)->loadAssocList();
             foreach ($rows as $row) {
+                if ($table === '#__content') {
+                    // These are the two native guest-rendered article image
+                    // fields, not arbitrary extension parameters or captions.
+                    $images = is_string($row['images'] ?? null) ? json_decode($row['images'], true) : null;
+                    unset($row['images']);
+                    if (is_array($images)) {
+                        foreach (['image_intro', 'image_fulltext'] as $field) {
+                            if (is_string($images[$field] ?? null) && $images[$field] !== '') {
+                                // Joomla removes this dimensions metadata from
+                                // the emitted src. Preserve other URL fragments.
+                                $row[$field] = explode('#joomlaImage://', $images[$field], 2)[0];
+                            }
+                        }
+                    }
+                }
                 foreach ($row as $value) {
                     if (!is_string($value) || $value === '') { continue; }
                     $bytes += strlen($value);
