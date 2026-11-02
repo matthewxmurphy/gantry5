@@ -1,26 +1,36 @@
 {
     "schema": 1,
     "product": "Gantry",
-    "version": "6.0.0-alpha.1",
+    "version": "6.0.1",
     "version_file": "VERSION",
-    "calendar_revision": "2026.11.01.002",
+    "calendar_revision": "2026.11.02.001",
     "calendar_revision_file": "RELEASE_REVISION",
     "release_timezone": "America/Chicago",
-    "tag": "v2026.11.01.002",
-    "stability": "alpha",
+    "tag": "v2026.11.02.001",
+    "stability": "stable",
     "repository": "matthewxmurphy/gantry5",
     "developer": "Matthew X Murphy",
     "developer_url": "https://MatthewxMurphy.com",
     "support_url": "https://builtnotbegged.com",
-    "php": ">=8.3.0 <8.6.0",
+    "php": ">=8.5.0 <8.6.0",
     "components": {
-        "framework": "6.0.0-alpha.1",
-        "helium": "6.0.0-alpha.1",
-        "hydrogen": "6.0.0-alpha.1"
+        "framework": "6.0.1",
+        "helium": "6.0.1",
+        "hydrogen": "6.0.1"
     },
     "updates": {
         "mode": "manual",
         "releases": "https://github.com/matthewxmurphy/gantry5/releases"
     },
-    "license_notice": "Existing Gantry and third-party licenses and notices remain applicable."
+    "license_notice": "Existing Gantry and third-party licenses and notices remain applicable.",
+    "api": {
+        "transport": "Joomla 6.2 core Web Services",
+        "authentication": "Joomla core API token",
+        "documentation": "Gantry administration > API / Swagger",
+        "scope": [
+            "outlines",
+            "layouts",
+            "outline theme settings"
+        ]
+    }
 }

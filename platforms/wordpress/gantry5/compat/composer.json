@@ -3,12 +3,12 @@
     "description": "Gantry SCSS compiler compatibility library",
     "license": "GPLv2",
     "require": {
-        "php": ">=8.3.0 <8.6.0",
+        "php": ">=8.5.0 <8.6.0",
         "scssphp/scssphp": "~1.10"
     },
     "config": {
         "platform": {
-            "php": "8.3.0"
+            "php": "8.5.0"
         }
     }
 }

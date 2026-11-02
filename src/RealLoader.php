@@ -49,19 +49,19 @@ abstract class RealLoader
      */
     public static function getClassLoader()
     {
-        if (version_compare($phpVersion = PHP_VERSION, '8.3.0', '<')) {
-            throw new \RuntimeException(sprintf(self::$errorMessagePhpMin, $phpVersion, '8.3.0'));
+        if (version_compare($phpVersion = PHP_VERSION, '8.5.0', '<')) {
+            throw new \RuntimeException(sprintf(self::$errorMessagePhpMin, $phpVersion, '8.5.0'));
         }
         if (PHP_VERSION_ID >= 80600) {
-            throw new \RuntimeException('This Gantry candidate supports PHP 8.3 through 8.5. A newer PHP version is not yet supported.');
+            throw new \RuntimeException('This Gantry candidate supports PHP 8.5 only. A newer PHP version is not yet supported.');
         }
 
         if (defined('GANTRY5_VERSION')) {
             throw new \LogicException(self::$errorMessageGantryLoaded);
         }
 
-        define('GANTRY5_VERSION', '6.0.0-alpha.1');
-        define('GANTRY5_VERSION_DATE', '2026-11-01');
+        define('GANTRY5_VERSION', '6.0.1');
+        define('GANTRY5_VERSION_DATE', '2026-11-02');
 
         if (!defined('DS')) {
             define('DS', DIRECTORY_SEPARATOR);

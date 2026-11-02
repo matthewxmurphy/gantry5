@@ -4,7 +4,7 @@ Author URI: http://gantry.org
 Tags: gantry, gantry5, framework, theme, builder
 Requires at least: 7.1.4
 Tested up to: 7.1.4
-Requires PHP: 8.3.0
+Requires PHP: 8.5.0
 Stable tag: @version@
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -88,7 +88,7 @@ Using FTP :
 1. Upload the plugin directory to the wp-content/plugins/
 1. Activate the plugin in Admin Dashboard > Plugins
 
-The framework ZIP does not include a theme. Install matching 6.0.0-alpha.1 Helium or Hydrogen from [this fork's releases](https://github.com/matthewxmurphy/gantry5/releases).
+The framework ZIP does not include a theme. Install matching 6.0.1 Helium or Hydrogen from [this fork's releases](https://github.com/matthewxmurphy/gantry5/releases).
 
 == Frequently Asked Questions ==
 

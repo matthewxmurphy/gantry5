@@ -1,3 +1,16 @@
+# 6.0.1
+## Calendar revision 2026.11.02.001
+
+- Add nine Joomla core Web Services operations for outlines, native layouts and
+  outline theme settings using existing Joomla token authentication and ACLs.
+- Add administrator API / Swagger discovery and downloadable OpenAPI JSON;
+  bundle Swagger UI locally without remote validation or persisted credentials.
+- Revision-check updates/deletes and refuse deletion of protected outlines.
+- Admit PHP8.5.x only; preserve PHP diagnostics in the Joomla system plugin.
+- Correct literal-hyphen browser validation patterns in outline, design-pack
+  and module-position fields.
+- See docs/6.0.1-release-notes.md for each endpoint and verification limits.
+
 # 6.0.0-alpha.1
 ## Alpha — calendar revision 2026.11.01.002
 

@@ -21,10 +21,10 @@ defined('ABSPATH') or die;
  * If you want to add your custom functions, put your code into `custom/functions.php` instead!
  */
 
-// Note: This file must be PHP 5.6 compatible.
+// This Gantry6 theme requires PHP8.5 and the matching modern framework.
 
 // Check min. required version of Gantry 5
-$requiredGantryVersion = '6.0.0-alpha.1';
+$requiredGantryVersion = '6.0.1';
 $translationDomain = 'g5_helium';
 
 if (is_admin()) {

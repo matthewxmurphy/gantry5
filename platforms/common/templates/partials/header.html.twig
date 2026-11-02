@@ -37,6 +37,9 @@
                     </a>
                 </li>
                 {% if gantry.authorize('platform.settings.manage') %}
+                <li {{ (location == 'api') ? 'class="active"' }}>
+                    <a href="{{ gantry.route('api') }}"><i class="fa fa-fw fa-code" aria-hidden="true"></i> API / Swagger</a>
+                </li>
                 <li>
                     <a href="{{ gantry.route('configurations', configuration ?: 'default', 'designpacks') }}">
                         <i class="fa fa-fw fa-paint-brush" aria-hidden="true"></i> Design packs

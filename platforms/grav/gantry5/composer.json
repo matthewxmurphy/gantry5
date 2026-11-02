@@ -6,7 +6,7 @@
     "license": "MIT",
 
     "require": {
-        "php": ">=8.3.0 <8.6.0",
+        "php": ">=8.5.0 <8.6.0",
         "ext-mbstring": "*",
         "ext-json": "*",
         "ext-dom": "*",
@@ -28,7 +28,7 @@
     ],
     "config": {
         "platform": {
-            "php": "8.3.0"
+            "php": "8.5.0"
         }
     }
 }

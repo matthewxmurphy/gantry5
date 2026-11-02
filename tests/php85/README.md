@@ -1,6 +1,6 @@
 # PHP 8.5 runtime regressions
 
-Run on actual PHP 8.3, 8.4 or 8.5 CLI with cURL:
+Run on actual PHP8.5 CLI with cURL:
 
 ```sh
 php tests/php85/runtime.php
@@ -20,9 +20,21 @@ dependencies and cannot establish whole-platform compatibility.
 
 PHP 8.5 deprecates the obsolete cleanup/accessibility calls and multibyte ord()
 usage described in the [official migration guide](https://www.php.net/manual/en/migration85.deprecated.php).
-The Gantry 6 development candidate retains PHP 8.3/8.4 support and caps admission
-below 8.6. Gantry 5's separate PHP 8.4 work remains on its existing branch.
+Gantry6.0.1 admits PHP8.5.x only. Gantry 5's separate PHP 8.4 work remains on its existing branch.
 
 Copyright (c) 2026 Matthew X Murphy, https://MatthewxMurphy.com.
 Product/support: https://builtnotbegged.com. New tests use MIT; existing code
 retains its original licenses and notices.
+
+## Core API boundaries
+
+Run `php tests/php85/api-input.php` on PHP8.5. Enabled diagnostics become
+exceptions. These checks cover malformed payloads, revisions, native node
+envelopes, size/depth limits, unsafe values and path controls. They do not
+establish Joomla authentication, native persistence or browser acceptance;
+follow [the installed API acceptance](../../docs/core-api.md) for those gates.
+
+Native cache/blueprint regressions use the installed Composer autoloader:
+`php tests/php85/api-cache.php platforms/joomla/lib_gantry5/vendor/autoload.php .`.
+The fixture reproduces stale equal-size/same-mtime native caches and verifies
+API/native freshness, revision changes, blueprint boundaries and flag restoration.

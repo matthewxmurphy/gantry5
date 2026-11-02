@@ -9,6 +9,14 @@
     <copyright>(C) 2005 - 2021 Tiger12, LLC. All rights reserved.</copyright>
     <license>http://www.gnu.org/licenses/gpl-2.0.html GNU/GPLv2</license>
     <description>COM_GANTRY5_DESCRIPTION</description>
+    <namespace path="src">Gantry\Component\Gantry</namespace>
+
+    <api>
+        <files folder="api">
+            <folder>src</folder>
+            <filename>MD5SUMS</filename>
+        </files>
+    </api>
 
     <files folder="site">
         <filename>gantry5.php</filename>
@@ -32,6 +40,7 @@
             <folder>js</folder>
             <folder>language</folder>
             <folder>scss</folder>
+            <folder>services</folder>
             <folder>templates</folder>
         </files>
         <menu>COM_GANTRY5</menu>

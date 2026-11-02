@@ -1,39 +1,38 @@
-## Gantry 6.0.0-alpha.1
+## Gantry 6.0.1
 
-This fork preserves the Gantry 5 codebase and its original licenses. This separate
-next-major alpha targets PHP 8.3–8.5 and modern dependencies. Use an isolated
-testing site: third-party themes, particles and integrations need API migration
-and acceptance before production use. Installation is manual and does not
-automatically migrate existing sites or content. The retained Gantry 5
-maintenance line is tracked in
-[PR #10](https://github.com/matthewxmurphy/gantry5/pull/10) and
-[focused PHP 8.4 checks](tests/php84/README.md). New administration features are
-documented in [Upgrade assistant](docs/upgrade-assistant.md),
+Gantry 6.0.1 adds a narrow API inside the existing Gantry core Joomla extension.
+It uses Joomla 6.2 Web Services and unchanged core API token authentication.
+PHP **8.5.x only** is admitted; Gantry 5.7.0 remains the separate PHP 8.4 line.
+No bridge plugin, standalone component, account or token is created.
+
+Open **Gantry administration > API / Swagger** for the local interactive API
+reference and OpenAPI JSON. The common administration entry is included across
+CMS ports; the API transport in this release is Joomla only. Outlines support
+list/get/create/rename/delete; layouts and outline theme settings support
+get/update. Every update/delete requires the current resource revision.
+See [API contracts and calls](docs/core-api.md),
+[itemized 6.0.1 release notes](docs/6.0.1-release-notes.md), and the
+[installation and rollback runbook](docs/6.0.1-runbook.md).
+
+This fork preserves upstream Gantry and dependency licenses. Existing third-party
+themes and particles still require migration to the modern dependency stack;
+read [dependency and theme migration](docs/dependency-migration.md). Native admin
+features are described in [Upgrade assistant](docs/upgrade-assistant.md),
 [Editor tools](docs/editor-tools.md), [Design packs](docs/design-packs.md),
-[Client editing](docs/client-editing.md) and
-[frontend keyboard, motion and focus behavior](docs/frontend-accessibility.md).
-See the [itemized candidate release notes](docs/6.0-release-notes.md) and
-[Grav 2 Admin2 integration](docs/grav-admin2.md).
-See [dependency and theme migration](docs/dependency-migration.md) before using
-this development line. Existing sites, CMS host vendors and content are not
-changed by checking out or building this source.
+[Client editing](docs/client-editing.md), [frontend accessibility](docs/frontend-accessibility.md),
+and [Grav 2 Admin2](docs/grav-admin2.md).
 
-The ecosystem version in `VERSION` is **6.0.0-alpha.1**. Its independent calendar
-revision is **2026.11.01.002**, recorded in `RELEASE_REVISION` and `release.json`;
-the corresponding GitHub release tag is `v2026.11.01.002`. This preserves the
-established Gantry SemVer scheme while recording the fork's release revision.
-Use the reviewed assets for that release from
-[this fork's GitHub releases](https://github.com/matthewxmurphy/gantry5/releases).
-The alpha has no automatic update feed and uses no official Gantry 5 feed.
+The ecosystem version is **6.0.1** (`VERSION`). Its independent calendar revision
+is **2026.11.02.001** (`RELEASE_REVISION` and `release.json`); the release tag is
+`v2026.11.02.001`. Download reviewed packages from
+[this fork's releases](https://github.com/matthewxmurphy/gantry5/releases).
+Installation is manual, with no inherited official Gantry 5 update feed.
+Historical [6.0.0-alpha.1 notes](docs/6.0-release-notes.md) remain available.
 
-The development baseline was exercised on Joomla 6.2.0, WordPress 7.1.4 and
-Grav 2.2.19/Admin2. See the release notes for exact final-package results and
-limits. Alpha availability does not certify a production site, every CMS/PHP
-combination or full accessibility/device acceptance.
-
-Fork maintenance: Matthew X Murphy, https://MatthewxMurphy.com.
-Product/support: https://builtnotbegged.com. Existing upstream notices and
-applicable Gantry/third-party licenses remain unchanged.
+Fork developer: Matthew X Murphy, https://MatthewxMurphy.com.
+Product/support: https://builtnotbegged.com. Upstream ownership, copyright and
+license notices remain applicable. Verification scope is recorded per release;
+source availability does not certify every CMS or third-party theme.
 
 ## Historical upstream announcement
 
@@ -106,18 +105,18 @@ The back-end administration requirements of Gantry in order of preference are as
 
 **Note:** Internet Explorer is no longer supported
 
-## Installing the Gantry 6 alpha and a matching theme
+## Installing Gantry 6.0.1 and a matching theme
 
 Gantry 5 is a framework by which Gantry-powered themes are made. In order for a Gantry theme to work, you will need to install both the **framework** and the **theme**. Doing this is not difficult at all.
 
-Download the framework and matching **6.0.0-alpha.1** Helium or Hydrogen theme
+Download the framework and matching **6.0.1** Helium or Hydrogen theme
 for your CMS from [this fork's releases](https://github.com/matthewxmurphy/gantry5/releases).
 Install them in an isolated copy with a tested file/database restore path.
-Official stable Gantry 5 themes require migration before use with this alpha;
+Official stable Gantry 5 themes require migration before use with this release;
 read [the dependency migration guide](docs/dependency-migration.md).
 
 The [original installation guide](http://docs.gantry.org/gantry5/basics/installation)
-describes the native CMS workflow; use the alpha package roster and requirements
+describes the native CMS workflow; use this release package roster and requirements
 above when following it.
 
 ## Accessing the Gantry Administrator
@@ -192,7 +191,7 @@ The nullable rewriter handles intersections/DNF unions and grouped attributes
 while preserving reference parameters and function bodies. See
 [the PHP 8.4 rewriter checks](tests/php84/README.md) for the actual parser/runtime
 command, coverage and integration limits. The Gantry 6 development candidate
-admits PHP 8.3–8.5; the retained Gantry 5.6.5 line and its PHP 8.4 scope are
+admits PHP 8.5 only; the retained Gantry 5.6.5 line and its PHP 8.4 scope are
 separate. A permitted Composer range is not whole-CMS or custom-theme acceptance.
 
 ## Testing PHP 8.3 Compatibility
