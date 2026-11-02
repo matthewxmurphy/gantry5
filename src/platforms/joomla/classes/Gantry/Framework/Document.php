@@ -14,6 +14,8 @@
 namespace Gantry\Framework;
 
 use Gantry\Component\Content\Document\HtmlDocument;
+use Gantry\Component\Render\Assets\AssetRuntime;
+use Gantry\Component\Render\Assets\JoomlaAssets;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
@@ -131,6 +133,11 @@ class Document extends HtmlDocument
 
         $styles = static::$stack[0]->getStyles();
 
+        if (AssetRuntime::manifest() !== null) {
+            JoomlaAssets::head($doc->getWebAssetManager(), 'style', $styles, AssetRuntime::critical());
+            return;
+        }
+
         foreach ($styles as $style) {
             switch ($style[':type']) {
                 case 'file':
@@ -157,6 +164,11 @@ class Document extends HtmlDocument
 
         $scripts = static::$stack[0]->getScripts();
 
+        if (AssetRuntime::manifest() !== null) {
+            JoomlaAssets::head($doc->getWebAssetManager(), 'script', $scripts);
+            return;
+        }
+
         foreach ($scripts as $script) {
             switch ($script[':type']) {
                 case 'file':
@@ -169,6 +181,17 @@ class Document extends HtmlDocument
                     break;
             }
         }
+    }
+
+    /** Preserve the native template footer location while WAM sorts its graph. */
+    public static function getScripts($location = 'head')
+    {
+        if ($location === 'head' || static::errorPage() || AssetRuntime::manifest() === null) {
+            return parent::getScripts($location);
+        }
+        static::getObject();
+        $doc = Factory::getApplication()->getDocument();
+        return JoomlaAssets::footer($doc->getWebAssetManager(), static::$stack[0]->getScripts($location), $doc->cspNonce ?? null);
     }
 
     protected static function registerJquery()

@@ -102,6 +102,11 @@ class Menu extends AbstractMenu
     #[\ReturnTypeWillChange]
     public function offsetGet($offset)
     {
+        // A page without an active menu item has no lookup key. PHP 8.5 no
+        // longer silently accepts null as an array offset during this read.
+        if ($offset === null) {
+            return null;
+        }
         $item = isset($this->items[$offset]) ? $this->items[$offset] : null;
         if (!$this->isAdmin) {
             return $item && $item->enabled ? $item : null;

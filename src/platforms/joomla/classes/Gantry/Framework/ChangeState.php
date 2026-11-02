@@ -9,6 +9,7 @@ namespace Gantry\Framework;
 
 use Gantry\Component\Api\ApiException;
 use Gantry\Component\Changes\StateAdapter;
+use Joomla\CMS\Access\Access;
 use Joomla\CMS\Factory;
 use Joomla\Database\DatabaseInterface;
 
@@ -48,6 +49,62 @@ final class ChangeState extends StateAdapter
     public function begin(): void { $this->db->transactionStart(); }
     public function commit(): void { $this->db->transactionCommit(); }
     public function rollback(): void { $this->db->transactionRollback(); }
+
+    public function renderSources(): array
+    {
+        $sources = [];
+        $bytes = 0;
+        // Offline public derivatives must never declassify an administrator's
+        // private/unpublished content. Query the native guest ACL, not this
+        // build request's authenticated administrator identity.
+        $levels = array_map('intval', Access::getAuthorisedViewLevels(0));
+        if (!$levels) { return []; }
+        $categoryRows = $this->db->setQuery($this->db->getQuery(true)->select(['id', 'parent_id', 'published', 'access', 'description'])->from('#__categories'))->loadAssocList('id');
+        $visibility = [];
+        $checking = [];
+        $visible = function (int $id) use (&$visible, &$visibility, &$checking, $categoryRows, $levels): bool {
+            if ($id === 0) { return true; }
+            if (isset($visibility[$id])) { return $visibility[$id]; }
+            if (isset($checking[$id]) || !isset($categoryRows[$id])) { return false; }
+            $checking[$id] = true;
+            $row = $categoryRows[$id];
+            $result = (int) $row['published'] === 1 && in_array((int) $row['access'], $levels, true) && $visible((int) $row['parent_id']);
+            unset($checking[$id]);
+            return $visibility[$id] = $result;
+        };
+        $publicCategories = [];
+        foreach ($categoryRows as $id => $row) {
+            if ($visible((int) $id)) { $publicCategories[] = (int) $id; }
+        }
+        $now = $this->db->quote(gmdate('Y-m-d H:i:s'));
+        foreach (['#__content' => ['introtext', 'fulltext'], '#__modules' => ['content']] as $table => $columns) {
+            $query = $this->db->getQuery(true)->select($this->db->quoteName($columns))->from($this->db->quoteName($table))->order('id')
+                ->where('access IN (' . implode(',', $levels) . ')')
+                ->where(($table === '#__content' ? 'state' : 'published') . '=1');
+            if ($table === '#__content') {
+                if (!$publicCategories) { continue; }
+                $query->where('catid IN (' . implode(',', $publicCategories) . ')');
+            } else { $query->where('client_id=0'); }
+            foreach (['publish_up' => '<=', 'publish_down' => '>='] as $column => $operator) {
+                $query->where('(' . $column . ' IS NULL OR ' . $column . "='0000-00-00 00:00:00' OR " . $column . $operator . $now . ')');
+            }
+            $rows = $this->db->setQuery($query)->loadAssocList();
+            foreach ($rows as $row) {
+                foreach ($row as $value) {
+                    if (!is_string($value) || $value === '') { continue; }
+                    $bytes += strlen($value);
+                    if ($bytes > 67108864 || count($sources) >= 20000) { throw new \RuntimeException('Native content exceeds the offline render-source limit.', 422); }
+                    $sources[] = $value;
+                }
+            }
+        }
+        foreach ($publicCategories as $id) {
+            $value = $categoryRows[$id]['description'];
+            if (is_string($value) && $value !== '') { $sources[] = $value; $bytes += strlen($value); }
+        }
+        if ($bytes > 67108864 || count($sources) > 20000) { throw new \RuntimeException('Native content exceeds the offline render-source limit.', 422); }
+        return $sources;
+    }
 
     public function capture(): array
     {

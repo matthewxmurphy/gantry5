@@ -17,6 +17,7 @@
 namespace Gantry\Component\Config;
 
 use Gantry\Component\Filesystem\Folder;
+use Gantry\Component\Render\BundleRuntime;
 
 /**
  * The Configuration & Blueprints Finder class.
@@ -47,6 +48,7 @@ class ConfigFileFinder
      */
     public function locateFiles(array $paths, $pattern = '|\.yaml$|', $levels = -1)
     {
+        $this->assertSource();
         $list = [];
         foreach ($paths as $folder) {
             $list += $this->detectRecursive($folder, $pattern, $levels);
@@ -64,6 +66,7 @@ class ConfigFileFinder
      */
     public function getFiles(array $paths, $pattern = '|\.yaml$|', $levels = -1)
     {
+        $this->assertSource();
         $list = [];
         foreach ($paths as $folder) {
             $path = trim(Folder::getRelativePath($folder), '/');
@@ -85,6 +88,7 @@ class ConfigFileFinder
      */
     public function listFiles(array $paths, $pattern = '|\.yaml$|', $levels = -1)
     {
+        $this->assertSource();
         $list = [[]];
         foreach ($paths as $folder) {
             $list[] = $this->detectAll($folder, $pattern, $levels);
@@ -104,6 +108,7 @@ class ConfigFileFinder
      */
     public function locateFileInFolder($filename, array $folders)
     {
+        $this->assertSource();
         $list = [];
         foreach ($folders as $folder) {
             $list += $this->detectInFolder($folder, $filename);
@@ -121,6 +126,7 @@ class ConfigFileFinder
      */
     public function locateInFolders(array $folders, $filename = null)
     {
+        $this->assertSource();
         $list = [];
         foreach ($folders as $folder) {
             $path = trim(Folder::getRelativePath($folder), '/');
@@ -140,6 +146,7 @@ class ConfigFileFinder
      */
     public function locateFile(array $paths, $name, $ext = '.yaml')
     {
+        $this->assertSource();
         $filename = preg_replace('|[./]+|', '/', $name) . $ext;
 
         $list = [];
@@ -169,6 +176,7 @@ class ConfigFileFinder
      */
     protected function detectRecursive($folder, $pattern, $levels)
     {
+        $this->assertSource();
         $path = trim(Folder::getRelativePath($folder), '/');
 
         if (is_dir($folder)) {
@@ -207,6 +215,7 @@ class ConfigFileFinder
      */
     protected function detectInFolder($folder, $lookup = null)
     {
+        $this->assertSource();
         $folder = rtrim($folder, '/');
         $path = trim(Folder::getRelativePath($folder), '/');
         if ($path === $folder) {
@@ -251,6 +260,7 @@ class ConfigFileFinder
      */
     protected function detectAll($folder, $pattern, $levels)
     {
+        $this->assertSource();
         $path = trim(Folder::getRelativePath($folder), '/');
 
         if (is_dir($folder)) {
@@ -277,5 +287,10 @@ class ConfigFileFinder
         }
 
         return $list;
+    }
+
+    private function assertSource(): void
+    {
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Configuration directory discovery is disabled during production rendering.'); }
     }
 }

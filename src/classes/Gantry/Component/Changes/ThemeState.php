@@ -99,6 +99,7 @@ final class ThemeState
     public function begin(): void { $this->adapter->begin(); }
     public function commit(): void { $this->adapter->commit(); }
     public function rollback(): void { $this->adapter->rollback(); }
+    public function renderSources(): array { return $this->adapter->renderSources(); }
 
     /** Restore exact original config bytes. Database restoration is used for committed undo only. */
     public function restore(array $state, bool $metadata = false): void

@@ -5,6 +5,30 @@ type: global
 form:
   fields:
 
+    version:
+      type: input.checkbox
+      label: Immutable local asset URLs
+      description: Prepare optional local CSS and JavaScript with content-addressed URLs. Native compiled theme CSS always retains immutable URLs for safe publication and undo.
+      default: true
+
+    minify:
+      type: input.checkbox
+      label: Minify prepared local assets
+      description: Minify during save or compilation, never while serving a page. Remote assets and scripts with unsupported relocation semantics remain native.
+      default: true
+
+    combine:
+      type: input.checkbox
+      label: Combine compatible local assets
+      description: Use prepared adjacent pairs only when ordering, attributes, dependencies and inline boundaries permit it.
+      default: true
+
+    main_image:
+      type: input.imagepicker
+      label: Main page image
+      description: Optional local image to prioritize eagerly. Otherwise the first eligible rendered image is eager; other eligible images default to lazy loading.
+      filter: '.(jpe?g|png|webp|avif)$'
+
     favicon:
       type: input.imagepicker
       label: Favicon

@@ -17,6 +17,7 @@
 namespace Gantry\Component\File;
 
 use RocketTheme\Toolbox\File\YamlFile;
+use Gantry\Component\Render\BundleRuntime;
 
 /**
  * Class CompiledYamlFile
@@ -24,7 +25,7 @@ use RocketTheme\Toolbox\File\YamlFile;
  */
 class CompiledYamlFile extends YamlFile
 {
-    use CompiledFile;
+    use CompiledFile { content as private sourceContent; }
 
     static public $defaultCachePath;
     static public $defaultCaching = true;
@@ -38,5 +39,28 @@ class CompiledYamlFile extends YamlFile
         if (static::$defaultCachePath) {
             $this->setCachePath(static::$defaultCachePath);
         }
+    }
+
+    /** The frontend consumes frozen PHP values even if this object cached old source. */
+    public function content($var = null)
+    {
+        if ($runtime = BundleRuntime::current()) {
+            if ($var !== null) { BundleRuntime::fail('Production YAML values are immutable.'); }
+            return $runtime->yaml((string) $this->filename);
+        }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Frozen YAML values are unavailable.'); }
+        return $this->sourceContent($var);
+    }
+
+    public function raw($var = null)
+    {
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Production rendering cannot read or replace YAML source.'); }
+        return parent::raw($var);
+    }
+
+    public function save($data = null)
+    {
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Production rendering cannot write YAML source.'); }
+        return parent::save($data);
     }
 }

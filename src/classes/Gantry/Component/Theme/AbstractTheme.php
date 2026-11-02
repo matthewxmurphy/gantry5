@@ -20,6 +20,12 @@ use Gantry\Component\Config\Config;
 use Gantry\Component\File\CompiledYamlFile;
 use Gantry\Component\Filesystem\Folder;
 use Gantry\Component\Gantry\GantryTrait;
+use Gantry\Component\Render\BundleRuntime;
+use Gantry\Component\Twig\CompiledEnvironment;
+use Gantry\Component\Twig\CompiledLoader;
+use Gantry\Component\Twig\GenerationFilesystemLoader;
+use Gantry\Component\Twig\ImmutableCache;
+use Gantry\Component\Twig\TwigBundle;
 use Gantry\Component\Twig\TwigCacheFilesystem;
 use Gantry\Component\Twig\TwigExtension;
 use Gantry\Framework\Gantry;
@@ -28,6 +34,7 @@ use Gantry\Framework\Services\ErrorServiceProvider;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 use Twig\Cache\FilesystemCache;
 use Twig\Environment;
+use Twig\Error\LoaderError;
 use Twig\Extension\DebugExtension;
 use Twig\Loader\ChainLoader;
 use Twig\Loader\FilesystemLoader;
@@ -123,9 +130,23 @@ abstract class AbstractTheme
      */
     public function renderer()
     {
+        $gantry = static::gantry();
+        $sourceMode = class_exists(BundleRuntime::class) && BundleRuntime::isSource();
+        $compiledRequired = defined('GANTRY5_PLATFORM') && GANTRY5_PLATFORM === 'joomla' && !$gantry->admin();
+        if ($compiledRequired && !$sourceMode) {
+            if (class_exists(BundleRuntime::class)) {
+                $bundle = BundleRuntime::current($gantry);
+                if (!$bundle) { throw new \RuntimeException('The compiled render bundle is unavailable. Rebuild it before serving the theme.', 503); }
+                if (!$this->renderer instanceof CompiledEnvironment || $this->renderer->generation() !== $bundle->id()) {
+                    $this->activateCompiledTwig($bundle->data('twig'), $bundle->root());
+                }
+            } elseif (!$this->renderer instanceof CompiledEnvironment) {
+                throw new \RuntimeException('The compiled render bundle is unavailable.', 503);
+            }
+        } elseif ($sourceMode && $this->renderer instanceof CompiledEnvironment) {
+            $this->renderer = null;
+        }
         if (!$this->renderer) {
-            $gantry = static::gantry();
-
             /** @var Config $global */
             $global = $gantry['global'];
 
@@ -166,6 +187,39 @@ abstract class AbstractTheme
         return $this->renderer;
     }
 
+    /** Compile only during the registry's explicit save/build source scope. */
+    public function compileTwigBundle(string $generation, string $directory, array $inlineSources = []): array
+    {
+        if (class_exists(BundleRuntime::class) && !BundleRuntime::isSource()) {
+            throw new \RuntimeException('Twig bundle compilation requires the registry source scope.', 503);
+        }
+        return TwigBundle::prepare($this, $generation, $directory, $inlineSources);
+    }
+
+    /** @internal Fresh native environment; never replace it with a cloned Twig instance. */
+    public function compilationEnvironment(string $generation): Environment
+    {
+        if (class_exists(BundleRuntime::class) && !BundleRuntime::isSource()) {
+            CompiledEnvironment::unavailable('Twig compiler environments require the registry source scope.');
+        }
+        $loader = new GenerationFilesystemLoader($generation);
+        $twig = new Environment($loader, ['debug' => static::gantry()->debug(), 'auto_reload' => false, 'autoescape' => 'html']);
+        $this->setTwigLoaderPaths($loader);
+        if ($twig->isDebug()) { $twig->addExtension(new DebugExtension()); }
+        return $this->extendTwig($twig, $loader);
+    }
+
+    /** Install the registry's pinned immutable generation without resolving source paths. */
+    public function activateCompiledTwig(array $map, string $directory): void
+    {
+        TwigBundle::validate($map);
+        $loader = new CompiledLoader($map['templates'], $map['generation']);
+        $cache = new ImmutableCache($directory, $loader, $map['templates']);
+        $twig = new CompiledEnvironment($loader, $cache, $map['strings'], $map['generation'], $map['options']);
+        if ($twig->isDebug()) { $twig->addExtension(new DebugExtension()); }
+        $this->renderer = $this->extendTwig($twig, $loader);
+    }
+
     /**
      * Render a template file by using given context.
      *
@@ -178,7 +232,12 @@ abstract class AbstractTheme
         // Include Gantry specific things to the context.
         $context = $this->getContext($context);
 
-        return $this->renderer()->render($file, $context);
+        $renderer = $this->renderer();
+        try { return $renderer->render($file, $context); }
+        catch (LoaderError $error) {
+            if ($renderer instanceof CompiledEnvironment) { CompiledEnvironment::unavailable('A required template is absent from the active render bundle.'); }
+            throw $error;
+        }
     }
 
     /**
@@ -191,12 +250,19 @@ abstract class AbstractTheme
     public function compile($string, array $context = [])
     {
         $renderer = $this->renderer();
+        if ($renderer instanceof CompiledEnvironment && !str_contains($string, '{{') && !str_contains($string, '{%') && !str_contains($string, '{#')) {
+            return $string;
+        }
         $template = $renderer->createTemplate($string);
 
         // Include Gantry specific things to the context.
         $context = $this->getContext($context);
 
-        return $template->render($context);
+        try { return $template->render($context); }
+        catch (LoaderError $error) {
+            if ($renderer instanceof CompiledEnvironment) { CompiledEnvironment::unavailable('An inline template dependency is absent from the active render bundle.'); }
+            throw $error;
+        }
     }
 
     /**

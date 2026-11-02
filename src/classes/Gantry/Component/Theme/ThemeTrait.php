@@ -25,6 +25,7 @@ use Gantry\Component\File\CompiledYamlFile;
 use Gantry\Component\Filesystem\Folder;
 use Gantry\Component\Gantry\GantryTrait;
 use Gantry\Component\Layout\Layout;
+use Gantry\Component\Render\BundleRuntime;
 use Gantry\Component\Stylesheet\CssCompilerInterface;
 use Gantry\Component\Stylesheet\ScssCompiler;
 use Gantry\Debugger;
@@ -61,6 +62,16 @@ trait ThemeTrait
     protected $equalized = [3 => 33.3, 6 => 16.7, 7 => 14.3, 8 => 12.5, 9 => 11.1, 11 => 9.1, 12 => 8.3];
     /** @var ThemeDetails */
     protected $details;
+    protected $presetsCache;
+
+    /** Disposable render state only; the authoritative theme data remains untouched. */
+    public function resetRenderState(): void
+    {
+        $this->layoutObject = $this->segments = $this->details = $this->presetsCache = $this->compiler = null;
+        $this->cssCache = [];
+        $this->atoms = false;
+        $this->renderer = null;
+    }
 
     /**
      * Register Theme stream.
@@ -223,6 +234,7 @@ trait ThemeTrait
      */
     public function compiler()
     {
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('SCSS compilation is disabled during production rendering.'); }
         if (!$this->compiler) {
             $compilerClass = (string) $this->details()->get('configuration.css.compiler', ScssCompiler::class);
 
@@ -262,6 +274,15 @@ trait ThemeTrait
      */
     public function css($name)
     {
+        $gantry = static::gantry();
+        if ($runtime = BundleRuntime::current($gantry)) {
+            $outline = isset($gantry['configuration']) ? (string) $gantry['configuration'] : 'default';
+            $assets = $runtime->outlineData($outline, 'assets');
+            $url = $assets['css'][$name] ?? null;
+            if (!is_string($url) || $url === '') { BundleRuntime::fail('A production stylesheet is absent from the active bundle.'); }
+            return $url;
+        }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Frozen production stylesheets are unavailable.'); }
         if (!isset($this->cssCache[$name])) {
             $compiler = $this->compiler();
 
@@ -308,9 +329,9 @@ trait ThemeTrait
      */
     public function presets()
     {
-        static $presets;
-
-        if (!$presets) {
+        if ($runtime = BundleRuntime::current(static::gantry())) { return new Config($runtime->data('presets')); }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Frozen theme presets are unavailable.'); }
+        if (!$this->presetsCache) {
             $gantry = static::gantry();
 
             /** @var UniformResourceLocator $locator */
@@ -318,11 +339,11 @@ trait ThemeTrait
 
             $filename = $locator->findResource('gantry-theme://gantry/presets.yaml');
             $file = CompiledYamlFile::instance($filename);
-            $presets = new Config((array)$file->content());
+            $this->presetsCache = new Config((array)$file->content());
             $file->free();
         }
 
-        return $presets;
+        return $this->presetsCache;
     }
 
     /**
@@ -358,6 +379,13 @@ trait ThemeTrait
             }
         }
 
+        if ($runtime = BundleRuntime::current(static::gantry())) {
+            if (!$this->layoutObject || $this->layoutObject->name !== $name || $this->layoutObject->compiledGeneration() !== $runtime->id()) {
+                $this->layoutObject = Layout::instance($name);
+            }
+            return $this->layoutObject;
+        }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('The frozen theme layout is unavailable.'); }
         if (!isset($this->layoutObject) || $this->layoutObject->name !== $name) {
             $layout = Layout::instance($name);
 

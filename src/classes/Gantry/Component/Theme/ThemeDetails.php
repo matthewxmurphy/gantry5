@@ -18,6 +18,7 @@ namespace Gantry\Component\Theme;
 
 use Gantry\Component\File\CompiledYamlFile;
 use Gantry\Component\Filesystem\Streams;
+use Gantry\Component\Render\BundleRuntime;
 use Gantry\Framework\Gantry;
 use RocketTheme\Toolbox\ArrayTraits\Export;
 use RocketTheme\Toolbox\ArrayTraits\NestedArrayAccessWithGetters;
@@ -44,6 +45,14 @@ class ThemeDetails implements \ArrayAccess
     public function __construct($theme)
     {
         $gantry = Gantry::instance();
+        if ($runtime = BundleRuntime::current($gantry)) {
+            $catalogue = $runtime->data('details');
+            if (!is_array($catalogue[$theme] ?? null)) { BundleRuntime::fail('Frozen theme details are unavailable.'); }
+            $this->items = $catalogue[$theme];
+            if (($this->items['name'] ?? null) !== $theme || !array_key_exists('parent', $this->items)) { BundleRuntime::fail('Frozen theme details are incomplete.'); }
+            return;
+        }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Frozen theme details are unavailable.'); }
 
         /** @var UniformResourceLocator $locator */
         $locator = $gantry['locator'];

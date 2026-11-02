@@ -304,6 +304,12 @@ abstract class Gantry extends Container
             return new Document();
         };
 
+        // The same registry is used by native saves, API saves and production
+        // readers. It owns derived artifacts, never a second settings store.
+        $instance['render.registry'] = static function (Gantry $gantry) {
+            return new \Gantry\Component\Render\RenderRegistry($gantry);
+        };
+
         // Make sure that nobody modifies the original collection by making it a factory.
         $instance['outlines'] = $instance->factory(static function ($c) {
             static $collection;

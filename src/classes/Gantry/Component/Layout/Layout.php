@@ -20,6 +20,7 @@ namespace Gantry\Component\Layout;
 use Gantry\Component\Config\Config;
 use Gantry\Component\File\CompiledYamlFile;
 use Gantry\Component\Outline\OutlineName;
+use Gantry\Component\Render\BundleRuntime;
 use Gantry\Debugger;
 use Gantry\Framework\Outlines;
 use Gantry\Framework\Gantry;
@@ -44,6 +45,16 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
     protected static $instances = [];
     /** @var array */
     protected static $indexes = [];
+    protected ?string $compiledGeneration = null;
+
+    /** Builders must not reuse resolved/source objects from an earlier outline pass. */
+    public static function resetCache(): void
+    {
+        static::$instances = [];
+        static::$indexes = [];
+    }
+
+    public function compiledGeneration(): ?string { return $this->compiledGeneration; }
 
     /** @var string */
     public $name;
@@ -78,6 +89,7 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
      */
     public static function presets()
     {
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Layout preset discovery is disabled during production rendering.'); }
         $gantry = Gantry::instance();
 
         /** @var UniformResourceLocator $locator */
@@ -117,6 +129,7 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
      */
     public static function preset($name)
     {
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Layout presets must be resolved when the bundle is prepared.'); }
         $gantry = Gantry::instance();
 
         /** @var UniformResourceLocator $locator */
@@ -140,6 +153,10 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
      */
     public static function instance($name)
     {
+        $runtime = BundleRuntime::current();
+        if (isset(static::$instances[$name]) && static::$instances[$name]->compiledGeneration !== ($runtime ? $runtime->id() : null)) {
+            unset(static::$instances[$name]);
+        }
         if (!isset(static::$instances[$name])) {
             static::$instances[$name] = static::load($name);
         }
@@ -153,6 +170,8 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
      */
     public static function index($name)
     {
+        if ($runtime = BundleRuntime::current()) { return $runtime->outlineData((string) $name, 'index'); }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('The frozen layout index is unavailable.'); }
         if (!isset(static::$indexes[$name])) {
             static::$indexes[$name] = static::loadIndex($name, false);
         }
@@ -204,6 +223,10 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
      */
     public function init($force = false, $inherit = true)
     {
+        if ($this->compiledGeneration !== null) {
+            if ($force || $this->references === null) { $this->indexCompiledReferences(); }
+            return $this;
+        }
         if ($force || $this->references === null) {
             $this->initReferences();
             if ($inherit) {
@@ -294,6 +317,7 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
      */
     public function save($cascade = true)
     {
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Production layouts cannot be saved.'); }
         if (!$this->name) {
             throw new \LogicException('Cannot save unnamed layout');
         }
@@ -367,6 +391,7 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
      */
     public function saveIndex($index = null)
     {
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Production layout indexes cannot be saved.'); }
         if (!$this->name) {
             throw new \LogicException('Cannot save unnamed layout');
         }
@@ -541,6 +566,13 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
      */
     public function inherit($outline = null)
     {
+        if ($this->compiledGeneration !== null) {
+            $runtime = BundleRuntime::current();
+            if (!$runtime || $runtime->id() !== $this->compiledGeneration) { BundleRuntime::fail('The resolved layout belongs to another render generation.'); }
+            $list = $runtime->outlineData((string) $this->name, 'index')['inherit'] ?? null;
+            if (!is_array($list)) { BundleRuntime::fail('The frozen inheritance index is incomplete.'); }
+            return $outline ? (!empty($list[$outline]) ? $list[$outline] : []) : $list;
+        }
         $this->init();
 
         $list = [];
@@ -1061,6 +1093,19 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
         }
 
         $gantry = Gantry::instance();
+        if ($runtime = BundleRuntime::current($gantry)) {
+            $data = $runtime->outlineData((string) $name, 'layout');
+            if (!is_array($data['nodes'] ?? null) || !is_array($data['preset'] ?? null) || !is_int($data['timestamp'] ?? null)) {
+                BundleRuntime::fail('The frozen resolved layout is incomplete.');
+            }
+            $layout = new static($name, [], $data['preset']);
+            $layout->items = $layout->cloneData($data['nodes']);
+            $layout->timestamp = $data['timestamp'];
+            $layout->compiledGeneration = $runtime->id();
+            $layout->indexCompiledReferences();
+            return $layout;
+        }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('The frozen resolved layout is unavailable.'); }
 
         /** @var UniformResourceLocator $locator */
         $locator = $gantry['locator'];
@@ -1095,6 +1140,8 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
      */
     protected static function loadIndexFile($name)
     {
+        if ($runtime = BundleRuntime::current()) { return $runtime->outlineData((string) $name, 'index'); }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('The frozen layout index is unavailable.'); }
         $gantry = Gantry::instance();
 
         /** @var UniformResourceLocator $locator */
@@ -1120,6 +1167,11 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
      */
     public static function loadIndex($name, $autoSave = false)
     {
+        if ($runtime = BundleRuntime::current()) {
+            if ($autoSave) { BundleRuntime::fail('Production layout indexes cannot be rebuilt.'); }
+            return $runtime->outlineData((string) $name, 'index');
+        }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('The frozen layout index is unavailable.'); }
         $gantry = Gantry::instance();
 
         /** @var UniformResourceLocator $locator */
@@ -1168,6 +1220,32 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
         ];
 
         return $index;
+    }
+
+    /** Index already-resolved native nodes without loading ancestors or allocating IDs. */
+    private function indexCompiledReferences(): void
+    {
+        $this->references = $this->types = $this->inherit = $this->parents = $this->blocks = [];
+        $walk = function (array $items, ?object $parent = null, ?object $block = null) use (&$walk): void {
+            foreach ($items as $item) {
+                if (!$item instanceof \stdClass || !is_string($item->type ?? null) || !is_string($item->id ?? null)
+                    || !($item->attributes ?? null) instanceof \stdClass || isset($this->references[$item->id])
+                    || (isset($item->subtype) && !is_string($item->subtype))) {
+                    BundleRuntime::fail('The frozen layout contains invalid or duplicate native nodes.');
+                }
+                $type = $item->type;
+                $subtype = !empty($item->subtype) ? $item->subtype : $type;
+                $this->references[$item->id] = $item;
+                $this->types[$type][$subtype][$item->id] = $item;
+                if ($block) { $this->parents[$item->id] = $parent; $this->blocks[$item->id] = $block; }
+                if (!empty($item->inherit->outline)) { $this->inherit[$item->id] = $item; }
+                if (isset($item->children)) {
+                    if (!is_array($item->children)) { BundleRuntime::fail('The frozen layout children are invalid.'); }
+                    $walk($item->children, $type === 'section' ? $item : $parent, $type === 'block' ? $item : null);
+                }
+            }
+        };
+        $walk($this->items);
     }
 
     /**

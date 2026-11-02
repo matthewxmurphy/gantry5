@@ -19,6 +19,9 @@ namespace Gantry\Framework\Services;
 use Gantry\Component\Config\CompiledBlueprints;
 use Gantry\Component\Config\CompiledConfig;
 use Gantry\Component\Config\ConfigFileFinder;
+use Gantry\Component\Config\BlueprintSchema;
+use Gantry\Component\Config\Config;
+use Gantry\Component\Render\BundleRuntime;
 use Gantry\Debugger;
 use Gantry\Framework\Atoms;
 use Gantry\Framework\Gantry;
@@ -81,6 +84,14 @@ class ConfigServiceProvider implements ServiceProviderInterface
      */
     public static function blueprints(Container $container)
     {
+        if ($runtime = BundleRuntime::current($container instanceof Gantry ? $container : null)) {
+            $state = $runtime->data('blueprints');
+            foreach (['items', 'rules', 'nested', 'dynamic', 'filter', 'configuration'] as $field) {
+                if (!is_array($state[$field] ?? null)) { BundleRuntime::fail('The frozen blueprint schema is incomplete.'); }
+            }
+            return new BlueprintSchema($state);
+        }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Frozen blueprints are unavailable.'); }
         /** @var UniformResourceLocator $locator */
         $locator = $container['locator'];
 
@@ -109,10 +120,14 @@ class ConfigServiceProvider implements ServiceProviderInterface
      */
     public static function load(Container $container, $name = 'default', $combine = true, $withDefaults = true)
     {
+        $combine = $combine && $name !== 'default';
+        if ($runtime = BundleRuntime::current($container instanceof Gantry ? $container : null)) {
+            $kind = ($combine ? 'config' : 'config_single') . ($withDefaults ? '' : '_raw');
+            return new Config($runtime->outlineData((string) $name, $kind), static function () use ($container) { return $container['blueprints']; });
+        }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Frozen theme configuration is unavailable.'); }
         /** @var UniformResourceLocator $locator */
         $locator = $container['locator'];
-
-        $combine = $combine && $name !== 'default';
 
         // Merge current configuration with the default.
         $uris = $combine ? ["gantry-config://{$name}", 'gantry-config://default'] : ["gantry-config://{$name}"];
