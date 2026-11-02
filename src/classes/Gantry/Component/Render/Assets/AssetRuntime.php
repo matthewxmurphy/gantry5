@@ -34,7 +34,7 @@ final class AssetRuntime
         foreach (['version', 'minify', 'combine'] as $option) { if (!is_bool($manifest['options'][$option] ?? null)) { $bad(); } }
         foreach ($manifest['css'] as $url) { if (!self::localUrl($url)) { $bad(); } }
         foreach ($manifest['files'] as $entry) {
-            if (!is_array($entry) || !is_string($entry['id'] ?? null) || !preg_match('/\A[a-f0-9]{64}\z/D', $entry['id']) || !self::localUrl($entry['url'] ?? null) || !in_array($entry['kind'] ?? null, ['style', 'script'], true) || !is_bool($entry['combine'] ?? null) || !is_int($entry['bytes'] ?? null) || $entry['bytes'] < 0) { $bad(); }
+            if (!is_array($entry) || !is_string($entry['id'] ?? null) || !preg_match('/\A[a-f0-9]{64}\z/D', $entry['id']) || !self::localUrl($entry['url'] ?? null) || !self::localUrl($entry['source_url'] ?? null) || !in_array($entry['kind'] ?? null, ['style', 'script'], true) || !is_bool($entry['combine'] ?? null) || !is_int($entry['bytes'] ?? null) || $entry['bytes'] < 0) { $bad(); }
         }
         foreach ($manifest['pairs'] as $entry) { if (!is_array($entry) || !self::localUrl($entry['url'] ?? null) || !is_string($entry['id'] ?? null) || !preg_match('/\A[a-f0-9]{64}\z/D', $entry['id']) || !is_int($entry['bytes'] ?? null) || $entry['bytes'] < 0) { $bad(); } }
         foreach ($manifest['images'] as $entry) { if (!ImageEntry::valid($entry)) { $bad(); } }
@@ -42,6 +42,15 @@ final class AssetRuntime
     }
 
     private static function localUrl(mixed $url): bool { return is_string($url) && str_starts_with($url, '/') && !str_starts_with($url, '//') && !preg_match('/[\x00-\x20]/', $url); }
+
+    /** Resolve known stream aliases without touching original asset/image files. */
+    public static function sourceUrl(string $uri, ?Gantry $gantry = null): ?string
+    {
+        if (!str_starts_with($uri, 'gantry-') || strpbrk($uri, '?#') !== false) { return null; }
+        $manifest = self::manifest($gantry);
+        $entry = $manifest['files'][$uri] ?? $manifest['images'][$uri] ?? null;
+        return is_array($entry) && self::localUrl($entry['source_url'] ?? null) ? $entry['source_url'] : null;
+    }
 
     /** No source lookup, filesystem access, minification or concatenation here. */
     public static function records(array $records, string $kind, ?Gantry $gantry = null): array

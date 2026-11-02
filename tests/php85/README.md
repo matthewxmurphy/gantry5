@@ -104,6 +104,7 @@ saved selector keys, existing FA5/FA7 files and complete license texts remain.
 php tests/php85/compiled-twig.php platforms/joomla/lib_gantry5/vendor/autoload.php .
 php tests/php85/compiled-readers.php platforms/joomla/lib_gantry5/vendor/autoload.php .
 php tests/php85/compiled-bundle.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+php tests/php85/joomla-render-admission.php "$GANTRY_AUTOLOAD" "$JOOMLA_AUTOLOAD" "$JOOMLA_LIBRARIES_SOURCE"
 ```
 
 The first fixture executes immutable native Twig PHP after removing all source
@@ -113,6 +114,8 @@ source directories and rejects all locator discovery. Exact native data views,
 references and source-write/SCSS/discovery failures are checked. See
 [the contracts and limits](../../docs/compiled-twig.md). Installed Joomla
 round-trip and comparison benchmarks remain required separate acceptance.
+
+The admission fixture checks real Joomla early/null-document routing in an isolated PHP HTTP process, including document/query precedence, exception-safe build scopes and native plugin recognition after source YAML is removed.
 
 The full bundle fixture has 47 checks using the actual registry, BundleCompiler,
 native SCSS/Twig and maintained asset minifiers. It compiles Hydrogen-derived

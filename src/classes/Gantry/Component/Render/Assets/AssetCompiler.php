@@ -78,7 +78,7 @@ final class AssetCompiler
             $particles = [];
             $this->particleSources((array) ($outline['layout'] ?? []), $sources, $strings, $particles);
             // Common frontend templates declare core scripts, icons and platform CSS.
-            foreach (['gantry-engine://templates/page_head.html.twig', 'gantry-engine://templates/page_body.html.twig', 'gantry-engine://twig/partials/page_head.html.twig'] as $template) {
+            foreach (['gantry-engine://templates/page.html.twig', 'gantry-engine://templates/page_head.html.twig', 'gantry-engine://templates/page_body.html.twig', 'gantry-engine://twig/partials/page_head.html.twig'] as $template) {
                 $file = $this->gantry['locator']->findResource($template, true);
                 if (is_string($file) && is_file($file)) { $this->references(file_get_contents($file), $sources); }
             }
@@ -183,7 +183,7 @@ final class AssetCompiler
         $published['content_hash'] = $published['id'];
         $published['id'] = $identity;
         $published['url'] .= '?g6=' . substr($identity, 0, 16);
-        $asset = $published + ['kind' => $kind, 'combine' => $combine, 'aliases' => array_values(array_unique([$uri, $url, $published['url']]))];
+        $asset = $published + ['kind' => $kind, 'source_url' => $url, 'combine' => $combine, 'aliases' => array_values(array_unique([$uri, $url, $published['url']]))];
         $this->cache->set($fingerprint, $asset);
         return $this->prepared[$key] = $asset;
     }

@@ -13,6 +13,7 @@ use Gantry\Framework\Gantry;
 /** Shared derived-artifact registry. Only ChangeEngine's locked build/save paths activate it. */
 final class RenderRegistry
 {
+    public const DIRECTORY = '.gantry6-render';
     private const GUARD = "<?php exit; ?>\n";
     private readonly string $directory;
 

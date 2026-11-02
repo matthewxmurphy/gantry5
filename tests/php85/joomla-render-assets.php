@@ -34,6 +34,7 @@ $styles = $manager->getAssets('style', true);
 $check(isset($styles['native.style']) && $styles['native.style']->getUri(false) === '/media/native.css', 'native stylesheet is untouched');
 $styleFiles = array_filter($styles, static fn ($asset) => !$asset->getOption('inline') && $asset->getOption('gantry.location') === 'head');
 $check(count($styleFiles) === 2 && array_values($styleFiles)[0]->getUri(false) === '/compiled/a.css', 'native graph preserves Gantry CSS order');
+$check(!array_key_exists('media', array_values($styleFiles)[0]->getAttributes()), 'absent CSS media is not serialized by native WAM as media=null');
 $inlineStyles = $manager->filterOutInlineAssets($styles); $relation = $manager->getInlineRelation($inlineStyles);
 $check(count($relation[array_key_first($styleFiles)]['before'] ?? []) === 1, 'critical CSS is a native before relation');
 JoomlaAssets::head($manager, 'script', [$file('/compiled/head.js', ['dependencies' => ['native'], 'element' => ['integrity' => 'sha384-test', 'crossorigin' => 'anonymous']])]);

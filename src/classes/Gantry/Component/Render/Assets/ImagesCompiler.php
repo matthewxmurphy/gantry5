@@ -45,7 +45,7 @@ final class ImagesCompiler
             if (!array_key_exists($path, $this->images)) { $this->images[$path] = $this->compile($path); }
             $image = $this->images[$path];
             if (!$image) { continue; }
-            $map[$uri] = $map[$url] = $image;
+            $map[$uri] = $map[$url] = $image + ['source_url' => $url];
         }
         return $map;
     }

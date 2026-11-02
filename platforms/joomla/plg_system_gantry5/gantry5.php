@@ -797,6 +797,14 @@ class plgSystemGantry5 extends CMSPlugin
      */
     private function isGantryTemplate($name)
     {
+        if (!is_string($name) || !preg_match('/\A[a-zA-Z0-9_-]{1,100}\z/D', $name)) { return false; }
+        // The native router must still select Gantry assignments when source
+        // formats are unavailable. A registered compiled theme remains strict:
+        // missing/corrupt generations are rejected by the registry, not silently
+        // replaced with another outline. Source metadata serves editor installs.
+        Loader::setup();
+        $directory = JPATH_SITE . '/' . \Gantry\Component\Render\RenderRegistry::DIRECTORY . '/' . $name;
+        if (is_dir($directory) && !is_link($directory)) { return true; }
         return file_exists(JPATH_SITE . "/templates/{$name}/gantry/theme.yaml");
     }
 

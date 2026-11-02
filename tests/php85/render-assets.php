@@ -192,6 +192,9 @@ try {
         $check($policy->resolve('/images/main.png', 'image') === null, 'unknown or invalid conditional denial is conservative: ' . $test);
     }
     unlink($temporary . '/images/.htaccess');
+    file_put_contents($temporary . '/.htaccess', "<IfModule !mod_rewrite.c>\nRedirectMatch 302 ^/$ /index.php/\n</IfModule>");
+    $check($policy->resolve('/images/main.png', 'image') !== null, 'unrelated native Joomla redirect does not reject public assets');
+    unlink($temporary . '/.htaccess');
     $privatePath = $temporary . '/administrator/protected/private.css';
     $check(!str_contains((new LiteralCssMinifier($privatePath))->minify(), 'PRIVATE-CSS-SENTINEL'), 'CSS minifier never treats literal payload as file path');
     $check(!str_contains((new LiteralJsMinifier($privatePath))->minify(), 'PRIVATE-CSS-SENTINEL'), 'JS minifier never treats literal payload as file path');
@@ -199,5 +202,25 @@ try {
         if (!$file->isFile()) { continue; }
         $check(!str_contains(file_get_contents($file->getPathname()), 'PRIVATE-CSS-SENTINEL') && !str_contains(file_get_contents($file->getPathname()), 'PRIVATE-JS-SENTINEL'), 'no denied source bytes published');
     }
+    // Exercise the real HtmlBlock after pinning a native immutable artifact.
+    // Stream source files disappear; prepared URLs must bypass timestamp/stat resolution.
+    $artifact = $temporary . '/assets-manifest.php';
+    file_put_contents($artifact, '<?php return ' . var_export($manifest, true) . ';');
+    $bundle = new \Gantry\Component\Render\BundleRuntime($temporary, ['schema' => 1, 'id' => str_repeat('b', 64), 'revision' => str_repeat('a', 64), 'theme' => 'fixture', 'php' => PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION, 'framework' => '6.0.2-rc.1', 'data' => [], 'outlines' => ['19' => ['assets' => ['file' => 'assets-manifest.php', 'sha256' => hash_file('sha256', $artifact)]]]]);
+    \Gantry\Component\Render\BundleRuntime::pin($bundle);
+    $gantry['document'] = new \Gantry\Component\Content\Document\HtmlDocument();
+    $block = new \Gantry\Component\Content\Block\HtmlBlock();
+    $block->addStyle('gantry-assets://css/a.css'); $block->addScript('gantry-assets://js/a.js');
+    unlink($temporary . '/assets/css/a.css'); unlink($temporary . '/assets/js/a.js');
+    $actualStyle = $block->getStyles(); $actualScript = $block->getScripts();
+    $check(count($actualStyle) === 1 && array_values($actualStyle)[0]['href'] === $manifest['files']['gantry-assets://css/a.css']['url'], 'real HtmlBlock substitutes CSS stream before timestamp/source lookup');
+    $check(count($actualScript) === 1 && array_values($actualScript)[0]['src'] === $manifest['files']['gantry-assets://js/a.js']['url'], 'real HtmlBlock substitutes JS stream before timestamp/source lookup');
+    $renderedBlock = new \Gantry\Component\Content\Block\HtmlBlock();
+    $renderedBlock->addStyle(\Gantry\Component\Content\Document\HtmlDocument::url('gantry-assets://css/a.css'));
+    $renderedBlock->addScript(\Gantry\Component\Content\Document\HtmlDocument::url('gantry-assets://js/a.js'));
+    $check(array_values($renderedBlock->getStyles())[0]['href'] === $manifest['files']['gantry-assets://css/a.css']['url'], 'Twig-style URL resolution retains CSS manifest identity without original file');
+    $check(array_values($renderedBlock->getScripts())[0]['src'] === $manifest['files']['gantry-assets://js/a.js']['url'], 'Twig-style URL resolution retains JS manifest identity without original file');
+    $check(\Gantry\Component\Render\Assets\AssetRuntime::sourceUrl('gantry-assets://css/a.css?v=declared') === null, 'query-bearing native stream retains declared semantics');
+    $check(\Gantry\Component\Render\Assets\AssetRuntime::sourceUrl('gantry-media://main.png') === '/images/main.png', 'prepared image stream resolves canonical URL from frozen manifest');
     echo "PASS $checks immutable asset/image checks on PHP " . PHP_VERSION . "\n";
 } finally { $remove($temporary); }

@@ -48,7 +48,11 @@ final class BundleRuntime
         if (PHP_SAPI === 'cli' || defined('GANTRYADMIN_PATH')) { return true; }
         if (!defined('GANTRY5_PLATFORM') || GANTRY5_PLATFORM !== 'joomla') { return true; }
         $app = \Joomla\CMS\Factory::getApplication();
-        return !$app->isClient('site') || $app->getDocument()->getType() !== 'html';
+        if (!$app->isClient('site')) { return true; }
+        // Native site routing can ask Gantry about templates before Joomla has
+        // created its document. The default HTML request must already be strict.
+        $document = $app->getDocument();
+        return ($document ? $document->getType() : $app->getInput()->getCmd('format', 'html')) !== 'html';
     }
 
     public static function current(?Gantry $gantry = null): ?self

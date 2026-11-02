@@ -78,6 +78,8 @@ jobs:
         run: php tests/php85/prepare-joomla-fixture.php --directory="$RUNNER_TEMP/gantry-joomla-6.2.0"
       - name: Run native Joomla Web Asset Manager checks
         run: php tests/php85/joomla-render-assets.php platforms/joomla/lib_gantry5/vendor/autoload.php "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/vendor/autoload.php" "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/src"
+      - name: Run native Joomla bootstrap and source-free theme admission checks
+        run: php tests/php85/joomla-render-admission.php platforms/joomla/lib_gantry5/vendor/autoload.php "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/vendor/autoload.php" "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/src"
       - name: Run native Joomla transaction and guest content admission checks
         run: php tests/php85/joomla-change-state.php platforms/joomla/lib_gantry5/vendor/autoload.php "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/vendor/autoload.php" . "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/src/Factory.php"
       - name: Run deterministic native layout identity checks

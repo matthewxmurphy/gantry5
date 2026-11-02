@@ -96,6 +96,8 @@ final class JoomlaAssets
             if (!empty($record['id'])) { $attributes['id'] = $record['id']; }
             if ($kind === 'style') { $attributes['media'] = $record['media'] ?? null; }
             else { $attributes['defer'] = $record['defer'] ?? false; $attributes['async'] = $record['async'] ?? false; }
+            // Native renderers stringify null attributes as the literal 'null'.
+            $attributes = array_filter($attributes, static fn (mixed $value): bool => $value !== null);
             $options = ['version' => false, 'gantry.location' => $location];
             if (($record[':type'] ?? '') === 'file') {
                 if ($previous !== null) { $dependencies[] = $previous; }

@@ -123,9 +123,15 @@ final class PublicSources
         $rules = preg_replace_callback('/<Files\s+["\']?([^>]*?)["\']?>[\s\S]*?<\/Files>/i', static function (array $match) use ($source): string {
             return fnmatch(trim($match[1], " \t\r\n\"'"), basename($source)) ? $match[0] : '';
         }, $rules);
-        if (preg_match('/\b(?:AuthType|AuthName|AuthUserFile|Order\s+|Allow\s+from|Deny\s+from|Redirect(?:Match)?\s+|Require\s+(?!all\s+granted\b))/i', $rules)) { return false; }
+        if (preg_match('/\b(?:AuthType|AuthName|AuthUserFile|Order\s+|Allow\s+from|Deny\s+from|Require\s+(?!all\s+granted\b))/i', $rules)) { return false; }
         $conditions = [];
+        $requestPath = $this->sitePrefix . '/' . ltrim(substr($source, strlen($this->siteRoot)), '/');
         foreach (preg_split('/\R/', $rules) as $line) {
+            if (preg_match('/^\s*Redirect(Match)?\s+(?:(?:[0-9]{3}|gone|forbidden|permanent|temp|seeother)\s+)?(\S+)/i', $line, $redirect)) {
+                $pattern = trim($redirect[2], "\"'");
+                $applies = ($redirect[1] ?? '') !== '' ? self::regex($pattern, $requestPath, false) !== 0 : str_starts_with($requestPath, $pattern);
+                if ($applies) { return false; }
+            }
             if (preg_match('/^\s*RewriteCond\s+(\S+)\s+(\S+)(?:\s+\[([^]]+)\])?/i', $line, $match)) { $conditions[] = $match; continue; }
             if (!preg_match('/^\s*RewriteRule\s+(\S+)\s+\S+(?:\s+\[([^]]+)\])?/i', $line, $match)) { continue; }
             if (preg_match('/(?:^|,)\s*(?:F|G|R=(?:40[134]|410))(?:,|$)/i', $match[2] ?? '')) {

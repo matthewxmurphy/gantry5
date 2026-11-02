@@ -436,6 +436,10 @@ class HtmlDocument
             return null;
         }
 
+        if (str_starts_with($url, 'gantry-') && ($frozen = AssetRuntime::sourceUrl($url, static::gantry())) !== null) {
+            return static::domain($domain) . $frozen;
+        }
+
         if ($url[0] === '#' || $url[0] === '?') {
             // Handle urls with query string or fragment only.
             return str_replace(' ', '%20', $url);

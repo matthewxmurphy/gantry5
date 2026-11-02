@@ -154,7 +154,7 @@ abstract class Platform
     /** Production artifacts survive normal CMS/derived-cache clearing. */
     public function getRenderPath()
     {
-        return rtrim(GANTRY5_ROOT, '/') . '/.gantry6-render';
+        return rtrim(GANTRY5_ROOT, '/') . '/' . \Gantry\Component\Render\RenderRegistry::DIRECTORY;
     }
 
     /**

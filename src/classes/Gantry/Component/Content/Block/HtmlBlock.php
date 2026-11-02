@@ -81,6 +81,8 @@ class HtmlBlock extends ContentBlock implements HtmlBlockInterface
         /** @var Document $document */
         $document = $gantry['document'];
 
+        // Resolve admitted original stream identities before native URL timestamping.
+        $styles = AssetRuntime::records($styles, 'style', $gantry);
         foreach ($styles as $key => $style) {
             if (isset($style['href'])) {
                 $url = $style['href'];
@@ -116,6 +118,8 @@ class HtmlBlock extends ContentBlock implements HtmlBlockInterface
         /** @var Document $document */
         $document = $gantry['document'];
 
+        // Prepared URIs are already absolute public paths and need no source probe.
+        $scripts = AssetRuntime::records($scripts, 'script', $gantry);
         foreach ($scripts as $key => $script) {
             if (isset($script['src'])) {
                 // Deal with streams and relative paths.
