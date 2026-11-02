@@ -1,13 +1,12 @@
-# Gantry 6.0.0-alpha.1 dependency and theme migration
+# Gantry6 dependency and theme migration
 
-This is an **alpha testing build** based on Gantry 5. It changes runtime
+This modern Gantry6 line is based on Gantry5. It changes runtime
 dependencies and extension APIs. Evaluate a copy of the site first; keep existing
 Grav 1.7 installations on the separate Gantry 5 maintenance line. A package install
 does not migrate every custom template, particle, outline, CMS database or media.
 
-The alpha's ecosystem version is `6.0.0-alpha.1`, calendar revision
-`2026.11.01.002`, and GitHub tag `v2026.11.01.002`. Use the matching framework and
-Helium/Hydrogen alpha packages. New-major theme metadata refuses an older
+Current release: `6.0.1`, calendar revision `2026.11.02.001`, tag
+`v2026.11.02.001`. Use matching framework and Helium/Hydrogen packages. New-major theme metadata refuses an older
 framework, and the Grav themes require Grav 2. Keep a restorable backup of source,
 CMS database, theme custom files, uploads and configuration before testing.
 
@@ -28,10 +27,8 @@ alpha's WordPress/Joomla vendors into Grav's host vendor directory.
 
 ## Runtime and package boundaries
 
-The candidate targets PHP **8.3, 8.4 and 8.5**, below 8.6. Runtime package requirements,
-plugin admission and the shared loader reflect that floor. Root/builder Composer
-graphs are build tools; their separate PHP 8.1 floor does not declare CMS runtime
-support. The existing runtime dependency versions remain pinned; widening the PHP
+Gantry6.0.1 targets PHP **8.5.x only**. Runtime package requirements,
+plugin admission, the shared loader and build tools reflect that floor. The existing runtime dependency versions remain pinned; widening the PHP
 upper bound does not upgrade those packages or an installed CMS.
 
 WordPress alpha metadata requires **7.1.4**, the currently verified native

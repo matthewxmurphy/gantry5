@@ -253,7 +253,9 @@ class Platform extends BasePlatform
         $session = $application->getSession();
         $token = $session::getFormToken();
 
-        return Route::_("index.php?option=com_gantry5&view=configurations/default/layout&theme={$theme}&{$token}=1" , false);
+        // Theme metadata is also loaded by Joomla's API client, whose router
+        // parses Web Services routes and does not build administrator URLs.
+        return Route::link('administrator', "index.php?option=com_gantry5&view=configurations/default/layout&theme={$theme}&{$token}=1", false);
     }
 
     /**

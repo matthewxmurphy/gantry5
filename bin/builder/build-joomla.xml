@@ -41,6 +41,10 @@
             <fileset dir="${path.platforms}/joomla/com_gantry5/site"/>
         </copy>
 
+        <copy todir="${tmp_dir}/packages/com_gantry5/api" overwrite="true">
+            <fileset dir="${path.platforms}/joomla/com_gantry5/api"/>
+        </copy>
+
         <copy todir="${tmp_dir}/packages/com_gantry5/admin" overwrite="true">
             <fileset dir="${path.platforms}/common">
                 <exclude name=".sass-cache/"/>
@@ -80,6 +84,9 @@
         <!-- Generate Manifest files -->
         <phingcall target="checksum">
             <property name="source" value="${tmp_dir}/packages/com_gantry5/site" />
+        </phingcall>
+        <phingcall target="checksum">
+            <property name="source" value="${tmp_dir}/packages/com_gantry5/api" />
         </phingcall>
         <phingcall target="checksum">
             <property name="source" value="${tmp_dir}/packages/com_gantry5/admin" />

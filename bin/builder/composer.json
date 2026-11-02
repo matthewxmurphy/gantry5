@@ -1,6 +1,6 @@
 {
     "require": {
-        "php": ">=8.1.0 <8.6.0",
+        "php": ">=8.5.0 <8.6.0",
         "ext-dom": "*",
         "ext-xml": "*",
         "ext-simplexml": "*",
@@ -14,7 +14,7 @@
     },
     "config": {
         "platform": {
-            "php": "8.1"
+            "php": "8.5.0"
         },
         "allow-plugins": {
             "phing/phing-composer-configurator": true

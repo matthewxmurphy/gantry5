@@ -102,7 +102,7 @@ if (!extension_loaded('intl')) {
 }
 
 // Ensure Phing can create zip archives even if CLI php.ini doesn't load zip by default.
-$phpCommand = 'php';
+$phpCommand = escapeshellarg(PHP_BINARY);
 if (!extension_loaded('zip')) {
     $extensionDir = ini_get('extension_dir') ?: '';
     if ($extensionDir && !preg_match('#^([a-zA-Z]:[\\\\/]|[\\\\/])#', $extensionDir)) {

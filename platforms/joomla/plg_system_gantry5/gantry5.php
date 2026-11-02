@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Document\HtmlDocument;
+use Joomla\CMS\Event\Application\BeforeApiRouteEvent;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Plugin\CMSPlugin;
@@ -23,6 +24,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Joomla\Event\DispatcherInterface;
 use Joomla\Registry\Registry;
+use Joomla\Router\Route as ApiRoute;
 use Gantry5\Loader;
 use Gantry\Component\Config\Config;
 use Gantry\Component\File\CompiledYamlFile;
@@ -86,9 +88,8 @@ class plgSystemGantry5 extends CMSPlugin
             return;
         }
 
-        if (!class_exists('Gantry\Debugger')) {
-            error_reporting(0);
-        }
+        // Preserve Joomla/PHP diagnostic reporting even without the optional
+        // Gantry debugger. Silencing all errors hides real runtime failures.
 
         // Finish initialization and register all the events.
         parent::__construct($subject, $config);
@@ -102,6 +103,30 @@ class plgSystemGantry5 extends CMSPlugin
     public function onGantryGlobalConfig(&$global)
     {
         $global = $this->params->toArray();
+    }
+
+    /**
+     * Register Gantry's narrow API in Joomla's router. Core API authentication
+     * runs after routing; no route is public and no token is handled here.
+     */
+    public function onBeforeApiRoute(BeforeApiRouteEvent $event): void
+    {
+        $base = 'v1/gantry/themes/:theme/outlines';
+        $defaults = ['component' => 'com_gantry5', 'public' => false];
+        $theme = ['theme' => '[A-Za-z0-9_-]{1,64}'];
+        $outline = $theme + ['outline' => '[A-Za-z0-9_-]{1,80}'];
+
+        $event->getRouter()->addRoutes([
+            new ApiRoute(['GET'], $base, 'theme.listOutlines', $theme, $defaults),
+            new ApiRoute(['POST'], $base, 'theme.createOutline', $theme, $defaults),
+            new ApiRoute(['GET'], $base . '/:outline', 'theme.getOutline', $outline, $defaults),
+            new ApiRoute(['PATCH'], $base . '/:outline', 'theme.updateOutline', $outline, $defaults),
+            new ApiRoute(['DELETE'], $base . '/:outline', 'theme.deleteOutline', $outline, $defaults),
+            new ApiRoute(['GET'], $base . '/:outline/layout', 'theme.getLayout', $outline, $defaults),
+            new ApiRoute(['PUT'], $base . '/:outline/layout', 'theme.updateLayout', $outline, $defaults),
+            new ApiRoute(['GET'], $base . '/:outline/settings', 'theme.getSettings', $outline, $defaults),
+            new ApiRoute(['PATCH'], $base . '/:outline/settings', 'theme.updateSettings', $outline, $defaults),
+        ]);
     }
 
     public function onAfterRoute()

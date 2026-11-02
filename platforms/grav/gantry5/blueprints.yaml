@@ -16,7 +16,7 @@ dependencies:
    - { name: admin2, version: '>=2.2.5' }
    - { name: api, version: '>=1.1.7' }
 php:
-   minimum: 8.3.0
+   minimum: 8.5.0
 
 form:
   validation: loose

@@ -27,7 +27,7 @@ use Joomla\Filesystem\Folder;
 class G5_BaseInstallerScript
 {
     /** @var string */
-    public $requiredGantryVersion = '6.0.0-alpha.1';
+    public $requiredGantryVersion = '6.0.1';
 
     /**
      * @param string $type

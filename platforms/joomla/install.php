@@ -35,13 +35,13 @@ class Pkg_Gantry5InstallerScript
      */
     protected $versions = array(
         'PHP' => array (
-            '8.3' => '8.3.0',
-            '0' => '8.4.0' // Preferred version
+            '8.5' => '8.5.0',
+            '0' => '8.5.0' // Preferred version
         ),
         'Joomla!' => array (
-            // Require Joomla 5+ (minimum 5.0.0)
-            '5.0' => '5.0.0',
-            '0' => '5.0.0' // Preferred version
+            // Gantry6.0.1 uses the Joomla6.2 core API application.
+            '6.2' => '6.2.0',
+            '0' => '6.2.0' // Preferred version
         )
     );
     /**
@@ -479,6 +479,10 @@ class Pkg_Gantry5InstallerScript
      */
     protected function checkVersion(array &$results, $name, $version)
     {
+        if ($name === 'PHP' && (PHP_VERSION_ID < 80500 || PHP_VERSION_ID >= 80600)) {
+            $results[] = 'Gantry 6.0.1 requires PHP 8.5.x.';
+            return;
+        }
         $major = $minor = 0;
         foreach ($this->versions[$name] as $major => $minor) {
             if (!$major || version_compare($version, $major, '<')) {

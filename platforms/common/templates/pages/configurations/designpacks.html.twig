@@ -12,7 +12,7 @@
     <h3>Create a shareable pack</h3>
     <p>Choose only values intended for redistribution. This is a design definition, not an export of the current layout or a private backup.</p>
     <form method="post" action="{{ gantry.route('configurations', outline, 'designpacks', 'download') }}">
-        <p><label>Pack ID <input name="id" pattern="[a-z][a-z0-9-]{0,47}" maxlength="48" required placeholder="studio-palette"></label>
+        <p><label>Pack ID <input name="id" pattern="[a-z][a-z0-9\-]{0,47}" maxlength="48" required placeholder="studio-palette"></label>
         <label>Version <input name="version" value="1.0.0" pattern="[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}" required></label></p>
         <p><label>Title <input name="title" maxlength="120" required></label>
         <label>Author <input name="author" maxlength="200" required></label></p>

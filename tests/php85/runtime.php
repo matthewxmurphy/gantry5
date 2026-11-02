@@ -9,8 +9,8 @@
 use Gantry\Component\Content\Document\HtmlDocument;
 use Gantry\Component\Remote\Response;
 
-if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80300 || PHP_VERSION_ID >= 80600 || !extension_loaded('curl')) {
-    throw new RuntimeException('Use actual PHP 8.3 through 8.5 CLI with cURL.');
+if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80500 || PHP_VERSION_ID >= 80600 || !extension_loaded('curl')) {
+    throw new RuntimeException('Use actual PHP 8.5 CLI with cURL.');
 }
 require dirname(__DIR__, 2) . '/src/classes/Gantry/Component/Gantry/GantryTrait.php';
 require dirname(__DIR__, 2) . '/src/classes/Gantry/Component/Content/Document/HtmlDocument.php';

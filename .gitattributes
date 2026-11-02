@@ -10,3 +10,6 @@
 # Enforce normalized line endings in source/distributions.
 * text=auto eol=lf
 *.php text eol=lf
+
+# Keep the bundled Swagger distribution and legal notices byte-for-byte upstream.
+platforms/common/js/swagger-ui/* -whitespace

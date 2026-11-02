@@ -8,6 +8,9 @@ notice here does not imply that every component is present in every archive.
 Composer package notices remain alongside their packages in vendor/compat.
 
 Included components and applicable upstream terms:
+- Swagger UI5.34.1: SmartBear Software; Apache-2.0. Bundled distribution
+  assets include full LICENSE, NOTICE and swagger-ui-bundle.js.LICENSE.txt
+  in the common administrator js/swagger-ui directory.
 - Bourbon 4.3.4: thoughtbot, inc.; MIT.
 - Color Schemer: Scott Kellum and Mason Wendell; MIT.
 - Lightcase 2.5.0 JavaScript / 2.4.4 CSS and bundled icon font: Cornel Boppart;

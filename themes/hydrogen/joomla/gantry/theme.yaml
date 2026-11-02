@@ -81,7 +81,7 @@ configuration:
       nopaddingall: No Padding
 
   dependencies:
-    gantry: '6.0.0-alpha.1'
+    gantry: '6.0.1'
 
 admin:
   styles:
