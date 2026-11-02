@@ -130,39 +130,15 @@ class Layout extends HtmlController
 
     public function save()
     {
-        $layout = $this->request->post->get('layout');
-        $layout = json_decode($layout, false);
-
-        if (!isset($layout)) {
-            throw new \RuntimeException('Error while saving layout: Structure missing', 400);
-        }
-
-        $outline = $this->params['outline'];
+        $nodes = json_decode((string) $this->request->post->get('layout'), true, 64, JSON_THROW_ON_ERROR);
+        if (!is_array($nodes)) { throw new \RuntimeException('Error while saving layout: Structure missing', 400); }
+        $outline = (string) $this->params['outline'];
         $preset = $this->request->post->getJsonArray('preset');
-
-        // Create layout from the data.
-        $layout = new LayoutObject($outline, $layout, $preset);
-        $layout->init(false, false);
-
-        /** @var Outlines $outlines */
-        $outlines = $this->container['outlines'];
-
-        // Update layouts from all inheriting outlines.
-        $elements = $layout->sections() + $layout->particles(false);
-        foreach ($outlines->getInheritingOutlines($outline) as $inheritedId => $inheritedName) {
-            LayoutObject::instance($inheritedId)->updateInheritance($outline, $outline, $elements)->save()->saveIndex();
-        }
-
-        // Save layout and its index.
-        $layout->save()->saveIndex();
-
-        // Fire save event.
-        $event = new LayoutEvent();
-        $event->gantry = $this->container;
-        $event->theme = $this->container['theme'];
-        $event->controller = $this;
-        $event->layout = $layout;
-        $this->container->fireEvent('admin.layout.save', $event);
+        $writer = new \Gantry\Component\Changes\NativeWriter($this->container);
+        $change = $this->changeSave('admin.layout',
+            fn() => $writer->saveLayout($outline, $nodes, $preset, $this),
+            fn() => $writer->previewLayout($outline, $nodes, $preset));
+        return $this->changeResponse($change);
     }
 
     /**

@@ -2,7 +2,7 @@
 
 var $             = require('elements'),
     ready         = require('elements/domready'),
-    request       = require('agent'),
+    request       = require('../utils/change-request'),
 
     modal         = require('../ui').modal,
     guid          = require('mout/random/guid'),

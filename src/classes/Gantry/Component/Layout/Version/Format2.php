@@ -1,5 +1,4 @@
 <?php
-// phpcs:disable WordPress.WP.AlternativeFunctions.rand_mt_rand
 
 /**
  * @package   Gantry5
@@ -35,7 +34,11 @@ class Format2
     /** @var array */
     protected $content;
     /** @var array */
-    protected $keys;
+    protected $keys = [];
+    /** Explicit identities are reserved before traversal, including later nodes. */
+    protected $reservedIds = [];
+    /** Document-local counters identify implicit structure without random state. */
+    protected $idCounters = [];
 
     /**
      * @param array $data
@@ -51,6 +54,11 @@ class Format2
     public function load()
     {
         $data = &$this->data;
+        // Reading one document twice must expose the same identities. Reserve
+        // explicit IDs first so an early implicit grid cannot consume a later
+        // real grid/particle ID. Attribute edits do not change these identities.
+        $this->keys = $this->reservedIds = $this->idCounters = [];
+        $this->reserveDocumentIds($data);
 
         // Parse layout.
         $result = [];
@@ -131,6 +139,7 @@ class Format2
                 'title' => $this->getTitle($type, $subtype, $id),
                 'attributes' => []
             ];
+            $result['id'] = $this->claimId((string) $result['id'], $type, $subtype);
             if (isset($boxed) && !isset($result['attributes']['boxed'])) {
                 $result['attributes']['boxed'] = $boxed;
             }
@@ -188,7 +197,12 @@ class Format2
         $title = $this->getTitle($type, $subtype, $id);
 
         $result = isset($this->data['content'][$content_id]) ? (array) $this->data['content'][$content_id] : [];
-        $result += ['id' => $this->id($type, $subtype, $id), 'title' => $title, 'type' => $type, 'subtype' => $subtype, 'attributes' => []];
+        // Do not allocate a throwaway fallback when native content has its own
+        // identity. The same explicit identity always wins over implicit IDs.
+        $result['id'] = isset($result['id'])
+            ? $this->claimId((string) $result['id'], $type, $subtype)
+            : $this->id($type, $subtype, $id);
+        $result += ['title' => $title, 'type' => $type, 'subtype' => $subtype, 'attributes' => []];
 
         $result['attributes'] = (object) ($result['attributes'] + ['enabled' => 1]);
         if (isset($result['inherit'])) {
@@ -295,13 +309,6 @@ class Format2
             if (!$isSection) {
                 // Special handling for positions.
                 if ($type === 'position') {
-                    // TODO: we may want to simplify position id, but we need to take into account multiple instances of the same position key.
-/*
-                    if (!$subtype || $subtype === 'position') {
-                        $id = 'position-' . (isset($child['attributes']['key']) ? $child['attributes']['key'] : rand(1000,9999));
-                        unset ($child['attributes']['key']);
-                    }
-*/
                     unset ($child['attributes']['title']);
                 }
 
@@ -515,6 +522,25 @@ class Format2
      */
     protected function id($type, $subtype = null, $id = null)
     {
+        $key = $this->idPrefix($type, $subtype);
+        if ($id !== null && $id !== '') {
+            return $this->claimId($key . '-' . $id, $type, $subtype);
+        }
+        return $this->generatedId($key);
+    }
+
+    /** Explicit IDs are retained; repeated references receive stable unique IDs. */
+    protected function claimId($id, $type, $subtype = null)
+    {
+        if ($id !== '' && !isset($this->keys[$id])) {
+            $this->keys[$id] = true;
+            return $id;
+        }
+        return $this->generatedId($this->idPrefix($type, $subtype));
+    }
+
+    protected function idPrefix($type, $subtype = null)
+    {
         $result = [];
         if ($type !== 'particle') {
             $result[] = $type;
@@ -522,19 +548,46 @@ class Format2
         if ($subtype && $subtype !== $type) {
             $result[] = $subtype;
         }
-        $key = implode('-', $result);
+        return implode('-', $result) ?: $type;
+    }
 
-        if (!$id || isset($this->keys[$key][$id])) {
-            do {
-                $id = function_exists('wp_rand') ? wp_rand(1000, 9999) : mt_rand(1000, 9999);
-                if (!isset($this->keys[$key][$id])) {
-                    break;
+    protected function generatedId($prefix)
+    {
+        $next = $this->idCounters[$prefix] ?? 0;
+        do { $candidate = $prefix . '-' . ++$next; }
+        while (isset($this->reservedIds[$candidate]) || isset($this->keys[$candidate]));
+        $this->idCounters[$prefix] = $next;
+        $this->keys[$candidate] = true;
+        return $candidate;
+    }
+
+    /** Collect only structural/identity fields, never hashes of mutable values. */
+    protected function reserveDocumentIds(array $data)
+    {
+        foreach (['structure', 'content'] as $group) {
+            foreach (($data[$group] ?? []) as $id => $values) {
+                $this->reservedIds[(string) $id] = true;
+                if (isset($values['id']) && is_scalar($values['id'])) {
+                    $this->reservedIds[(string) $values['id']] = true;
                 }
-            } while (true);
+            }
         }
-
-        $this->keys[$key][$id] = true;
-
-        return $key . '-'. $id;
+        $walk = function (array $items, $root = false) use (&$walk) {
+            foreach ($items as $field => $value) {
+                if ($root || is_array($value) || !$value) {
+                    if (!is_numeric($field)) {
+                        $section = $this->parseSectionString($field);
+                        $this->reservedIds[$section[4]] = true;
+                    }
+                    if (is_array($value)) { $walk($value); }
+                } elseif (is_string($value)) {
+                    list($type, $subtype, $id) = $this->parseContentString($value);
+                    if ($id !== null && $id !== '') {
+                        $this->reservedIds[$this->idPrefix($type, $subtype) . '-' . $id] = true;
+                    }
+                }
+            }
+        };
+        $walk($data['layout'], true);
     }
 }

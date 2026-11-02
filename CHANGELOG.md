@@ -1,3 +1,20 @@
+# 6.0.2-rc.1
+## Staging candidate — calendar revision 2026.11.02.002
+
+- Route native outline, layout and settings saves and REST writes through one
+  theme revision/lock/recovery engine and canonical native data writers.
+- Add no-write validation previews, bounded latest-change undo, and native
+  Change history with persistent guarded snapshots outside disposable caches.
+- Reject stale editor/API writes, including editor forms from before an undo;
+  interrupted writes block subsequent edits pending verified operator recovery.
+- Add GET theme changes, POST change preview and POST undo to the existing
+  Joomla core-token API and local Swagger contract.
+- See docs/shared-changes.md and docs/6.0.2-candidate-notes.md for exact scope,
+  recovery limits and verification. This candidate makes no performance claim.
+- Keep native duplicated outline titles consistent across the admin and API
+  by applying the Joomla theme prefix once.
+- Preserve the published 6.0.1 release and all Gantry 5 artifacts.
+
 # 6.0.1
 ## Calendar revision 2026.11.02.001
 

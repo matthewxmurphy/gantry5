@@ -11,6 +11,7 @@
     <p>Enabling permits users who already have <strong>{{ client_capability }}</strong> to open this restricted page. It grants no capabilities and changes no users. Other Gantry actions for non-settings administrators are blocked while enabled.</p>
     <p>Only saved, non-inherited instances of the built-in Client text particle are eligible. Save explicit plain text in Layout Manager first. Theme overrides of its renderer or blueprint are not eligible.</p>
     <form method="post" action="{{ gantry.route('client', 'policy') }}">
+        <input type="hidden" name="g6_revision" value="{{ g6_revision }}">
         <input type="hidden" name="policy_revision" value="{{ client_policy.revision }}">
         <input type="hidden" name="candidate_revision" value="{{ client_candidates.revision }}">
         <p><label><input type="checkbox" name="enabled" value="yes"{{ client_policy.enabled ? ' checked' }}> Enable restricted client editing for this theme</label></p>
@@ -27,6 +28,7 @@
     <p>Change plain text only. HTML and template syntax remain literal text. Reload after another editor changes the policy or layout.</p>
     {% for key, item in client_items %}
     <form method="post" action="{{ gantry.route('client', 'save') }}" style="margin-bottom:2rem">
+        <input type="hidden" name="g6_revision" value="{{ g6_revision }}">
         <input type="hidden" name="policy_revision" value="{{ client_policy.revision }}">
         <input type="hidden" name="layout_revision" value="{{ item.layout_revision }}">
         <input type="hidden" name="outline" value="{{ item.outline }}">

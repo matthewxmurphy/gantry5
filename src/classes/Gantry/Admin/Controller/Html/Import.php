@@ -51,57 +51,6 @@ class Import extends HtmlController
      */
     public function import()
     {
-        \check_admin_referer('gantry5-layout-manager');
-
-        if (!isset($_FILES['file']) || !is_array($_FILES['file']) || !isset($_FILES['file']['error']) || is_array($_FILES['file']['error'])) {
-            throw new \RuntimeException('No file sent', 400);
-        }
-
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- The Gantry admin router already requires the matching nonce.
-        $upload = $_FILES['file'];
-
-        switch ($upload['error']) {
-            case UPLOAD_ERR_OK:
-                break;
-            case UPLOAD_ERR_NO_FILE:
-                throw new \RuntimeException('No file sent', 400);
-            case UPLOAD_ERR_INI_SIZE:
-            case UPLOAD_ERR_FORM_SIZE:
-                throw new \RuntimeException('Exceeded filesize limit.', 400);
-            default:
-                throw new \RuntimeException('Unkown errors', 400);
-        }
-
-        if (empty($upload['tmp_name']) || !is_string($upload['tmp_name'])) {
-            throw new \RuntimeException('No file sent', 400);
-        }
-
-        $filename = $upload['tmp_name'];
-
-        if (!is_uploaded_file($filename)) {
-            throw new \RuntimeException('No file sent', 400);
-        }
-
-        $zip = new \ZipArchive;
-        if ($zip->open($filename) !== true || !($export = Yaml::parse($zip->getFromName('export.yaml'))) || !isset($export['gantry'])) {
-            throw new \RuntimeException('Uploaded file is not Gantry 5 export file', 400);
-        }
-
-        /** @var UniformResourceLocator $locator */
-        $locator = $this->container['locator'];
-
-        $folder = $locator->findResource('gantry-cache://import', true, true);
-        if (is_dir($folder)) Folder::delete($folder);
-        $zip->extractTo($folder);
-        $zip->close();
-
-        $importer = new Importer($folder);
-        $importer->all();
-
-        if (is_dir($folder)) Folder::delete($folder);
-
-        $this->params['success'] = true;
-
-        return $this->render('@gantry-admin/pages/import/import.html.twig', $this->params);
+        throw new \RuntimeException('Legacy whole-theme ZIP import is unavailable in Gantry 6. Use reviewed Design packs or a private outline snapshot.', 409);
     }
 }

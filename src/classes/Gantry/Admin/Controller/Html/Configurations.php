@@ -105,11 +105,14 @@ class Configurations extends HtmlController
         $title = $this->request->post['title'];
         $preset = $this->request->post['preset'];
 
-        $id = $outlines->create(null, $title, $preset);
+        $change = $this->changeSave('admin.outline.create', fn() => $outlines->create(null, $title, $preset),
+            fn() => ['operation' => 'outline.create', 'title' => $title, 'preset' => $preset]);
+        if (!empty($change['preview'])) { return $this->changeResponse($change); }
+        $id = $change['result'];
 
         $html = $this->render('@gantry-admin/layouts/outline.html.twig', ['name' => $id, 'title' => $outlines[$id]]);
 
-        return new JsonResponse(['html' => 'Outline created.', 'id' => "outline-{$id}", 'outline' => $html]);
+        return $this->changeResponse($change, ['html' => 'Outline created.', 'id' => "outline-{$id}", 'outline' => $html]);
     }
 
     /**
@@ -126,11 +129,14 @@ class Configurations extends HtmlController
         $outlines = $this->container['outlines'];
         $title = $this->request->post['title'];
 
-        $id = $outlines->rename($outline, $title);
+        $change = $this->changeSave('admin.outline.rename', fn() => $outlines->rename($outline, $title),
+            fn() => ['operation' => 'outline.rename', 'outline' => $outline, 'title' => $title]);
+        if (!empty($change['preview'])) { return $this->changeResponse($change); }
+        $id = $change['result'];
 
         $html = $this->render('@gantry-admin/layouts/outline.html.twig', ['name' => $id, 'title' => $outlines[$id]]);
 
-        return new JsonResponse(['html' => 'Outline renamed.', 'id' => "outline-{$outline}", 'outline' => $html]);
+        return $this->changeResponse($change, ['html' => 'Outline renamed.', 'id' => "outline-{$outline}", 'outline' => $html]);
     }
 
     /**
@@ -169,11 +175,14 @@ class Configurations extends HtmlController
         $title = $this->request->post['title'];
         $inherit = in_array($this->request->post['inherit'], ['1', 'true']);
 
-        $id = $outlines->duplicate($outline, $title, $inherit);
+        $change = $this->changeSave('admin.outline.duplicate', fn() => $outlines->duplicate($outline, $title, $inherit),
+            fn() => ['operation' => 'outline.duplicate', 'outline' => $outline, 'title' => $title, 'inherit' => $inherit]);
+        if (!empty($change['preview'])) { return $this->changeResponse($change); }
+        $id = $change['result'];
 
         $html = $this->render('@gantry-admin/layouts/outline.html.twig', ['name' => $id, 'title' => $outlines[$id]]);
 
-        return new JsonResponse(['html' => 'Outline duplicated.', 'id' => $id, 'outline' => $html]);
+        return $this->changeResponse($change, ['html' => 'Outline duplicated.', 'id' => $id, 'outline' => $html]);
     }
 
     /**
@@ -195,9 +204,25 @@ class Configurations extends HtmlController
             $this->forbidden();
         }
 
-        $outlines->delete($outline);
+        // Joomla's native style deletion can reassign CMS menu rows. They are
+        // outside theme undo, so check assignment under the shared revision lock
+        // before calling the native model, in both preview and commit paths.
+        $checkAssigned = function () use ($outline): void {
+            if ((new \Gantry\Component\Changes\ChangeEngine($this->container))->isAssigned((string) $outline)) {
+                throw new \RuntimeException('This outline is assigned to CMS pages. Unassign it through the CMS before deleting.', 409);
+            }
+        };
+        $change = $this->changeSave('admin.outline.delete', function () use ($outlines, $outline, $checkAssigned) {
+            $checkAssigned();
+            $outlines->delete($outline);
+            return ['deleted' => $outline];
+        }, function () use ($outline, $checkAssigned): array {
+            $checkAssigned();
+            return ['operation' => 'outline.delete', 'outline' => $outline];
+        });
+        if (!empty($change['preview'])) { return $this->changeResponse($change); }
 
-        return new JsonResponse(['html' => 'Outline deleted.', 'outline' => $outline]);
+        return $this->changeResponse($change, ['html' => 'Outline deleted.', 'outline' => $outline]);
     }
 
     /**

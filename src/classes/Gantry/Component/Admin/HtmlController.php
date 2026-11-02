@@ -19,6 +19,8 @@ namespace Gantry\Component\Admin;
 use Gantry\Admin\Theme;
 use Gantry\Component\Controller\HtmlController as BaseController;
 use Gantry\Framework\Platform;
+use Gantry\Component\Changes\ChangeEngine;
+use Gantry\Component\Response\JsonResponse;
 
 /**
  * Class HtmlController
@@ -36,7 +38,32 @@ abstract class HtmlController extends BaseController
         /** @var Theme $theme */
         $theme = $this->container['admin.theme'];
 
+        // The theme chooser and about pages can render before a theme is selected.
+        $context['g6_revision'] = isset($this->container['theme.name'])
+            ? (new ChangeEngine($this->container))->revision() : null;
         return $theme->render($file, $context);
+    }
+
+    /** Native adapters retain their authorization and pass all persistence through one engine. */
+    protected function changeSave(string $label, callable $writer, ?callable $planner = null): array
+    {
+        // General native writes use the same settings-administrator boundary as
+        // REST. Module-manager JSON admission must not bypass that boundary.
+        // Client::save separately enforces the explicit approved-text policy.
+        if ($label !== 'client.text' && !$this->authorize('platform.settings.manage')) { $this->forbidden(); }
+        $engine = new ChangeEngine($this->container);
+        $revision = $this->request->post['g6_revision'];
+        if (!is_string($revision)) { throw new \RuntimeException('Reload this editor before saving; its revision is missing.', 409); }
+        if ($this->request->post['g6_mode'] === 'preview') {
+            if ($planner === null) { throw new \RuntimeException('This operation has no no-write preview.', 400); }
+            return $engine->preview($revision, $planner) + ['preview' => true];
+        }
+        return $engine->save($revision, $label, $writer);
+    }
+
+    protected function changeResponse(array $change, array $content = []): JsonResponse
+    {
+        return new JsonResponse($content + array_intersect_key($change, array_flip(['revision', 'change_id', 'preview', 'result', 'plan'])));
     }
 
     /**

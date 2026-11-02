@@ -147,11 +147,14 @@ class Upgrade extends HtmlController
     public function restore()
     {
         $service = $this->service();
-        $result = $service->restore($this->upload(), $this->request->post['revision'],
-            $this->request->post['snapshot_digest'], $this->request->post['restore_confirm'] === 'yes');
-        // Existing Gantry cache API; no theme/assets/CMS configuration is removed.
-        Folder::delete($this->container['locator']('gantry-cache://theme'), false);
-        $this->params['restore_result'] = $result;
+        $bytes = $this->upload();
+        $change = $this->changeSave('admin.restore', function () use ($service, $bytes) {
+            $result = $service->restore($bytes, $this->request->post['revision'],
+                $this->request->post['snapshot_digest'], $this->request->post['restore_confirm'] === 'yes');
+            (new \Gantry\Component\Changes\NativeWriter($this->container))->invalidateAll();
+            return $result;
+        });
+        $this->params['restore_result'] = $change['result'];
         return $this->page();
     }
 }

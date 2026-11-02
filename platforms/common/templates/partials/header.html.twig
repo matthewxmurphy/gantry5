@@ -57,6 +57,7 @@
                 </li>
                 {% endif %}
                 {% if gantry.platform.isSettingsAdministrator() %}
+                <li><a href="{{ gantry.route('changes') }}">Theme changes / Undo</a></li>
                 <li><a href="{{ gantry.route('client') }}"><i class="fa fa-fw fa-font" aria-hidden="true"></i> Client text policy</a></li>
                 {% endif %}
                 <li data-g-extras data-g-popover data-g-popover-style="extras" aria-haspopup="true" aria-expanded="false" role="presentation">

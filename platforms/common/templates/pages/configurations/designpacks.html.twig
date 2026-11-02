@@ -12,6 +12,7 @@
     <h3>Create a shareable pack</h3>
     <p>Choose only values intended for redistribution. This is a design definition, not an export of the current layout or a private backup.</p>
     <form method="post" action="{{ gantry.route('configurations', outline, 'designpacks', 'download') }}">
+        <input type="hidden" name="g6_revision" value="{{ g6_revision }}">
         <p><label>Pack ID <input name="id" pattern="[a-z][a-z0-9\-]{0,47}" maxlength="48" required placeholder="studio-palette"></label>
         <label>Version <input name="version" value="1.0.0" pattern="[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}" required></label></p>
         <p><label>Title <input name="title" maxlength="120" required></label>
@@ -36,6 +37,7 @@
     <h3>Check an existing pack</h3>
     <p>Compatibility preview changes no outlines or assets. Maximum JSON size: {{ pack_limit }} bytes. Unsupported fields, missing types or missing section styles are refused rather than silently remapped.</p>
     <form method="post" enctype="multipart/form-data" action="{{ gantry.route('configurations', outline, 'designpacks', 'preview') }}">
+        <input type="hidden" name="g6_revision" value="{{ g6_revision }}">
         <label>Design pack JSON <input type="file" name="designpack" accept="application/json,.json" required></label>
         <button class="button" type="submit">Preview design pack</button>
     </form>
@@ -51,6 +53,7 @@
     {% for asset in design_preview.assets %}<h4>{{ asset.name }}</h4><p>{{ asset.mime }} · {{ asset.width }} × {{ asset.height }}</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere">{{ asset.license }}
 {{ asset.notice }}</pre>{% endfor %}
     <form method="post" enctype="multipart/form-data" action="{{ gantry.route('configurations', outline, 'designpacks', 'apply') }}">
+        <input type="hidden" name="g6_revision" value="{{ g6_revision }}">
         <input type="hidden" name="pack_digest" value="{{ design_preview.digest }}">
         <p><label>Choose the same JSON again <input type="file" name="designpack" accept="application/json,.json" required></label></p>
         <p><label><input type="checkbox" name="apply_confirm" value="yes" required> Create a new unassigned outline and new image copies. Preserve existing outlines, assets and assignments.</label></p>

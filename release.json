@@ -1,20 +1,20 @@
 {
     "schema": 1,
     "product": "Gantry",
-    "version": "6.0.1",
+    "version": "6.0.2-rc.1",
     "version_file": "VERSION",
-    "calendar_revision": "2026.11.02.001",
+    "calendar_revision": "2026.11.02.002",
     "calendar_revision_file": "RELEASE_REVISION",
     "release_timezone": "America/Chicago",
-    "tag": "v2026.11.02.001",
-    "stability": "stable",
+    "tag": "source/2026.11.02.002",
+    "stability": "candidate",
     "repository": "matthewxmurphy/gantry5",
     "developer": "Matthew X Murphy",
     "developer_url": "https://MatthewxMurphy.com",
     "support_url": "https://builtnotbegged.com",
     "php": ">=8.5.0 <8.6.0",
     "components": {
-        "framework": "6.0.1",
+        "framework": "6.0.2-rc.1",
         "helium": "6.0.1",
         "hydrogen": "6.0.1"
     },
@@ -30,7 +30,8 @@
         "scope": [
             "outlines",
             "layouts",
-            "outline theme settings"
+            "outline theme settings",
+            "shared change preview and undo"
         ]
     }
 }

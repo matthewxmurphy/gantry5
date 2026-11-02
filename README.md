@@ -1,38 +1,32 @@
-## Gantry 6.0.1
+## Gantry 6 shared change engine candidate
 
-Gantry 6.0.1 adds a narrow API inside the existing Gantry core Joomla extension.
-It uses Joomla 6.2 Web Services and unchanged core API token authentication.
-PHP **8.5.x only** is admitted; Gantry 5.7.0 remains the separate PHP 8.4 line.
-No bridge plugin, standalone component, account or token is created.
+This branch builds **6.0.2-rc.1** (calendar **2026.11.02.002**) on the published
+[Gantry 6.0.1 API release](https://github.com/matthewxmurphy/gantry5/releases/tag/v2026.11.02.001).
+The original release remains immutable. This candidate adds one shared
+preview/save/undo engine for native outline/layout/settings editors and REST,
+with theme-wide revisions, a writer lock, exact-state recovery and guarded
+latest-change undo. PHP **8.5.x only**; the Gantry 5.7/PHP8.4 line is separate.
 
-Open **Gantry administration > API / Swagger** for the local interactive API
-reference and OpenAPI JSON. The common administration entry is included across
-CMS ports; the API transport in this release is Joomla only. Outlines support
-list/get/create/rename/delete; layouts and outline theme settings support
-get/update. Every update/delete requires the current resource revision.
-See [API contracts and calls](docs/core-api.md),
-[itemized 6.0.1 release notes](docs/6.0.1-release-notes.md), and the
-[installation and rollback runbook](docs/6.0.1-runbook.md).
+Open **Gantry administration > API / Swagger** for the Joomla6.2 core Web Services
+contract and **Change history** for native undo. Joomla core token auth and CMS
+permissions remain authoritative; no account, token, bridge plugin or standalone
+component is created. See [shared changes](docs/shared-changes.md),
+[candidate notes](docs/6.0.2-candidate-notes.md),
+[API contracts](docs/core-api.md), and the [accepted roadmap](docs/gantry6-roadmap.md).
+The shared core has native CMS adapters; current transport/runtime acceptance is
+Joomla only. No render-bundle, speed, registry, metadata, Template Club or MCP
+completion is claimed by this first slice.
 
-This fork preserves upstream Gantry and dependency licenses. Existing third-party
-themes and particles still require migration to the modern dependency stack;
-read [dependency and theme migration](docs/dependency-migration.md). Native admin
-features are described in [Upgrade assistant](docs/upgrade-assistant.md),
-[Editor tools](docs/editor-tools.md), [Design packs](docs/design-packs.md),
-[Client editing](docs/client-editing.md), [frontend accessibility](docs/frontend-accessibility.md),
-and [Grav 2 Admin2](docs/grav-admin2.md).
-
-The ecosystem version is **6.0.1** (`VERSION`). Its independent calendar revision
-is **2026.11.02.001** (`RELEASE_REVISION` and `release.json`); the release tag is
-`v2026.11.02.001`. Download reviewed packages from
-[this fork's releases](https://github.com/matthewxmurphy/gantry5/releases).
-Installation is manual, with no inherited official Gantry 5 update feed.
-Historical [6.0.0-alpha.1 notes](docs/6.0-release-notes.md) remain available.
+Installation is manual. This branch is a staging candidate; availability of source
+or packages does not constitute a public production release. Unchanged Helium
+and Hydrogen remain6.0.1, with their existing migration requirements.
+Historical [6.0.1 notes](docs/6.0.1-release-notes.md), [runbook](docs/6.0.1-runbook.md)
+and [dependency migration](docs/dependency-migration.md) remain available.
 
 Fork developer: Matthew X Murphy, https://MatthewxMurphy.com.
-Product/support: https://builtnotbegged.com. Upstream ownership, copyright and
-license notices remain applicable. Verification scope is recorded per release;
-source availability does not certify every CMS or third-party theme.
+Product/support: https://builtnotbegged.com. Upstream and dependency copyright,
+licenses and notices remain applicable. Verification is recorded per candidate;
+source availability does not certify every CMS, theme or particle.
 
 ## Historical upstream announcement
 

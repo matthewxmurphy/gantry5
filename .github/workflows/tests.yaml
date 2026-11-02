@@ -46,10 +46,20 @@ jobs:
         run: php tests/modern/dependencies.php platforms/wordpress/gantry5/vendor/autoload.php
       - name: Run download and Unicode runtime regression checks
         run: php tests/php85/runtime.php
+      - name: Run deterministic native layout identity checks
+        run: php tests/php85/layout-identity.php
       - name: Run core API request boundary checks
         run: php tests/php85/api-input.php
       - name: Run native API configuration cache regressions
         run: php tests/php85/api-cache.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run shared change-engine recovery and concurrency checks
+        run: php tests/php85/change-engine.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run native administrator change permissions checks
+        run: php tests/php85/admin-change-permissions.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run assigned outline deletion boundary checks
+        run: php tests/php85/admin-outline-delete.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run native editor revision lifecycle checks
+        run: node tests/frontend/change-request.js
       - name: Run targeted PHP 8.4/8.5 nullable-rewriter checks
         if: matrix.php == '8.4' || matrix.php == '8.5'
         run: php tests/php84/nullable-rewriter.php

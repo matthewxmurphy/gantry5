@@ -1,4 +1,4 @@
-# Gantry 6.0.1 core API
+# Gantry 6 core API — shared change-engine candidate
 
 Developer: Matthew X Murphy, https://MatthewxMurphy.com. Support:
 https://builtnotbegged.com. Existing Gantry/Joomla license terms apply.
@@ -16,7 +16,7 @@ available to settings administrators. Swagger UI 5.34.1 is bundled locally;
 the external validator is disabled and credentials are not persisted across
 reloads. Requests must remain on the same CMS origin. On other CMS ports the
 same entry shows this contract as a reference with request execution disabled;
-Gantry 6.0.1 exposes no WordPress or Grav API transport.
+This candidate exposes no WordPress or Grav API transport. The shared core uses native CMS adapters; only Joomla has the database adapter verified by this candidate.
 
 All paths below follow `/api/index.php` relative to the Joomla installation.
 `{theme}` is an installed Gantry theme identifier; `{outline}` is its outline ID.
@@ -53,7 +53,7 @@ unassigned and do not change the site's default template or menu assignments.
 The API does not expose arbitrary files, template/PHP code, accounts, tokens,
 menus or extension management.
 
-Create accepts `title` and optional installed `preset`. Rename accepts `title`
+Create accepts `title`, optional installed `preset` and optional preview `revision`. Rename accepts `title`
 and `revision`. Delete accepts a JSON body containing `revision`. Layout PUT
 accepts `layout` (native node list), optional `preset` (native metadata object),
 and `revision`. Settings PATCH accepts one or more of `styles`, `page`,
@@ -77,9 +77,11 @@ Acceptance must exercise the installed staging package: API-created outline,
 layout and style changes, exact admin values and front-end rendering, followed
 by UI saves and PHP log review. Unit checks alone do not meet that bar.
 
-Concurrency limits: the API lock serializes API writers and revision checks
-catch completed native admin edits. Native admin writers do not share that
-lock. Layout saves and their dependent outlines/events retain native multi-file
-I/O behavior, without a database/filesystem transaction; an I/O or extension
-event failure may need recovery from the site backup. Inspect current state
-and private logs after500 before retrying.
+Concurrency: native outline/layout/settings editors and REST use the same
+shared change engine, native writers, theme-wide revision and per-theme lock.
+Preview validates without saving. Latest-change undo restores verified exact
+configuration and native metadata under a new generation. The three additional
+change routes, request envelopes, persistent guarded journal and exact recovery
+limits are documented in [shared changes](shared-changes.md). Interrupted work
+blocks edits pending verified operator recovery. This remains recoverable
+multi-file I/O; atomic render-bundle activation is a later roadmap gate.

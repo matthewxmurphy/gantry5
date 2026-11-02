@@ -80,6 +80,21 @@ final class ThemeController extends ApiController
         return $this->operation('gantry-settings', fn (ThemeApi $api): array => $api->updateSettings($this->outline(), $this->body()));
     }
 
+    public function history(): static
+    {
+        return $this->operation('gantry-changes', static fn (ThemeApi $api): array => $api->history());
+    }
+
+    public function preview(): static
+    {
+        return $this->operation('gantry-changes', fn (ThemeApi $api): array => $api->preview($this->body()));
+    }
+
+    public function undo(): static
+    {
+        return $this->operation('gantry-changes', fn (ThemeApi $api): array => $api->undo($this->body()));
+    }
+
     private function operation(string $type, callable $callback, int $status = 200, bool $collection = false): static
     {
         $identity = $this->app->getIdentity();
@@ -99,6 +114,8 @@ final class ThemeController extends ApiController
 
         try {
             $data = $callback($this->service());
+            if (isset($data['revision'])) { $this->app->setHeader('X-Gantry-Revision', $data['revision'], true); }
+            if (isset($data['change_id'])) { $this->app->setHeader('X-Gantry-Change', $data['change_id'], true); }
             $serializer = new ResourceSerializer($type);
             if ($status === 204) {
                 // Match Joomla ApiController::delete: no resource after delete.

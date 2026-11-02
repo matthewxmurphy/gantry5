@@ -106,20 +106,21 @@ class Page extends HtmlController
      */
     public function save($id = null)
     {
-        $data = $id ? [$id => $this->request->post->getArray()] : $this->request->post->getArray('page');
-
-        foreach ($data as $name => $values) {
-            $this->saveItem($name, $values);
+        $data = $this->request->post->getArray('page');
+        if ($id) {
+            $block = $this->request->post->getArray();
+            unset($block['g6_revision'], $block['g6_mode']);
+            $data = [$id => $block];
         }
-
-        // Fire save event.
-        $event             = new PageEvent();
-        $event->gantry     = $this->container;
-        $event->theme      = $this->container['theme'];
-        $event->controller = $this;
-        $event->data       = $data;
-        $this->container->fireEvent('admin.page.save', $event);
-
+        unset($data['g6_revision'], $data['g6_mode']);
+        foreach ($data as &$values) { if (!is_array($values)) { $values = null; } }
+        unset($values);
+        $outline = (string) $this->params['outline'];
+        $writer = new \Gantry\Component\Changes\NativeWriter($this->container);
+        $change = $this->changeSave('admin.page',
+            fn() => $writer->saveSettings($outline, ['page' => $data], $this),
+            fn() => $writer->previewSettings($outline, ['page' => $data]));
+        if (!empty($this->params['ajax']) || !empty($change['preview'])) { return $this->changeResponse($change); }
         return $id ? $this->display($id) : $this->index();
     }
 
@@ -317,42 +318,6 @@ class Page extends HtmlController
      * @param string $id
      * @param array $data
      */
-    protected function saveItem($id, $data)
-    {
-        /** @var UniformResourceLocator $locator */
-        $locator = $this->container['locator'];
-
-        // Save layout into custom directory for the current theme.
-        $outline = $this->params['outline'];
-
-        // Move atoms out of layout.
-        if ($id === 'head') {
-            $layout = Layout::instance($outline);
-            if (is_array($layout->atoms())) {
-                $layout->save(false);
-            }
-            if (isset($data['atoms'])) {
-                $atoms = new Atoms($data['atoms']);
-                $data['atoms'] = $atoms->update()->toArray();
-            }
-        }
-
-        $save_dir      = $locator->findResource("gantry-config://{$outline}/page", true, true);
-        $filename      = "{$save_dir}/{$id}.yaml";
-
-        $file = YamlFile::instance($filename);
-        if (!is_array($data)) {
-            if ($file->exists()) {
-                $file->delete();
-            }
-        } else {
-            $blueprints = $this->container['page']->getBlueprintForm($id);
-            $config     = new Config($data, function () use ($blueprints) { return $blueprints; });
-
-            $file->save($config->toArray());
-        }
-        $file->free();
-    }
 
     /**
      * @return array|null

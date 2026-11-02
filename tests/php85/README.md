@@ -38,3 +38,26 @@ Native cache/blueprint regressions use the installed Composer autoloader:
 `php tests/php85/api-cache.php platforms/joomla/lib_gantry5/vendor/autoload.php .`.
 The fixture reproduces stale equal-size/same-mtime native caches and verifies
 API/native freshness, revision changes, blueprint boundaries and flag restoration.
+
+## Native Joomla database adapter
+
+With existing Joomla library source/dependencies and PDO SQLite available:
+
+```sh
+php tests/php85/joomla-change-state.php "$GANTRY_AUTOLOAD" "$JOOMLA_AUTOLOAD" . "$JOOMLA_FACTORY_SOURCE"
+```
+
+The real Joomla Database driver, DI container, CMS Factory and Gantry Joomla
+adapter operate on a private SQLite memory database. No database behavior is
+mocked. The 22 checks cover by-reference row insertion, exact NULL restoration,
+create/delete/rename undo metadata, transactions, unrelated rows and protection
+against changed assignments/defaults or reused IDs. The actual source files and
+Composer vendors remain outside the repository. This optional fixture is not
+added to default CI, which does not install Joomla CMS source/vendor packages.
+
+The installed Joomla SQLite connector emits one PHP 8.5 deprecation while
+registering `ROW_NUMBER` with `PDO::sqliteCreateFunction`. This exact bootstrap
+diagnostic is counted and reported; every other enabled diagnostic throws.
+No vendor compatibility shim is installed. These 22 checks do not certify the
+staging MariaDB path; the installed token-authenticated metadata round-trip is
+the required runtime gate.

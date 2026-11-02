@@ -153,7 +153,7 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
     public static function index($name)
     {
         if (!isset(static::$indexes[$name])) {
-            static::$indexes[$name] = static::loadIndex($name, true);
+            static::$indexes[$name] = static::loadIndex($name, false);
         }
 
         return static::$indexes[$name];
@@ -1069,7 +1069,7 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
             // Attempt to load the index file.
             $indexFile = $locator("gantry-config://{$name}/index.yaml");
             if ($indexFile || !$preset) {
-                $index = static::loadIndex($name, true);
+                $index = static::loadIndex($name, false);
                 $preset = $index['preset']['name'];
             }
 

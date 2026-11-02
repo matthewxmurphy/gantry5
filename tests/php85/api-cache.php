@@ -16,6 +16,7 @@ use Gantry\Component\Config\BlueprintForm;
 use Gantry\Component\Config\BlueprintSchema;
 use Gantry\Component\Config\Config;
 use Gantry\Component\File\CompiledYamlFile;
+use Gantry\Component\Layout\Layout;
 use Gantry\Framework\Gantry;
 use Gantry\Framework\Outlines;
 use Gantry\Framework\Services\ConfigServiceProvider;
@@ -27,7 +28,7 @@ if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80500 || PHP_VERSION_ID >= 80600 || !
 }
 $source = $argv[2] ?? dirname(__DIR__, 2);
 $loader = require $argv[1];
-$loader->addPsr4('Gantry\\', $source . '/src/classes/Gantry');
+$loader->addPsr4('Gantry\\', $source . '/src/classes/Gantry', true);
 foreach (['ApiException', 'Input', 'ThemeApi'] as $class) {
     require dirname(__DIR__, 2) . '/src/classes/Gantry/Component/Api/' . $class . '.php';
 }
@@ -164,6 +165,53 @@ try {
     $expect($api->getOutline($created['id'])['revision'] === $created['revision'], 'immediate native create/get revisions agree despite container clone factory');
     $expect(!isset($gantry['outlines'][$created['id']]), 'API retains its native collection without mutating the shared factory prototype');
     $expect(is_file($temporary . '/config/' . $created['id'] . '/layout.yaml') && is_file($temporary . '/config/' . $created['id'] . '/index.yaml'), 'factory-clone regression uses real native layout and index persistence');
+
+    // Use the actual shipped preset, not a hand-shaped layout or mock reader.
+    // Read entry points must derive missing/stale indexes only in memory. A read
+    // must not materialize layout.yaml/index.yaml outside the change engine.
+    copy($source . '/themes/hydrogen/common/layouts/default.yaml', $temporary . '/layouts/default.yaml');
+    $sourceTree = static function () use ($temporary): array {
+        $tree = [];
+        foreach (['config', 'layouts'] as $scope) {
+            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($temporary . '/' . $scope, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST) as $file) {
+                $key = $scope . '/' . substr($file->getPathname(), strlen($temporary . '/' . $scope) + 1);
+                $tree[$key] = $file->isDir() ? null : ['bytes' => file_get_contents($file->getPathname()), 'mtime' => $file->getMTime(), 'mode' => $file->getPerms() & 0777];
+            }
+        }
+        ksort($tree);
+        return $tree;
+    };
+    $caching = CompiledYamlFile::$defaultCaching;
+    CompiledYamlFile::$defaultCaching = false;
+    try {
+        $tree = $sourceTree();
+        $index = Layout::index('default');
+        $expect(isset($index['sections']['header']) && $index['preset']['name'] === 'default', 'missing index derives real installed preset sections in memory');
+        $expect($sourceTree() === $tree, 'Layout::index does not materialize missing base layout or index YAML');
+        $loaded = Layout::load('default');
+        $expect(count($loaded->toArray()) > 0 && $loaded->preset['name'] === 'default', 'Layout::load resolves missing base layout through installed preset');
+        $expect($sourceTree() === $tree, 'Layout::load preserves exact source tree with missing layout and index');
+
+        mkdir($temporary . '/config/readonly_stale', 0700);
+        file_put_contents($temporary . '/config/readonly_stale/index.yaml', "name: readonly_stale\ntimestamp: 0\nversion: 0\npreset:\n  name: default\nsections:\n  must-not-survive: stale\n");
+        $tree = $sourceTree();
+        $index = Layout::index('readonly_stale');
+        $expect($index['version'] === Layout::VERSION && isset($index['sections']['header']) && !isset($index['sections']['must-not-survive']), 'stale preset-only index is rebuilt accurately in memory');
+        $expect($sourceTree() === $tree, 'Layout::index leaves stale index bytes and missing layout untouched');
+        $loaded = Layout::load('readonly_stale');
+        $expect(count($loaded->toArray()) > 0 && $loaded->preset['name'] === 'default', 'Layout::load resolves installed preset despite stale source index');
+        $expect($sourceTree() === $tree, 'Layout::load preserves exact stale index and absent layout YAML');
+
+        mkdir($temporary . '/config/readonly_layout', 0700);
+        copy($source . '/themes/hydrogen/common/layouts/default.yaml', $temporary . '/config/readonly_layout/layout.yaml');
+        $tree = $sourceTree();
+        $index = Layout::index('readonly_layout');
+        $expect(isset($index['sections']['header']), 'existing native layout builds missing index sections in memory');
+        $expect($sourceTree() === $tree, 'Layout::index preserves an existing layout without creating index YAML');
+        $loaded = Layout::load('readonly_layout');
+        $expect(count($loaded->toArray()) > 0, 'Layout::load reads actual existing native layout');
+        $expect($sourceTree() === $tree, 'existing-layout reads preserve exact YAML bytes, mtimes, modes and directory paths');
+    } finally { CompiledYamlFile::$defaultCaching = $caching; }
     echo 'PASS ' . $checks . ' native core API cache/blueprint regression checks on PHP ' . PHP_VERSION . "\n";
 } finally {
     if (is_dir($temporary)) {

@@ -117,6 +117,9 @@ class plgSystemGantry5 extends CMSPlugin
         $outline = $theme + ['outline' => '[A-Za-z0-9_-]{1,80}'];
 
         $event->getRouter()->addRoutes([
+            new ApiRoute(['GET'], 'v1/gantry/themes/:theme/changes', 'theme.history', $theme, $defaults),
+            new ApiRoute(['POST'], 'v1/gantry/themes/:theme/changes/preview', 'theme.preview', $theme, $defaults),
+            new ApiRoute(['POST'], 'v1/gantry/themes/:theme/changes/undo', 'theme.undo', $theme, $defaults),
             new ApiRoute(['GET'], $base, 'theme.listOutlines', $theme, $defaults),
             new ApiRoute(['POST'], $base, 'theme.createOutline', $theme, $defaults),
             new ApiRoute(['GET'], $base . '/:outline', 'theme.getOutline', $outline, $defaults),
