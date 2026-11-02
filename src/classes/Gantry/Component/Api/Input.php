@@ -130,6 +130,21 @@ final class Input
         return $nodes;
     }
 
+    /** Match native Format2 structural tags and installed content blueprint types. */
+    public static function nodeType(string $type, string $subtype, array $installed): bool
+    {
+        $structural = in_array($type, ['wrapper', 'container', 'section', 'grid', 'block', 'offcanvas'], true);
+        if ($structural) {
+            $allowed = $type === 'section' ? ['div', 'section', 'aside', 'nav', 'article', 'header', 'footer', 'main'] : [$type];
+            if (!in_array($subtype, $allowed, true)) {
+                throw new ApiException('Use a native structural section subtype.', 422, 'invalid_layout');
+            }
+        } elseif (!isset($installed[$subtype]) || ($installed[$subtype]['type'] ?? 'particle') !== $type) {
+            throw new ApiException('Use the native type of an installed content subtype.', 422, 'invalid_layout');
+        }
+        return $structural;
+    }
+
     private static function nodes(array $nodes, array &$ids, int &$count, int $depth): void
     {
         if ($depth > self::MAX_DEPTH) {
@@ -145,7 +160,7 @@ final class Input
                 throw new ApiException('The layout contains too many nodes or duplicate IDs.', 422, 'invalid_layout');
             }
             $ids[$id] = true;
-            if (!in_array($node['type'], ['wrapper', 'container', 'section', 'grid', 'block', 'offcanvas', 'particle', 'position', 'system'], true)) {
+            if (!in_array($node['type'], ['wrapper', 'container', 'section', 'grid', 'block', 'offcanvas', 'particle', 'position', 'system', 'spacer'], true)) {
                 throw new ApiException('The layout contains an unsupported node type.', 422, 'invalid_layout');
             }
             self::id($node['subtype']);
@@ -176,7 +191,7 @@ final class Input
             }
             if (isset($node['children'])) {
                 if (!is_array($node['children']) || !array_is_list($node['children'])
-                    || in_array($node['type'], ['particle', 'position', 'system'], true)) {
+                    || in_array($node['type'], ['particle', 'position', 'system', 'spacer'], true)) {
                     throw new ApiException('The layout contains invalid children.', 422, 'invalid_layout');
                 }
                 self::nodes($node['children'], $ids, $count, $depth + 1);

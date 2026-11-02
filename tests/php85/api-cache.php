@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 use Gantry\Component\Api\ThemeApi;
 use Gantry\Component\Api\ApiException;
+use Gantry\Component\Api\Input;
 use Gantry\Component\Config\BlueprintForm;
 use Gantry\Component\Config\BlueprintSchema;
 use Gantry\Component\Config\Config;
@@ -19,6 +20,7 @@ use Gantry\Framework\Gantry;
 use Gantry\Framework\Outlines;
 use Gantry\Framework\Services\ConfigServiceProvider;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
+use RocketTheme\Toolbox\File\YamlFile;
 
 if (PHP_SAPI !== 'cli' || PHP_VERSION_ID < 80500 || PHP_VERSION_ID >= 80600 || !isset($argv[1]) || !is_file($argv[1])) {
     throw new RuntimeException('Use actual PHP 8.5 CLI and the installed Gantry Composer autoloader.');
@@ -133,6 +135,25 @@ try {
             throw new RuntimeException('Unsafe native blueprint control was accepted.');
         } catch (ApiException $expected) {
             $expect($expected->getErrorCode() === $code && $expected->getCode() === 422, 'real native blueprint refuses ' . $code);
+        }
+    }
+    $installed = [];
+    foreach (['copyright', 'spacer', 'content', 'messages', 'position'] as $subtype) {
+        $file = YamlFile::instance($source . '/engines/common/nucleus/particles/' . $subtype . '.yaml');
+        try { $installed[$subtype] = $file->content(); } finally { $file->free(); }
+    }
+    foreach (['div', 'section', 'aside', 'nav', 'article', 'header', 'footer', 'main'] as $tag) {
+        $expect(Input::nodeType('section', $tag, $installed), 'native structural section tag accepted: ' . $tag);
+    }
+    foreach (['copyright' => 'particle', 'spacer' => 'spacer', 'content' => 'system', 'messages' => 'system', 'position' => 'position'] as $subtype => $type) {
+        $expect(!Input::nodeType($type, $subtype, $installed), 'actual native installed blueprint accepts its content type: ' . $subtype);
+    }
+    foreach ([['section', 'script'], ['grid', 'header'], ['particle', 'content'], ['system', 'copyright'], ['spacer', 'unknown']] as [$type, $subtype]) {
+        try {
+            Input::nodeType($type, $subtype, $installed);
+            throw new RuntimeException('Invalid native node type was accepted.');
+        } catch (ApiException $expected) {
+            $expect($expected->getCode() === 422 && $expected->getErrorCode() === 'invalid_layout', 'native node type mismatch is refused');
         }
     }
     mkdir($temporary . '/layouts', 0700);

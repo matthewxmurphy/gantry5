@@ -519,9 +519,7 @@ final class ThemeApi
         $installed = $this->collections['particles']->all();
         foreach ($nodes as $node) {
             $prior = $old[$node['id']] ?? [];
-            $structural = in_array($node['type'], ['wrapper', 'container', 'section', 'grid', 'block', 'offcanvas'], true);
-            if ($structural && $node['subtype'] !== $node['type']) { throw new ApiException('Structural node subtypes must match their type.', 422, 'invalid_layout'); }
-            if (!$structural && !isset($installed[$node['subtype']])) { throw new ApiException('Use an installed particle subtype.', 422, 'invalid_layout'); }
+            $structural = Input::nodeType($node['type'], $node['subtype'], $installed);
             if (!empty($node['inherit']['outline'])) {
                 $source = $node['inherit']['outline'];
                 $this->requireOutline($source);

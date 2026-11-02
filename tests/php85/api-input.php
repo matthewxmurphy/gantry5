@@ -97,6 +97,16 @@ try {
         ]],
     ]];
     $expect(Input::layout($layout) === $layout, 'real editor layout structure with copyright particle retains exact data');
+    $native = $layout;
+    $native[0]['subtype'] = 'footer';
+    $native[0]['children'][0]['children'][0]['children'][] = ['id' => 'spacer-2', 'type' => 'spacer', 'subtype' => 'spacer', 'attributes' => ['enabled' => 1]];
+    $native[] = ['id' => 'header', 'type' => 'section', 'subtype' => 'header', 'attributes' => []];
+    $native[] = ['id' => 'main', 'type' => 'section', 'subtype' => 'main', 'attributes' => [], 'children' => [
+        ['id' => 'system-messages-2', 'type' => 'system', 'subtype' => 'messages', 'attributes' => ['enabled' => 1]],
+        ['id' => 'system-content-2', 'type' => 'system', 'subtype' => 'content', 'attributes' => ['enabled' => 1]],
+        ['id' => 'position-footer', 'type' => 'position', 'subtype' => 'position', 'attributes' => ['key' => 'footer', 'enabled' => 1]],
+    ]];
+    $expect(Input::layout($native) === $native, 'native header/main/footer, spacer, system and position node envelopes are accepted unchanged');
     $expect(Input::layout([]) === [], 'intentional empty layout accepted');
     $reject(static fn () => Input::layout(['layout' => $layout]), 'invalid_layout', 'serialized YAML envelope is not an editor node list');
     $bad = $layout;
