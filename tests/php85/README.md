@@ -61,3 +61,30 @@ diagnostic is counted and reported; every other enabled diagnostic throws.
 No vendor compatibility shim is installed. These 22 checks do not certify the
 staging MariaDB path; the installed token-authenticated metadata round-trip is
 the required runtime gate.
+
+## Batch 1 core regressions
+
+Run the issue-named checks after the native dependency build:
+
+```sh
+php tests/php85/issue-2486.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+php tests/php85/issue-3419.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+node tests/frontend/issue-2894.js platforms/joomla/lib_gantry5/vendor/autoload.php
+```
+
+Issue 2486 exercises real Unicode outline create/rename, duplicate allocation and
+layout/index persistence, including bounded long CJK names and invalid UTF-8.
+Generic catalogue reload still derives display labels from safe folder IDs;
+there is no new durable title store. Joomla titles remain native database data.
+The parked non-Joomla adapters must settle their durable title policy before
+mutation acceptance. These fixtures do not enable WordPress writes.
+
+Issue 3419 renders the shipped Joomla head block through native Twig with debug
+on/off. Its version objects are branch fixtures, not installed CMS acceptance.
+Issue 2894 invokes its PHP helper for real Twig asset/version admission and then
+headless Chrome for CSS glyph pixels, SVG paths and JS-mode pseudo glyphs. An
+isolated child HTTP server records successful matching font requests; no npm
+package or external asset service is used. Set `CHROME_BIN` when Chrome is not at
+a standard path. Missing browsers or incomplete assertions fail the check.
+The FA6 payload comes from the official Font Awesome 6.5.1 distribution; its
+saved selector keys, existing FA5/FA7 files and complete license texts remain.

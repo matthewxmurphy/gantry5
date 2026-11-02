@@ -39,3 +39,39 @@ with third-party modal dialogs. Named CMS/theme checks remain separate.
 
 Copyright 2026 Matthew C. Murphy. New test tooling is MIT; Gantry's existing
 licenses and notices remain unchanged.
+
+## Gantry 6 Batch 1 issue gates
+
+After the native package dependency build, run the issue-named regressions:
+
+```sh
+node tests/frontend/issue-2282.js platforms/joomla/lib_gantry5/vendor/autoload.php
+node tests/frontend/issue-2519.js platforms/joomla/lib_gantry5/vendor/autoload.php
+```
+
+These require actual PHP 8.5.x, the shipped SCSS compiler, and a real Chromium
+executable. Set `CHROME_BIN` if Chrome/Chromium is not in a detected standard
+location (`/usr/bin/google-chrome` on CI). A missing compiler/browser fails the
+gate rather than skipping it. The runner creates and removes its own temporary
+profile and HTML fixture, with no network or installed-site dependency and no
+new npm dependency.
+
+- [#2282](https://github.com/gantry/gantry5/issues/2282), 76 checks: source-compiled
+  and checked-in Joomla CSS are each combined with the shipped compatibility
+  and Bootstrap 5 stylesheets. Native contact radios/labels must have visible
+  geometry, pointer hit targets, focus, label selection and submitted values.
+  Enhanced Bootstrap 5 button radios retain native clipping and activation.
+- [#2519](https://github.com/gantry/gantry5/issues/2519), 64 checks: source-compiled
+  and shipped core Nucleus CSS each run with frozen pre-fix theme CSS and current
+  Helium Owl CSS. Intrinsic-image/background slides must fill 320px and 960px
+  containers before measured inline widths are available. Measured single/multi-
+  item widths remain authoritative; two measured slides fit side by side, and
+  vertical touch panning remains enabled. The fallback lives in core so existing
+  cloned themes receive the repair through a framework-only installation.
+
+These shipped-asset browser fixtures verify the defect mechanisms. They do not
+certify complete Joomla contact-component integration, Owl initialization from
+third-party templates, physical-device interaction or whole-theme appearance.
+
+New issue tooling: Copyright (c) 2026 Matthew X Murphy,
+https://MatthewxMurphy.com. MIT; support https://builtnotbegged.com.

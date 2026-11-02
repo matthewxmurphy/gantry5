@@ -19,6 +19,7 @@ namespace Gantry\Component\Layout;
 
 use Gantry\Component\Config\Config;
 use Gantry\Component\File\CompiledYamlFile;
+use Gantry\Component\Outline\OutlineName;
 use Gantry\Debugger;
 use Gantry\Framework\Outlines;
 use Gantry\Framework\Gantry;
@@ -301,7 +302,10 @@ class Layout implements \ArrayAccess, \Iterator, ExportInterface
             Debugger::addMessage("Saving layout for outline {$this->name}");
         }
 
-        $name = strtolower(preg_replace('|[^a-z\d_-]|ui', '_', $this->name));
+        $name = OutlineName::slug((string) $this->name, 255);
+        if ($name === '') {
+            throw new \RuntimeException('Outline needs a valid name.', 400);
+        }
 
         $gantry = Gantry::instance();
 

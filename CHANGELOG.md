@@ -14,6 +14,16 @@
 - Keep native duplicated outline titles consistent across the admin and API
   by applying the Joomla theme prefix once.
 - Preserve the published 6.0.1 release and all Gantry 5 artifacts.
+- Fix #2282: keep native contact-form radio controls and labels visible,
+  focusable and selectable while preserving enhanced Bootstrap button controls.
+- Fix #2519: let unmeasured Owl slides fill their carousel without overriding
+  the measured inline widths used by initialized multi-item views.
+- Fix #2486: preserve safe Unicode outline identities through create, duplicate,
+  rename and subsequent native layout/index writes.
+- Fix #2894: restore the selected Font Awesome 6.5.1 JavaScript and matching
+  versioned font assets without replacing the existing 5.x or 7.x files.
+- Fix #3419: load Joomla debug styles only when Gantry debugging is enabled.
+- Run one explicitly issue-named regression gate for each Batch 1 defect in CI.
 
 # 6.0.1
 ## Calendar revision 2026.11.02.001

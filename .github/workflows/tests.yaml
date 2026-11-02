@@ -40,6 +40,22 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
       - name: Build Gantry packages
         run: composer build-dev
+      - name: "Issue #2282: visible and selectable contact radios"
+        run: node tests/frontend/issue-2282.js platforms/joomla/lib_gantry5/vendor/autoload.php
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+      - name: "Issue #2519: Owl Carousel slide widths"
+        run: node tests/frontend/issue-2519.js platforms/joomla/lib_gantry5/vendor/autoload.php
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+      - name: "Issue #2486: native Unicode outline persistence"
+        run: php tests/php85/issue-2486.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: "Issue #2894: emitted Font Awesome assets and icon rendering"
+        run: node tests/frontend/issue-2894.js platforms/joomla/lib_gantry5/vendor/autoload.php
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+      - name: "Issue #3419: debug stylesheet admission"
+        run: php tests/php85/issue-3419.php platforms/joomla/lib_gantry5/vendor/autoload.php .
       - name: Check icon catalogues on all supported CMS bootstraps
         run: php tests/php84/icon-catalogues.php
       - name: Run modern dependency and Twig integration checks

@@ -34,6 +34,9 @@ $output-bourbon-deprecation-warnings: false;
 // Forms
 @import "nucleus/forms";
 
+// Particle layout defaults shared by existing themes
+@import "nucleus/particles";
+
 // Utilities
 @import "nucleus/utilities";
 
