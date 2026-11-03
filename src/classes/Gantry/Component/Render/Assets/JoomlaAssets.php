@@ -17,11 +17,15 @@ final class JoomlaAssets
 {
     public static function head(WebAssetManager $manager, string $kind, array $records, string $critical = ''): void
     {
-        $handles = self::register($manager, $kind, $records, 'head');
+        self::register($manager, $kind, $records, 'head');
         if ($critical !== '' && $kind === 'style') {
             $first = null;
-            foreach ($handles as $handle => $record) { if (($record[':type'] ?? '') === 'file') { $first = $handle; break; } }
-            $manager->addInlineStyle($critical, ['name' => 'gantry.compiled.critical.' . hash('sha256', $critical), 'position' => 'before'], [], $first ? [$first] : []);
+            // Native CMS assets may precede Gantry's files in the sorted graph.
+            // Anchor before that first stylesheet without reordering any files.
+            foreach ($manager->getAssets('style', true) as $asset) {
+                if (!$asset->getOption('inline')) { $first = $asset->getName(); break; }
+            }
+            $manager->addInlineStyle($critical, ['name' => 'gantry.compiled.critical.' . hash('sha256', $critical), 'position' => 'before'], [], $first !== null ? [$first] : []);
         }
         // A footer dependency cannot execute before an active head consumer.
         self::assertHead($manager, $kind);

@@ -45,7 +45,8 @@ $styleFiles = array_filter($styles, static fn ($asset) => !$asset->getOption('in
 $check(count($styleFiles) === 2 && array_values($styleFiles)[0]->getUri(false) === '/compiled/a.css', 'native graph preserves Gantry CSS order');
 $check(!array_key_exists('media', array_values($styleFiles)[0]->getAttributes()), 'absent CSS media is not serialized by native WAM as media=null');
 $inlineStyles = $manager->filterOutInlineAssets($styles); $relation = $manager->getInlineRelation($inlineStyles);
-$check(count($relation[array_key_first($styleFiles)]['before'] ?? []) === 1, 'critical CSS is a native before relation');
+$check(count($relation['native.style']['before'] ?? []) === 1, 'critical CSS precedes the first actual native stylesheet, including files registered before Gantry');
+$check(array_map(static fn ($asset) => $asset->getUri(false), array_values($styles)) === ['/media/native.css', '/compiled/a.css', '/compiled/b.css'], 'adding critical CSS preserves the complete native and Gantry file order');
 JoomlaAssets::head($manager, 'script', [$file('/compiled/head.js', ['dependencies' => ['native'], 'element' => ['integrity' => 'sha384-test', 'crossorigin' => 'anonymous']])]);
 $head = $manager->getAssets('script', true);
 $check(array_key_first($head) === 'native' && count($head) === 2, 'native header dependencies remain authoritative');
@@ -85,10 +86,20 @@ if (!is_file($coreSource) || !is_file($argv[3] . '/Document/Renderer/Html/Styles
 $temporary = (realpath(sys_get_temp_dir()) ?: sys_get_temp_dir()) . '/g6-wam-render-' . bin2hex(random_bytes(8));
 mkdir($temporary, 0700);
 $remove = static function (string $path) use (&$remove): void { if (is_dir($path) && !is_link($path)) { foreach (new FilesystemIterator($path, FilesystemIterator::SKIP_DOTS) as $child) { $remove($child->getPathname()); } rmdir($path); } else { unlink($path); } };
+$criticalBeforeAll = static function (DOMDocument $dom, string $critical): bool {
+    $seen = 0;
+    foreach ($dom->getElementsByTagName('head')->item(0)->childNodes as $node) {
+        if (!$node instanceof DOMElement) { continue; }
+        if ($node->tagName === 'style' && trim($node->textContent) === $critical) { ++$seen; }
+        if ($node->tagName === 'link' && in_array('stylesheet', explode(' ', $node->getAttribute('rel')), true) && $seen !== 1) { return false; }
+    }
+    return $seen === 1;
+};
 try {
     mkdir($temporary . '/media/system/css', 0700, true);
     $corePath = $temporary . '/media/system/css/joomla-fontawesome.min.css';
     copy($coreSource, $corePath); touch($corePath, 1700000000);
+    copy($coreSource, $temporary . '/media/system/css/native-dependent.css');
     file_put_contents($temporary . '/origin-root.css', 'body{color:inherit}');
     define('JPATH_ROOT', $temporary); define('JPATH_PUBLIC', $temporary); define('GANTRY5_ROOT', $temporary);
     $loader->addClassMap(['Gantry\\Framework\\Document' => dirname(__DIR__, 2) . '/src/platforms/joomla/classes/Gantry/Framework/Document.php']);
@@ -125,8 +136,31 @@ try {
         $hrefs = []; foreach ($dom->getElementsByTagName('link') as $link) { $hrefs[] = $link->getAttribute('href'); }
         $check($hrefs === $expected, 'actual native StylesRenderer emits exact ordered same-origin and external URLs without duplicate core CSS: ' . ($prefix ?: '/') . ' got ' . json_encode($hrefs, JSON_UNESCAPED_SLASHES));
         $check(!str_contains($html, 'href="//media/') && !str_contains($html, 'href="http://media/') && substr_count($html, 'joomla-fontawesome.min.css') === 1, 'rendered core CSS never becomes host media and is emitted exactly once: ' . ($prefix ?: '/'));
-        $check(strpos($html, 'body{margin:0}') < strpos($html, 'compiled/fixture.css') && $manager->getAsset('style', 'native.core') === $nativeAsset, 'native WAM still owns inline placement, ordering and core handle identity: ' . ($prefix ?: '/'));
+        $check($criticalBeforeAll($dom, 'body{margin:0}') && $manager->getAsset('style', 'native.core') === $nativeAsset, 'native renderer emits critical CSS before every stylesheet link while preserving the native core identity: ' . ($prefix ?: '/'));
+
+        // No Gantry files: the pre-existing native dependency graph still supplies
+        // the first stylesheet anchor and keeps its original file order/objects.
+        $nativeOnly = $wam();
+        $nativeOnly->registerAndUseStyle('native.dependent', 'media/system/css/native-dependent.css', ['version' => false], [], ['0']);
+        $nativeOnly->registerAsset('style', '0', 'media/system/css/joomla-fontawesome.min.css', ['version' => false])->useAsset('style', '0');
+        $nativeCore = $nativeOnly->getAsset('style', '0');
+        $nativeDependent = $nativeOnly->getAsset('style', 'native.dependent');
+        JoomlaAssets::head($nativeOnly, 'style', [], 'body{margin:0}');
+        $nativeDocument = new HtmlDocument(['webAssetManager' => $nativeOnly, 'mediaversion' => 'fixture']);
+        $nativeHtml = (new StylesRenderer($nativeDocument))->render('styles');
+        $nativeDom = new DOMDocument(); $nativeDom->loadHTML('<html><head>' . $nativeHtml . '</head><body></body></html>');
+        $nativeHrefs = []; foreach ($nativeDom->getElementsByTagName('link') as $link) { $nativeHrefs[] = $link->getAttribute('href'); }
+        $check($criticalBeforeAll($nativeDom, 'body{margin:0}'), 'critical CSS precedes every native-only stylesheet without Gantry file records, including valid handle zero: ' . ($prefix ?: '/'));
+        $check($nativeHrefs === [$prefix . '/media/system/css/joomla-fontawesome.min.css', $prefix . '/media/system/css/native-dependent.css']
+            && $nativeOnly->getAsset('style', '0') === $nativeCore && $nativeOnly->getAsset('style', 'native.dependent') === $nativeDependent
+            && $nativeDependent->getDependencies() === ['0'], 'native-only stylesheet dependencies, order and object identities remain unchanged: ' . ($prefix ?: '/'));
     }
+    $empty = $wam();
+    JoomlaAssets::head($empty, 'style', [], 'body{margin:0}');
+    $emptyHtml = (new StylesRenderer(new HtmlDocument(['webAssetManager' => $empty])))->render('styles');
+    $emptyDom = new DOMDocument(); $emptyDom->loadHTML('<html><head>' . $emptyHtml . '</head><body></body></html>');
+    $check($criticalBeforeAll($emptyDom, 'body{margin:0}') && $emptyDom->getElementsByTagName('link')->length === 0,
+        'with no existing stylesheet files, critical CSS renders once without inventing a request');
     Uri::reset();
 } finally { $remove($temporary); }
 echo "PASS $checks native Joomla WAM checks on PHP " . PHP_VERSION . "\n";
