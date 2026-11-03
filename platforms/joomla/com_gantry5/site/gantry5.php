@@ -100,6 +100,15 @@ if ($params->get('robots')) {
     $document->setMetaData('robots', $params->get('robots'));
 }
 
+if ($params->get('show_page_heading')) {
+    $heading = trim((string) $params->get('page_heading', $params->get('page_title', $menuItem->title)));
+    if ($heading !== '') {
+        echo '<div class="page-header"><h1>'
+            . htmlspecialchars($heading, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+            . '</h1></div>';
+    }
+}
+
 /** @var object $params */
 if ($params->get('particle')) {
     $data = json_decode($params->get('particle'), true);
@@ -107,7 +116,7 @@ if ($params->get('particle')) {
     $data = false;
 }
 if (!$data) {
-    // No component output.
+    // No configured particle.
     return;
 }
 
