@@ -93,7 +93,7 @@
         {% set rel = rel ? ' rel="' ~ rel|e('html_attr') ~ '"' %}
 
         <li class="g-menu-item g-menu-item-type-{{ item.type }} g-menu-item-{{ item.id }}{% if not item.dropdown_hide %}{{ parent }}{% endif %}{{ active }}{{ dropdown }} {% if item.url and parent %}{% if not item.dropdown_hide %}g-menu-item-link-parent{% endif %}{% endif %} {{ item.class|default('') }}"
-                {{- self.getCustomWidth(item, menu, 'item', dropdown) }}
+                {{- self.getCustomWidth(item, menu, 'item', dropdown, null) }}
                 {%- if context.particle.renderTitles|default(0) %} title="{{ item.title }}"{% endif %}{{listAttributes|raw}}>
             {% if item.url %}
                 <a class="g-menu-item-container{{ item.anchor_class ? ' ' ~ item.anchor_class }}" href="{{ item.url }}{{ item.hash }}"{{ (title ~ label ~ target ~ rel ~ linkAttributes)|raw }}>
@@ -178,7 +178,7 @@
 {% if menu.root.count() %}
     <nav class="g-main-nav"{{ particle.mobileTarget ? ' data-g-mobile-target' : '' }} data-g-hover-expand="{{ particle.hoverExpand|default('true') ? 'true': 'false' }}">
         <ul class="g-toplevel">
-            {{ macro.displayItems(menu.root, menu, _context) }}
+            {{ macro.displayItems(menu.root, menu, _context, null, null) }}
         </ul>
     </nav>
 {% endif %}
