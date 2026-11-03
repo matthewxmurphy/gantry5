@@ -711,7 +711,7 @@ class Menu extends AbstractMenu
         if (!$link) {
             $url = false;
         } elseif ((strpos($link, 'index.php?') !== false) && strcasecmp(substr($link, 0, 4), 'http')) {
-            $url = Route::_($link, false, $params->get('secure'));
+            $url = Route::_($link, false, (int) $params->get('secure'));
         } else {
             $url = Route::_($link, false);
         }
