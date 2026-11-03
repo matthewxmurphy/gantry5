@@ -12,9 +12,14 @@
  */
 defined('_JEXEC') or die;
 
-use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Document\HtmlDocument;
 use Joomla\CMS\Event\Application\BeforeApiRouteEvent;
+use Joomla\CMS\Event\Model\AfterSaveEvent;
+use Joomla\CMS\Event\Model\BeforeDeleteEvent;
+use Joomla\CMS\Event\Model\BeforeSaveEvent;
+use Joomla\CMS\Event\Model\PrepareDataEvent;
+use Joomla\CMS\Event\Model\PrepareFormEvent;
+use Joomla\CMS\Event\Plugin\AjaxEvent;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Plugin\CMSPlugin;
@@ -22,7 +27,9 @@ use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\CMS\Table\Table;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
-use Joomla\Event\DispatcherInterface;
+use Joomla\Event\AbstractEvent;
+use Joomla\Event\Event;
+use Joomla\Event\SubscriberInterface;
 use Joomla\Registry\Registry;
 use Joomla\Router\Route as ApiRoute;
 use Gantry5\Loader;
@@ -50,49 +57,101 @@ if (!class_exists(CMSPlugin::class)) {
 /**
  * Class plgSystemGantry5
  */
-class plgSystemGantry5 extends CMSPlugin
+class plgSystemGantry5 extends CMSPlugin implements SubscriberInterface
 {
     protected $autoloadLanguage = true;
 
-    /** @var CMSApplication */
-    protected $app;
     protected $styles;
     protected $modules;
 
-    /**
-     * plgSystemGantry5 constructor.
-     * @param DispatcherInterface $subject
-     * @param array $config
-     * @throws Exception
-     */
-    public function __construct(&$subject, $config = array())
+    public static function getSubscribedEvents(): array
     {
-        $this->_name = isset($config['name']) ? $config['name'] : 'gantry5';
-        $this->_type = isset($config['type']) ? $config['type'] : 'system';
+        return [
+            'onGantryGlobalConfig' => 'handleGlobalConfig',
+            'onBeforeApiRoute' => 'onBeforeApiRoute',
+            'onAfterRoute' => 'onAfterRoute',
+            'onAfterDispatch' => 'onAfterDispatch',
+            'onAfterRender' => 'onAfterRender',
+            'onRenderModule' => 'handleRenderModule',
+            'onAjaxParticle' => 'handleAjaxParticle',
+            'onAfterDispatchSiteAdmin' => 'onAfterDispatchSiteAdmin',
+            'onGantry5SaveConfig' => 'handleSaveConfig',
+            'onContentBeforeSave' => 'handleContentBeforeSave',
+            'onExtensionBeforeSave' => 'handleExtensionBeforeSave',
+            'onExtensionAfterSave' => 'handleExtensionAfterSave',
+            'onExtensionBeforeDelete' => 'handleExtensionBeforeDelete',
+            'onContentPrepareData' => 'handleContentPrepareData',
+            'onContentPrepareForm' => 'handleContentPrepareForm',
+        ];
+    }
 
-        $this->app = Factory::getApplication();
+    public function handleGlobalConfig(AbstractEvent $event): void
+    {
+        // The existing Gantry emitter passes the global configuration by reference.
+        $arguments = $event->getArguments();
+        unset($arguments['result']);
+        $this->onGantryGlobalConfig(...array_values($arguments));
+    }
 
-        $this->loadLanguage('plg_system_gantry5.sys');
+    public function handleRenderModule(AbstractEvent $event): void
+    {
+        // Preserve reference arguments for Gantry's legacy module dispatcher.
+        $arguments = $event->getArguments();
+        unset($arguments['result']);
+        $this->onRenderModule(...array_values($arguments));
+    }
 
-        // Use Joomla's class loader instead of JLoader which is deprecated in Joomla 5
-        require_once JPATH_LIBRARIES . '/gantry5/src/Loader.php';
-
-        // Detect Gantry Framework or fail gracefully.
-        if (!class_exists('Gantry5\Loader')) {
-            if ($this->app->isClient('administrator')) {
-                $this->app->enqueueMessage(
-                    Text::sprintf('PLG_SYSTEM_GANTRY5_LIBRARY_MISSING', Text::_('PLG_SYSTEM_GANTRY5')),
-                    'warning'
-                );
-            }
-            return;
+    public function handleAjaxParticle(AjaxEvent $event): void
+    {
+        $result = $this->onAjaxParticle();
+        if ($result !== null) {
+            $event->addResult($result);
         }
+    }
 
-        // Preserve Joomla/PHP diagnostic reporting even without the optional
-        // Gantry debugger. Silencing all errors hides real runtime failures.
+    public function handleSaveConfig(Event $event): void
+    {
+        $arguments = $event->getArguments();
+        $results = $arguments['result'] ?? [];
+        unset($arguments['result']);
+        $result = $this->onGantry5SaveConfig(...array_values($arguments));
+        if ($result !== null) {
+            $results[] = $result;
+            $event->setArgument('result', $results);
+        }
+    }
 
-        // Finish initialization and register all the events.
-        parent::__construct($subject, $config);
+    public function handleContentBeforeSave(BeforeSaveEvent $event): void
+    {
+        $this->onContentBeforeSave($event->getContext(), $event->getItem(), $event->getIsNew(), $event->getArguments()['data'] ?? []);
+    }
+
+    public function handleExtensionBeforeSave(BeforeSaveEvent $event): void
+    {
+        $this->onExtensionBeforeSave($event->getContext(), $event->getItem(), $event->getIsNew());
+    }
+
+    public function handleExtensionAfterSave(AfterSaveEvent $event): void
+    {
+        $this->onExtensionAfterSave($event->getContext(), $event->getItem(), $event->getIsNew());
+    }
+
+    public function handleExtensionBeforeDelete(BeforeDeleteEvent $event): void
+    {
+        $result = $this->onExtensionBeforeDelete($event->getContext(), $event->getItem());
+        if ($result !== null) {
+            $event->addResult($result);
+        }
+    }
+
+    public function handleContentPrepareData(PrepareDataEvent $event): void
+    {
+        $this->onContentPrepareData($event->getContext(), $event->getData());
+    }
+
+    public function handleContentPrepareForm(PrepareFormEvent $event): void
+    {
+        $this->onContentPrepareForm($event->getForm(), $event->getData());
     }
 
     /**
@@ -134,10 +193,10 @@ class plgSystemGantry5 extends CMSPlugin
 
     public function onAfterRoute()
     {
-        if ($this->app->isClient('site')) {
+        if ($this->getApplication()->isClient('site')) {
             $this->onAfterRouteSite();
 
-        } elseif ($this->app->isClient('administrator')) {
+        } elseif ($this->getApplication()->isClient('administrator')) {
             $this->onAfterRouteAdmin();
         }
     }
@@ -154,10 +213,10 @@ class plgSystemGantry5 extends CMSPlugin
 
     public function onAfterRender()
     {
-        if ($this->app->isClient('site') && class_exists('Gantry\Framework\Gantry')) {
+        if ($this->getApplication()->isClient('site') && class_exists('Gantry\Framework\Gantry')) {
             $this->onAfterRenderSite();
 
-        } elseif ($this->app->isClient('administrator')) {
+        } elseif ($this->getApplication()->isClient('administrator')) {
             $this->onAfterRenderAdmin();
         }
     }
@@ -168,7 +227,7 @@ class plgSystemGantry5 extends CMSPlugin
      */
     public function onRenderModule(&$module, &$attribs)
     {
-        if (!$this->app->isClient('site') || !class_exists('Gantry\Framework\Gantry')) {
+        if (!$this->getApplication()->isClient('site') || !class_exists('Gantry\Framework\Gantry')) {
             return;
         }
 
@@ -191,11 +250,11 @@ class plgSystemGantry5 extends CMSPlugin
      */
     public function onAjaxParticle()
     {
-        if (!$this->app->isClient('site') || !class_exists('Gantry\Framework\Gantry')) {
+        if (!$this->getApplication()->isClient('site') || !class_exists('Gantry\Framework\Gantry')) {
             return null;
         }
 
-        $input = $this->app->input;
+        $input = $this->getApplication()->getInput();
         $format = strtolower($input->getCmd('format', 'html'));
 
         if (!in_array($format, ['json', 'raw', 'debug'], true)) {
@@ -230,7 +289,7 @@ class plgSystemGantry5 extends CMSPlugin
 
         if ($identifier === 'main-particle') {
             $type = $identifier;
-            $menu = $this->app->getMenu();
+            $menu = $this->getApplication()->getMenu();
             $menuItem = $menu ? $menu->getActive() : null;
             $params = $menuItem ? $menuItem->getParams() : new Registry;
 
@@ -284,7 +343,7 @@ class plgSystemGantry5 extends CMSPlugin
      */
     private function onAfterRouteSite()
     {
-        $templateName = $this->app->getTemplate();
+        $templateName = $this->getApplication()->getTemplate();
 
         if (!$this->isGantryTemplate($templateName)) {
             return;
@@ -357,7 +416,7 @@ class plgSystemGantry5 extends CMSPlugin
      */
     private function onAfterRouteAdmin()
     {
-        $input = $this->app->input;
+        $input = $this->getApplication()->getInput();
 
         $option = $input->getCmd('option');
         $task   = $input->getCmd('task');
@@ -381,9 +440,9 @@ class plgSystemGantry5 extends CMSPlugin
                     if ($task === 'style.edit') {
                         $theme = reset($selected);
                         $id = key($selected);
-                    $session = $this->app->getSession();
+                    $session = $this->getApplication()->getSession();
                     $token = $session::getFormToken();
-                        $this->app->redirect("index.php?option=com_gantry5&view=configurations/{$id}/layout&theme={$theme}&{$token}=1");
+                        $this->getApplication()->redirect("index.php?option=com_gantry5&view=configurations/{$id}/layout&theme={$theme}&{$token}=1");
                     }
                 }
             }
@@ -402,7 +461,7 @@ class plgSystemGantry5 extends CMSPlugin
 
         $theme = $gantry['theme'];
 
-        $document = $this->app->getDocument();
+        $document = $this->getApplication()->getDocument();
         if ($document instanceof HtmlDocument) {
             $document->setHtml5(true);
         }
@@ -417,13 +476,13 @@ class plgSystemGantry5 extends CMSPlugin
     {
         $gantry = Gantry::instance();
 
-        $html = $this->app->getBody();
+        $html = $this->getApplication()->getBody();
 
         /** @var Document $document */
         $document = $gantry['document'];
 
         // Only filter our streams. If there's an error (bad UTF8), fallback with original output.
-        $this->app->setBody($document::urlFilter($html, false, 0, true) ?: $html);
+        $this->getApplication()->setBody($document::urlFilter($html, false, 0, true) ?: $html);
     }
 
     /**
@@ -431,19 +490,19 @@ class plgSystemGantry5 extends CMSPlugin
      */
     private function onAfterRenderAdmin()
     {
-        $document = $this->app->getDocument();
+        $document = $this->getApplication()->getDocument();
         $type   = $document->getType();
 
-        $option = $this->app->input->getString('option');
-        $view   = $this->app->input->getString('view', 'g5');
-        $task   = $this->app->input->getString('task');
+        $option = $this->getApplication()->getInput()->getString('option');
+        $view   = $this->getApplication()->getInput()->getString('view', 'g5');
+        $task   = $this->getApplication()->getInput()->getString('task');
 
         if (($option === 'com_templates' || $option === 'com_advancedtemplates') && ($view === 'g5' || $view === 'styles') && !$task && $type === 'html') {
             $this->styles = $this->getStyles();
 
-            $body = preg_replace_callback('/(<a\s[^>]*href=")([^"]*)("[^>]*>)(.*)(<\/a>)/siU', array($this, 'appendHtml'), $this->app->getBody());
+            $body = preg_replace_callback('/(<a\s[^>]*href=")([^"]*)("[^>]*>)(.*)(<\/a>)/siU', array($this, 'appendHtml'), $this->getApplication()->getBody());
 
-            $this->app->setBody($body);
+            $this->getApplication()->setBody($body);
         }
 
         if (($option === 'com_modules' || $option === 'com_advancedmodules') && (($view === 'g5' || $view === 'modules') || empty($view)) && $type === 'html') {
@@ -457,7 +516,7 @@ class plgSystemGantry5 extends CMSPlugin
 
             if (count($data) > 0) {
                 $this->modules = array();
-                $body = $this->app->getBody();
+                $body = $this->getApplication()->getBody();
 
                 foreach ($data as $module) {
                     $params   = json_decode($module->params, false);
@@ -473,7 +532,7 @@ class plgSystemGantry5 extends CMSPlugin
                 }
 
 
-                $this->app->setBody($body);
+                $this->getApplication()->setBody($body);
             }
         }
     }
@@ -510,7 +569,7 @@ class plgSystemGantry5 extends CMSPlugin
         }
 
         // Trigger the onContentBeforeSave event.
-        $result = $this->app->triggerEvent('onExtensionBeforeSave', array($name, $table, false));
+        $result = $this->getApplication()->triggerEvent('onExtensionBeforeSave', array($name, $table, false));
         if (in_array(false, $result, true)) {
             throw new RuntimeException($table->getError());
         }
@@ -527,7 +586,7 @@ class plgSystemGantry5 extends CMSPlugin
         $this->params = $params;
 
         // Trigger the onExtensionAfterSave event.
-        $this->app->triggerEvent('onExtensionAfterSave', array($name, $table, false));
+        $this->getApplication()->triggerEvent('onExtensionAfterSave', array($name, $table, false));
 
         return true;
     }
@@ -635,7 +694,7 @@ class plgSystemGantry5 extends CMSPlugin
         try {
             $outlines->delete($table->id, false);
         } catch (Exception $e) {
-            $this->app->enqueueMessage($e->getMessage(), 'error');
+            $this->getApplication()->enqueueMessage($e->getMessage(), 'error');
             return false;
         }
 
