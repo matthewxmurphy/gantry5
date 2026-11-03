@@ -99,7 +99,8 @@ try {
         if ($record === false) { throw new RuntimeException('The ZIP directory is incomplete.'); }
         $name = $record['name'];
         if (str_ends_with($name, '/')) { continue; }
-        if (!str_starts_with($name, 'libraries/vendor/') && !str_starts_with($name, 'libraries/src/') && $name !== 'LICENSE.txt') { continue; }
+        if (!str_starts_with($name, 'libraries/vendor/') && !str_starts_with($name, 'libraries/src/')
+            && $name !== 'media/system/css/joomla-fontawesome.min.css' && $name !== 'LICENSE.txt') { continue; }
         if ($name[0] === '/' || str_contains($name, '\\') || str_contains($name, "\0") || preg_match('~(?:^|/)\.{1,2}(?:/|$)~', $name)) {
             throw new RuntimeException('The selected ZIP path is unsafe.');
         }
@@ -116,7 +117,8 @@ try {
         $entries[$name] = ['bytes' => strlen($content), 'sha256' => hash('sha256', $content), 'index' => $i];
     }
     foreach (['libraries/vendor/autoload.php', 'libraries/src/WebAsset/WebAssetManager.php', 'libraries/src/Event/CoreEventAware.php',
-        'libraries/src/Access/Access.php', 'libraries/src/Factory.php', 'libraries/src/Version.php', 'LICENSE.txt'] as $required) {
+        'libraries/src/Access/Access.php', 'libraries/src/Factory.php', 'libraries/src/Version.php',
+        'media/system/css/joomla-fontawesome.min.css', 'LICENSE.txt'] as $required) {
         if (!isset($entries[$required])) { throw new RuntimeException('The pinned archive lacks a required native fixture file.'); }
     }
     $manifest = ['schema' => 1, 'joomla' => JOOMLA_FIXTURE_VERSION, 'url' => JOOMLA_FIXTURE_URL,

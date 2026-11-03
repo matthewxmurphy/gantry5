@@ -102,7 +102,9 @@ final class JoomlaAssets
             if (($record[':type'] ?? '') === 'file') {
                 if ($previous !== null) { $dependencies[] = $previous; }
                 if ($manager->assetExists($kind, $handle) && $manager->getAsset($kind, $handle)->getOption('gantry.location') !== $location) { throw new \RuntimeException('Gantry must not replace a native Web Asset handle.'); }
-                $manager->registerAsset($kind, $handle, (string) $record[$kind === 'style' ? 'href' : 'src'], $options, $attributes, array_values(array_unique($dependencies)));
+                $asset = new JoomlaResolvedAsset($handle, (string) $record[$kind === 'style' ? 'href' : 'src'],
+                    $options + ['type' => $kind], $attributes, array_values(array_unique($dependencies)));
+                $manager->registerAsset($kind, $asset);
                 $manager->useAsset($kind, $handle);
                 $previous = $handle;
             } else {

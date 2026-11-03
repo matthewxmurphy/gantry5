@@ -7,9 +7,15 @@
  */
 declare(strict_types=1);
 use Gantry\Component\Render\Assets\JoomlaAssets;
+use Gantry\Component\Content\Block\HtmlBlock;
+use Gantry\Framework\Gantry;
+use Joomla\CMS\Document\HtmlDocument;
+use Joomla\CMS\Document\Renderer\Html\StylesRenderer;
+use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\WebAsset\WebAssetManager;
 use Joomla\CMS\WebAsset\WebAssetRegistry;
 use Joomla\CMS\WebAsset\Exception\InvalidActionException;
+use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 
 if (PHP_VERSION_ID < 80500 || PHP_VERSION_ID >= 80600 || !isset($argv[3]) || !is_file($argv[1]) || !is_file($argv[2]) || !is_file($argv[3] . '/WebAsset/WebAssetManager.php')) { throw new RuntimeException('Use PHP8.5, Gantry/Joomla vendor autoloaders and the native Joomla6.2 libraries/src directory.'); }
 $loader = require $argv[1]; $loader->addPsr4('Gantry\\', dirname(__DIR__, 2) . '/src/classes/Gantry', true);
@@ -20,7 +26,10 @@ foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($argv[3], 
 }
 $native->addClassMap($map);
 define('_JEXEC', 1); define('JDEBUG', false);
-error_reporting(E_ALL); set_error_handler(static function (int $severity, string $message, string $file, int $line): never { throw new ErrorException($message, 0, $severity, $file, $line); });
+error_reporting(E_ALL); set_error_handler(static function (int $severity, string $message, string $file, int $line): bool {
+    if (error_reporting() & $severity) { throw new ErrorException($message, 0, $severity, $file, $line); }
+    return false;
+});
 $checks = 0;
 $check = static function (bool $condition, string $message) use (&$checks): void { if (!$condition) { throw new RuntimeException('Failed: ' . $message); } ++$checks; };
 $wam = static fn (): WebAssetManager => new WebAssetManager(new WebAssetRegistry());
@@ -67,4 +76,57 @@ $check($refused && $manager->getAsset('script', 'native')->getUri(false) === '/n
 $manager = $wam();
 $deferred = JoomlaAssets::footer($manager, [$file('/a.js', ['defer' => true]), $file('/b.js', ['defer' => true])]);
 $check(count($deferred) === 2 && substr_count(implode('', $deferred), ' defer') === 2, 'declared dependency-ordered defer preserved');
+
+// Exercise getUri(true) through the actual Joomla renderer, rather than only
+// inspecting stored getUri(false) values. Native mediaPath would otherwise turn
+// an already resolved /media/... path into protocol-relative //media/....
+$coreSource = dirname(rtrim($argv[3], '/'), 2) . '/media/system/css/joomla-fontawesome.min.css';
+if (!is_file($coreSource) || !is_file($argv[3] . '/Document/Renderer/Html/StylesRenderer.php')) { throw new RuntimeException('Prepare the pinned full Joomla fixture, including its official Font Awesome stylesheet.'); }
+$temporary = (realpath(sys_get_temp_dir()) ?: sys_get_temp_dir()) . '/g6-wam-render-' . bin2hex(random_bytes(8));
+mkdir($temporary, 0700);
+$remove = static function (string $path) use (&$remove): void { if (is_dir($path) && !is_link($path)) { foreach (new FilesystemIterator($path, FilesystemIterator::SKIP_DOTS) as $child) { $remove($child->getPathname()); } rmdir($path); } else { unlink($path); } };
+try {
+    mkdir($temporary . '/media/system/css', 0700, true);
+    $corePath = $temporary . '/media/system/css/joomla-fontawesome.min.css';
+    copy($coreSource, $corePath); touch($corePath, 1700000000);
+    file_put_contents($temporary . '/origin-root.css', 'body{color:inherit}');
+    define('JPATH_ROOT', $temporary); define('JPATH_PUBLIC', $temporary); define('GANTRY5_ROOT', $temporary);
+    $loader->addClassMap(['Gantry\\Framework\\Document' => dirname(__DIR__, 2) . '/src/platforms/joomla/classes/Gantry/Framework/Document.php']);
+    $gantry = new Gantry();
+    $locator = new UniformResourceLocator($temporary);
+    $gantry['locator'] = static fn () => $locator;
+    $gantry['document'] = new \Gantry\Framework\Document();
+    (new ReflectionProperty(Gantry::class, 'instance'))->setValue(null, $gantry);
+    $check(hash_file('sha256', $corePath) === hash_file('sha256', $coreSource) && filesize($corePath) > 100000, 'URL regression uses the actual pinned Joomla core stylesheet');
+    foreach (['', '/cms'] as $prefix) {
+        (new ReflectionProperty(Uri::class, 'root'))->setValue(null, ['prefix' => 'https://joomlamafia.example', 'path' => $prefix]);
+        $manager = $wam();
+        $manager->registerAndUseStyle('native.core', 'media/system/css/joomla-fontawesome.min.css', ['version' => false]);
+        $block = new HtmlBlock();
+        $inputs = [
+            'media/system/css/joomla-fontawesome.min.css',
+            $prefix . '/compiled/fixture.css?g6=fixture',
+            '/origin-root.css',
+            'https://joomlamafia.example' . $prefix . '/absolute.css',
+            '//cdn.example/explicit.css',
+            'https://cdn.example/absolute.css',
+        ];
+        foreach ($inputs as $uri) { $block->addStyle(['href' => $uri]); }
+        $records = array_values($block->getStyles());
+        $resolved = array_column($records, 'href');
+        $expected = $inputs; $expected[0] = $prefix . '/media/system/css/joomla-fontawesome.min.css';
+        $check($resolved === $expected, 'native Gantry document preserves root/subdirectory/absolute/protocol-relative URL meanings: ' . ($prefix ?: '/'));
+        JoomlaAssets::head($manager, 'style', $records, 'body{margin:0}');
+        $nativeAsset = $manager->getAsset('style', 'native.core');
+        $check($nativeAsset::class === \Joomla\CMS\WebAsset\WebAssetItem::class && $nativeAsset->getUri(false) === $inputs[0], 'mixed queue retains the original native core asset and URI: ' . ($prefix ?: '/'));
+        $doc = new HtmlDocument(['webAssetManager' => $manager, 'mediaversion' => 'fixture']);
+        $html = (new StylesRenderer($doc))->render('styles');
+        $dom = new DOMDocument(); $dom->loadHTML('<html><head>' . $html . '</head><body></body></html>');
+        $hrefs = []; foreach ($dom->getElementsByTagName('link') as $link) { $hrefs[] = $link->getAttribute('href'); }
+        $check($hrefs === $expected, 'actual native StylesRenderer emits exact ordered same-origin and external URLs without duplicate core CSS: ' . ($prefix ?: '/') . ' got ' . json_encode($hrefs, JSON_UNESCAPED_SLASHES));
+        $check(!str_contains($html, 'href="//media/') && !str_contains($html, 'href="http://media/') && substr_count($html, 'joomla-fontawesome.min.css') === 1, 'rendered core CSS never becomes host media and is emitted exactly once: ' . ($prefix ?: '/'));
+        $check(strpos($html, 'body{margin:0}') < strpos($html, 'compiled/fixture.css') && $manager->getAsset('style', 'native.core') === $nativeAsset, 'native WAM still owns inline placement, ordering and core handle identity: ' . ($prefix ?: '/'));
+    }
+    Uri::reset();
+} finally { $remove($temporary); }
 echo "PASS $checks native Joomla WAM checks on PHP " . PHP_VERSION . "\n";
