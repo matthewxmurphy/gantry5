@@ -1,3 +1,14 @@
+# 6.0.3
+
+- Rewrite Phing's implicit nullable temporary-file parameter before building packages.
+- Use Twig's native date conversion API in the Joomla date filter.
+- Mark unpublished Joomla menu items in Gantry's editor.
+- Pass an integer TLS mode to Joomla routing.
+- Use Joomla's native query factory for menu and style reads.
+- Use Joomla's request input accessor.
+- Pass explicit optional arguments to Twig menu macros.
+- Register the Joomla system plugin through native DI and explicit event subscriptions.
+
 # 6.0.2
 
 - Publish the verified rc.2 runtime with final Joomla package, framework, and API version metadata.
