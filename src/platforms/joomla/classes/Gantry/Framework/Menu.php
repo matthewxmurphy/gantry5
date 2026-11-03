@@ -697,7 +697,8 @@ class Menu extends AbstractMenu
             }
         }
 
-        $item = new Item($this, $properties);
+        $unpublished = isset($menuItem->published) && (int) $menuItem->published === 0;
+        $item = new Item($this, $properties, $unpublished);
 
         $link = $item->link;
         if ($item->type === 'url') {
@@ -855,7 +856,7 @@ class Menu extends AbstractMenu
             }
             
             $query = $db->getQuery(true)
-                ->select('m.id, m.menutype, m.title, m.alias, m.note, m.path AS route, m.link, m.type, m.level, m.language')
+                ->select('m.id, m.menutype, m.title, m.alias, m.note, m.path AS route, m.link, m.type, m.level, m.language, m.published')
                 ->select($db->quoteName('m.browserNav') . ', m.access, m.params, m.home, m.img, m.template_style_id, m.component_id, m.parent_id')
                 ->select('e.element as component')
                 ->from('#__menu AS m')
@@ -883,7 +884,7 @@ class Menu extends AbstractMenu
                 $cache = Factory::getContainer()->get(\Joomla\CMS\Cache\CacheControllerFactoryInterface::class)
                     ->createCacheController('callback', ['defaultgroup' => 'com_menus']);
 
-                $items = $cache->get($loader, [], md5(get_class($this) . $menutype), false);
+                $items = $cache->get($loader, [], md5(get_class($this) . ':published:' . $menutype), false);
             } catch (\Exception $e) {
                 // Fallback for Joomla 4 or if cache factory fails
                 $items = $loader();
