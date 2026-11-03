@@ -45,5 +45,8 @@
         <div id="gantry-swagger-ui" aria-label="Gantry API operations"></div>
         <script type="application/json" id="gantry-openapi-spec">{{ api_spec_json|raw }}</script>
         <noscript>Enable JavaScript to use Swagger UI, or open the OpenAPI JSON link.</noscript>
+        {% if api_available %}
+            {% include '@gantry-admin/pages/api-extension-inventory.html.twig' %}
+        {% endif %}
     </div>
 {% endblock %}

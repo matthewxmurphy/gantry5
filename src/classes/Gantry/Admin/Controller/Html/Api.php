@@ -20,7 +20,12 @@ class Api extends HtmlController
         $this->requireAdministrator();
         $platform = $this->container['platform']->getName();
         $this->params['api_available'] = $platform === 'joomla';
-        $this->params['api_spec_json'] = json_encode($this->specification(), JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        $specification = $this->specification();
+        $this->params['api_spec_json'] = json_encode($specification, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        if ($platform === 'joomla') {
+            $database = \Joomla\CMS\Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class);
+            $this->params['api_extension_inventory'] = \Gantry\Joomla\ExtensionApiInventory::read($database, $specification);
+        }
         $response = new HtmlResponse($this->render('@gantry-admin/pages/api.html.twig', $this->params));
         $response->setHeader('Cache-Control', 'private, no-store');
         return $response;

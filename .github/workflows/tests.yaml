@@ -80,6 +80,8 @@ jobs:
         run: php tests/php85/render-assets.php platforms/joomla/lib_gantry5/vendor/autoload.php .
       - name: Prepare pinned native Joomla test libraries
         run: php tests/php85/prepare-joomla-fixture.php --directory="$RUNNER_TEMP/gantry-joomla-6.2.0"
+      - name: Run native Joomla extension API inventory checks
+        run: php tests/php85/joomla-extension-api-inventory.php platforms/joomla/lib_gantry5/vendor/autoload.php "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/vendor/autoload.php"
       - name: Run native Joomla Web Asset Manager checks
         run: php tests/php85/joomla-render-assets.php platforms/joomla/lib_gantry5/vendor/autoload.php "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/vendor/autoload.php" "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/src"
       - name: Run native Joomla bootstrap and source-free theme admission checks

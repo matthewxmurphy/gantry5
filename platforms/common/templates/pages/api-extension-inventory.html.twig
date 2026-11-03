@@ -1,0 +1,29 @@
+<section aria-labelledby="gantry-api-inventory-title">
+    <h2 id="gantry-api-inventory-title">Extension API inventory</h2>
+    <p>Installed Joomla extensions and the API evidence available to Gantry. A detected Web Services plugin does not identify its routes, authentication or permissions.</p>
+    <ul>
+        {% for extension in api_extension_inventory %}
+            <li>
+                <strong>{{ extension.name|e }}</strong>
+                <code>{{ extension.type|e }}{% if extension.folder %}/{{ extension.folder|e }}{% endif %}/{{ extension.element|e }} #{{ extension.id|e }}</code>
+                {% if extension.version is not null %}Version {{ extension.version|e }}.{% endif %}
+                {{ extension.enabled ? 'Enabled.' : 'Disabled.' }}
+                {% if extension.state == 'documented' %}
+                    Documented.
+                    <a href="{{ gantry.route('api', 'openapi')|e('html_attr') }}">OpenAPI JSON</a>.
+                    Joomla API token and Gantry settings-administrator permission.
+                    <details>
+                        <summary>Documented operations</summary>
+                        <ul>
+                            {% for operation in extension.operations %}<li><code>{{ operation|e }}</code></li>{% endfor %}
+                        </ul>
+                    </details>
+                {% elseif extension.state == 'discovered' %}
+                    Discovered Web Services provider. Schema and access details unverified.
+                {% else %}
+                    None declared in this inventory.
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</section>
