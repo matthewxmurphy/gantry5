@@ -31,6 +31,12 @@ final class BundleRuntime
         foreach ($manifest['data'] as $key => $entry) {
             if (!is_string($key) || !preg_match('/\A[a-z_]+\z/D', $key) || !self::descriptor($entry)) { self::fail('The production artifact map is malformed.'); }
         }
+        if (array_key_exists('preset_names', $manifest)) {
+            if (!is_array($manifest['preset_names'])) { self::fail('The production preset membership map is invalid.'); }
+            foreach ($manifest['preset_names'] as $present) {
+                if ($present !== true) { self::fail('The production preset membership map is invalid.'); }
+            }
+        }
         if (array_key_exists('particle_configs', $manifest) && $manifest['particle_configs'] !== true) {
             self::fail('The production particle configuration capability is invalid.');
         }
@@ -104,6 +110,9 @@ final class BundleRuntime
     public function root(): string { return $this->directory; }
     public function theme(): string { return $this->manifest['theme']; }
     public function revision(): string { return $this->manifest['revision']; }
+
+    /** Membership only; full preset readers retain their native frozen artifact. */
+    public function presetNames(): ?array { return $this->manifest['preset_names'] ?? null; }
 
     public function data(string $key): array
     {

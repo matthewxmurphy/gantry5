@@ -79,7 +79,7 @@ try {
     file_put_contents($themeRoot . '/config/20/styles.yaml', "accent:\n  color-1: '#ee4b2b'\n");
     $themeYaml = "details:\n  name: JoomlaMafia Hydrogen fixture\n  version: 6.0.2-rc.1\nconfiguration:\n  dependencies:\n    gantry: 6.0.1\n  css:\n    compiler: '\\Gantry\\Component\\Stylesheet\\ScssCompiler'\n    target: gantry-theme://css-compiled\n    paths: [gantry-theme://scss]\n    files: [hydrogen]\n";
     file_put_contents($themeRoot . '/gantry/theme.yaml', $themeYaml);
-    file_put_contents($themeRoot . '/gantry/presets.yaml', "preset1:\n  name: JoomlaMafia palette\n");
+    file_put_contents($themeRoot . '/gantry/presets.yaml', "preset1:\n  name: JoomlaMafia palette\n7:\n  name: Numeric palette\n'01':\n  name: String palette\nnull-preset: null\nfalse-preset: false\nzero-preset: 0\n");
     file_put_contents($themeRoot . '/scss/hydrogen.scss', 'body { color: $accent-color-1; .g-container { width: 88%; } }');
     file_put_contents($temporary . '/engine/css-compiled/nucleus.css', 'html { box-sizing: border-box; } body { margin: 0; }');
     file_put_contents($temporary . '/assets/css/extra.css', "/*! Fixture asset license */\n.g-grid { display: flex; }\n");
@@ -215,6 +215,91 @@ try {
         $validPublished = $validPublished && is_file($path) && filesize($path) === $bytes && hash_file('sha256', $path) === pathinfo($path, PATHINFO_FILENAME);
     }
     $expect($validPublished, 'every actual published asset/combination has exact bytes and its content-addressed filename');
+    // Exercise the actual native preset selector against its source-mode path.
+    $presetManifest = require $runtimeA->root() . '/bundle.php';
+    $expect($presetManifest['preset_names'] === ['preset1' => true, 7 => true, '01' => true, 'false-preset' => true, 'zero-preset' => true], 'real compiler emits native isset membership, excluding null while retaining numeric/false/zero entries');
+    $presetProperty = new ReflectionProperty($theme, 'preset');
+    $presetLoaded = static fn (BundleRuntime $runtime): bool => array_key_exists($presetManifest['data']['presets']['file'], (new ReflectionProperty(BundleRuntime::class, 'loaded'))->getValue($runtime));
+    foreach (['preset1', 'missing', 'null-preset', 'false-preset', 'zero-preset', 7, '7', '01', 0, '0', false, null, '', 0.0, true] as $value) {
+        $presetRuntime = $registry->open($a);
+        $request = $freshRequest($presetRuntime);
+        $request['config']->set('styles.preset', $value);
+        $presetProperty->setValue($theme, null);
+        $native = BundleRuntime::source(static fn () => $theme->preset());
+        $theme->resetRenderState();
+        $expect($theme->preset() === $native && !$presetLoaded($presetRuntime), 'compiled preset membership exactly matches native source selection without loading full presets: ' . var_export($value, true));
+    }
+    foreach ([null, false, 0, '0', '', 'preset1', 7, 'missing'] as $value) {
+        $presetRuntime = $registry->open($a);
+        $request = $freshRequest($presetRuntime);
+        $request['config']->set('styles.preset', 'zero-preset');
+        $presetProperty->setValue($theme, $value);
+        $native = BundleRuntime::source(static fn () => $theme->preset(true));
+        $theme->resetRenderState();
+        $expect($theme->preset(true) === $native && !$presetLoaded($presetRuntime), 'forced compiled preset preserves native numeric/falsy membership without reading config: ' . var_export($value, true));
+    }
+    $presetRuntime = $registry->open($a);
+    $request = $freshRequest($presetRuntime);
+    $presetProperty->setValue($theme, null);
+    $request['config']->set('styles.preset', 'preset1');
+    $theme->preset();
+    $allPresets = $theme->presets()->toArray();
+    $expect($presetLoaded($presetRuntime) && array_key_exists('null-preset', $allPresets) && $allPresets['null-preset'] === null && $allPresets['false-preset'] === false && $allPresets['zero-preset'] === 0 && isset($allPresets[7], $allPresets['01']), 'actual full preset readers retain the exact complete frozen artifact');
+    $request = $freshRequest($registry->open($a));
+    $customPresetTheme = new class {
+        use ThemeTrait;
+        public array $events = [];
+        public static function gantry() { return Gantry::instance(); }
+        public function presets() { $this->events[] = 'presets'; return new Config(['custom' => []]); }
+    };
+    $customPresetConfig = new class(['styles' => ['preset' => 'custom']]) extends Config {
+        public array $events = [];
+        public function get($name, $default = null, $separator = '.') { $this->events[] = 'get'; return parent::get($name, $default, $separator); }
+    };
+    unset($request['config']); $request['config'] = $customPresetConfig;
+    $expect($customPresetTheme->preset() === 'custom' && $customPresetTheme->events === ['presets'] && $customPresetConfig->events === ['get'], 'custom presets override and Config getter each execute once through their native fallback');
+    $presetRuntime = $registry->open($a);
+    $request = $freshRequest($presetRuntime);
+    $presetProperty->setValue($theme, null);
+    $customPresetConfig->set('styles.preset', 'preset1'); $customPresetConfig->events = [];
+    unset($request['config']); $request['config'] = $customPresetConfig;
+    $expect($theme->preset() === 'preset1' && $customPresetConfig->events === ['get'] && $presetLoaded($presetRuntime), 'native presets with an unattested Config keep the full-read fallback and call its custom getter once');
+    $presetRuntime = $registry->open($a);
+    $request = $freshRequest($presetRuntime);
+    $request['config']->set('styles.preset', 'preset1'); $request['config']->blueprint();
+    $expect($theme->preset() === 'preset1' && $presetLoaded($presetRuntime), 'public native schema access disables the preset-membership shortcut too');
+    $presetRuntime = $registry->open($a);
+    $request = $freshRequest($presetRuntime);
+    $presetProperty->setValue($theme, null);
+    $factoryCalls = 0; $factorySawFullPresets = false;
+    $factoryConfig = new class(['styles' => ['preset' => 'zero-preset']]) extends Config {
+        public int $gets = 0;
+        public function get($name, $default = null, $separator = '.') { ++$this->gets; return parent::get($name, $default, $separator); }
+    };
+    unset($request['config']);
+    $request['config'] = static function () use (&$factoryCalls, &$factorySawFullPresets, $presetRuntime, $presetLoaded, $presetProperty, $theme, $factoryConfig) {
+        ++$factoryCalls; $factorySawFullPresets = $presetLoaded($presetRuntime);
+        $presetProperty->setValue($theme, 'preset1');
+        return $factoryConfig;
+    };
+    $expect($theme->preset() === 'zero-preset' && $factoryCalls === 1 && $factoryConfig->gets === 1 && $factorySawFullPresets, 'unresolved config factory side effects retain native presets-before-config and local-preset capture ordering');
+    $presetRuntime = $registry->open($a);
+    $request = $freshRequest($presetRuntime);
+    $presetProperty->setValue($theme, null);
+    $factoryCalls = 0;
+    unset($request['config']); $request['config'] = static function () use (&$factoryCalls) { ++$factoryCalls; throw new LogicException('A forced native preset must not resolve config.'); };
+    $expect($theme->preset(true) === null && $factoryCalls === 0 && $presetLoaded($presetRuntime), 'forced fallback loads native presets but never resolves an unused config factory');
+    $legacyPresets = $presetManifest; unset($legacyPresets['preset_names']);
+    $presetRuntime = new BundleRuntime($runtimeA->root(), $legacyPresets);
+    $request = $freshRequest($presetRuntime);
+    $request['config']->set('styles.preset', 'preset1');
+    $presetProperty->setValue($theme, null);
+    $expect($theme->preset() === 'preset1' && $presetLoaded($presetRuntime), 'older bundles missing membership metadata retain the full native preset read');
+    foreach ([null, false, 'not-a-map', ['preset1' => false], ['preset1' => 1], ['preset1' => null], ['preset1' => []]] as $badNames) {
+        $invalidPresets = $presetManifest; $invalidPresets['preset_names'] = $badNames;
+        $refuse(static fn () => new BundleRuntime($runtimeA->root(), $invalidPresets), 'malformed optional preset membership metadata fails503');
+    }
+    $presetProperty->setValue($theme, null);
     $sourceGantry = $gantry;
     $gantry = $freshRequest($runtimeA);
     $renderParticle = static fn ($item): array => json_decode($theme->getContent($item)->toString(), true, 512, JSON_THROW_ON_ERROR);
@@ -427,6 +512,11 @@ try {
     $expect($locator->attempts === 0, 'full compiled path performs zero source file or directory discovery');
     $statistics = $theme->renderer()->statistics();
     $expect($statistics['source_attempts'] === 0 && $statistics['compiler_attempts'] === 0, 'subsequent compiled Twig rendering performs zero source reads or compiler calls');
+    $presetRuntime = $registry->current();
+    $gantry = $freshRequest($presetRuntime);
+    $gantry['config']->set('styles.preset', 7);
+    $presetProperty->setValue($theme, null);
+    $expect($theme->preset() === 7 && !$presetLoaded($presetRuntime) && $locator->attempts === 0, 'native preset membership survives complete source removal without full preset artifact reads');
     unset($finalManifest['particle_configs']);
     $gantry = $freshRequest(new BundleRuntime($runtimeB->root(), $finalManifest));
     $expect($renderParticle($copyright) === $nativeParticle && !ConfigServiceProvider::canUsePreparedParticles($gantry, $gantry['config']) && $locator->attempts === 0, 'old capability-absent bundles still render exact native particle merges using frozen blueprints without source discovery');

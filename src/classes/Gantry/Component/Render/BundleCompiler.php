@@ -73,7 +73,13 @@ final class BundleCompiler
                 $details[$detail->name] = $detail->toArray();
             } while (($detail = $detail->parent()));
             $manifest['data']['details'] = $this->write($staging, 'data/details.php', $details);
-            $manifest['data']['presets'] = $this->write($staging, 'data/presets.php', $theme->presets()->toArray());
+            $presets = $theme->presets()->toArray();
+            $manifest['preset_names'] = [];
+            foreach ($presets as $name => $preset) {
+                // Match native isset(), including null-valued and numeric keys.
+                if ($preset !== null) { $manifest['preset_names'][$name] = true; }
+            }
+            $manifest['data']['presets'] = $this->write($staging, 'data/presets.php', $presets);
             $manifest['data']['blueprints'] = $this->write($staging, 'data/blueprints.php', $this->gantry['blueprints']->getState());
             $assignments = (new \Gantry\Framework\Assignments())->loadSavedAssignments();
             $manifest['data']['assignments'] = $this->write($staging, 'data/assignments.php', $assignments);

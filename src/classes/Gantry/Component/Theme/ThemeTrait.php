@@ -193,13 +193,21 @@ trait ThemeTrait
      */
     public function preset($forced = false)
     {
-        $presets = $this->presets()->toArray();
+        $presets = null;
+        if ((new \ReflectionMethod($this, 'presets'))->getFileName() === __FILE__ && !BundleRuntime::isSource()
+            && ($runtime = BundleRuntime::current($gantry = static::gantry())) && ($names = $runtime->presetNames()) !== null
+            && isset($gantry['config']) && ($preparedConfig = $gantry->raw('config')) instanceof Config
+            && ConfigServiceProvider::canUsePreparedParticles($gantry, $preparedConfig)) {
+            $presets = $names;
+            $config = $preparedConfig;
+        }
+        $presets ??= $this->presets()->toArray();
 
         $preset = $this->preset;
 
         if (!$preset && !$forced) {
             /** @var Config $config */
-            $config = static::gantry()['config'];
+            $config ??= static::gantry()['config'];
             $preset = $config->get('styles.preset', '-undefined-');
         }
 
