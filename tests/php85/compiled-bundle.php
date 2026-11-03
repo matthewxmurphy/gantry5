@@ -38,7 +38,7 @@ mkdir($temporary, 0700);
 define('GRAV_ROOT', $temporary);
 define('GANTRY5_ROOT', $temporary);
 define('GANTRY5_PLATFORM', 'joomla');
-define('GANTRY5_VERSION', '6.0.2-rc.1');
+define('GANTRY5_VERSION', '6.0.2-rc.2');
 define('GANTRY5_LIBRARY', dirname(realpath($argv[1]), 2));
 define('GANTRY_DEBUGGER', false);
 $checks = 0;
@@ -77,7 +77,7 @@ try {
     mkdir($themeRoot . '/templates/content', 0700);
     foreach (['particle', 'atom'] as $type) { file_put_contents($themeRoot . '/templates/content/' . $type . '.html.twig', '{{ particle|json_encode|raw }}'); }
     file_put_contents($themeRoot . '/config/20/styles.yaml', "accent:\n  color-1: '#ee4b2b'\n");
-    $themeYaml = "details:\n  name: JoomlaMafia Hydrogen fixture\n  version: 6.0.2-rc.1\nconfiguration:\n  dependencies:\n    gantry: 6.0.1\n  css:\n    compiler: '\\Gantry\\Component\\Stylesheet\\ScssCompiler'\n    target: gantry-theme://css-compiled\n    paths: [gantry-theme://scss]\n    files: [hydrogen]\n";
+    $themeYaml = "details:\n  name: JoomlaMafia Hydrogen fixture\n  version: 6.0.2-rc.2\nconfiguration:\n  dependencies:\n    gantry: 6.0.1\n  css:\n    compiler: '\\Gantry\\Component\\Stylesheet\\ScssCompiler'\n    target: gantry-theme://css-compiled\n    paths: [gantry-theme://scss]\n    files: [hydrogen]\n";
     file_put_contents($themeRoot . '/gantry/theme.yaml', $themeYaml);
     file_put_contents($themeRoot . '/gantry/presets.yaml', "preset1:\n  name: JoomlaMafia palette\n7:\n  name: Numeric palette\n'01':\n  name: String palette\nnull-preset: null\nfalse-preset: false\nzero-preset: 0\n");
     file_put_contents($themeRoot . '/scss/hydrogen.scss', 'body { color: $accent-color-1; .g-container { width: 88%; } }');

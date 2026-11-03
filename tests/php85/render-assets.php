@@ -231,7 +231,7 @@ try {
     // Stream source files disappear; prepared URLs must bypass timestamp/stat resolution.
     $artifact = $temporary . '/assets-manifest.php';
     file_put_contents($artifact, '<?php return ' . var_export($manifest, true) . ';');
-    $bundle = new \Gantry\Component\Render\BundleRuntime($temporary, ['schema' => 1, 'id' => str_repeat('b', 64), 'revision' => str_repeat('a', 64), 'theme' => 'fixture', 'php' => PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION, 'framework' => '6.0.2-rc.1', 'data' => [], 'outlines' => ['19' => ['assets' => ['file' => 'assets-manifest.php', 'sha256' => hash_file('sha256', $artifact)]]]]);
+    $bundle = new \Gantry\Component\Render\BundleRuntime($temporary, ['schema' => 1, 'id' => str_repeat('b', 64), 'revision' => str_repeat('a', 64), 'theme' => 'fixture', 'php' => PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION, 'framework' => '6.0.2-rc.2', 'data' => [], 'outlines' => ['19' => ['assets' => ['file' => 'assets-manifest.php', 'sha256' => hash_file('sha256', $artifact)]]]]);
     \Gantry\Component\Render\BundleRuntime::pin($bundle);
     $gantry['document'] = new \Gantry\Component\Content\Document\HtmlDocument();
     $block = new \Gantry\Component\Content\Block\HtmlBlock();

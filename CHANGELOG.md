@@ -1,3 +1,9 @@
+# 6.0.2-rc.2
+
+- Scan rendered image tags by byte offset and splice only changed tags.
+  Preserve the responsive image output and protected markup from rc.1.
+- Prepare a new compiled generation before serving frontend traffic after upgrade.
+
 # 6.0.2-rc.1
 ## Staging candidate — calendar revision 2026.11.02.002
 
