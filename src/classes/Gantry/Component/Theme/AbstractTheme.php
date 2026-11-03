@@ -25,6 +25,7 @@ use Gantry\Component\Twig\CompiledEnvironment;
 use Gantry\Component\Twig\CompiledLoader;
 use Gantry\Component\Twig\GenerationFilesystemLoader;
 use Gantry\Component\Twig\ImmutableCache;
+use Gantry\Component\Twig\ThemeRuntime;
 use Gantry\Component\Twig\TwigBundle;
 use Gantry\Component\Twig\TwigCacheFilesystem;
 use Gantry\Component\Twig\TwigExtension;
@@ -39,6 +40,7 @@ use Twig\Extension\DebugExtension;
 use Twig\Loader\ChainLoader;
 use Twig\Loader\FilesystemLoader;
 use Twig\Loader\LoaderInterface;
+use Twig\RuntimeLoader\FactoryRuntimeLoader;
 use Twig\TwigFilter;
 
 /**
@@ -100,6 +102,11 @@ abstract class AbstractTheme
      */
     public function extendTwig(Environment $twig, ?LoaderInterface $loader = null)
     {
+        // Native runtime loaders avoid initializing Twig's compiler registry when
+        // executing a precompiled theme callback. Keep the actual theme bound.
+        $twig->addRuntimeLoader(new FactoryRuntimeLoader([
+            ThemeRuntime::class => fn (): ThemeRuntime => new ThemeRuntime($this),
+        ]));
         if ($twig->hasExtension(TwigExtension::class)) {
             $this->addGantryTwigGlobal($twig);
 
@@ -116,7 +123,7 @@ abstract class AbstractTheme
         $this->addGantryTwigGlobal($twig);
 
         if (method_exists($this, 'toGrid')) {
-            $filter = new TwigFilter('toGrid', [$this, 'toGrid']);
+            $filter = new TwigFilter('toGrid', [ThemeRuntime::class, 'toGrid']);
             $twig->addFilter($filter);
         }
 

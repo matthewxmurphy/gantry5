@@ -15,6 +15,7 @@ namespace Gantry\Framework;
 
 use Gantry\Component\Theme\AbstractTheme;
 use Gantry\Component\Theme\ThemeTrait;
+use Gantry\Component\Twig\ThemeRuntime;
 use Joomla\CMS\Application\CMSApplication;
 use Joomla\CMS\Date\Date;
 use Joomla\CMS\Factory;
@@ -86,7 +87,7 @@ class Theme extends AbstractTheme
         $core->setDateFormat(Text::_('DATE_FORMAT_LC2'), Text::_('GANTRY5_X_DAYS'));
         $core->setNumberFormat(0, Text::_('DECIMALS_SEPARATOR'), Text::_('THOUSANDS_SEPARATOR'));
 
-        $filter = new TwigFilter('date', [$this, 'twig_dateFilter'], ['needs_environment' => true]);
+        $filter = new TwigFilter('date', [ThemeRuntime::class, 'dateFilter'], ['needs_environment' => true]);
         $twig->addFilter($filter);
 
         return $twig;

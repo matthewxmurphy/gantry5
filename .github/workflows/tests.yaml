@@ -68,6 +68,8 @@ jobs:
         run: php tests/php85/menu-offset.php platforms/joomla/lib_gantry5/vendor/autoload.php .
       - name: Run strict precompiled Twig checks
         run: php tests/php85/compiled-twig.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run native compiled Twig runtime dispatch checks
+        run: php tests/php85/twig-runtime.php platforms/joomla/lib_gantry5/vendor/autoload.php .
       - name: Run frozen config, layout and blueprint checks
         run: php tests/php85/compiled-readers.php platforms/joomla/lib_gantry5/vendor/autoload.php .
       - name: Run actual native render bundle preparation and activation checks

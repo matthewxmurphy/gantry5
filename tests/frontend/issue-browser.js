@@ -38,13 +38,15 @@ function browser(issue, css, markup, assertions, width) {
             'document.getElementById("result").setAttribute("data-result",btoa(unescape(encodeURIComponent(JSON.stringify(rows)))));' +
             '})()</script></body></html>';
         fs.writeFileSync(fixture, html, {mode: 0o600});
+        // Bound cold Chromium startup on contended CI runners; the virtual
+        // page budget and every assertion/missing-result failure stay unchanged.
         const output = execFileSync(chrome, [
             '--headless', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage',
             '--no-first-run', '--no-default-browser-check', '--disable-background-networking',
             '--user-data-dir=' + path.join(temporary, 'profile'),
             '--window-size=' + width + ',900', '--virtual-time-budget=1500', '--dump-dom',
             pathToFileURL(fixture).href,
-        ], {encoding: 'utf8', timeout: 30000, maxBuffer: 8 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe']});
+        ], {encoding: 'utf8', timeout: 45000, maxBuffer: 8 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe']});
         const encoded = output.match(/data-result="([A-Za-z0-9+/=]+)"/);
         if (!encoded) throw new Error('Chromium did not execute the regression assertions.');
         return JSON.parse(Buffer.from(encoded[1], 'base64').toString('utf8'));
