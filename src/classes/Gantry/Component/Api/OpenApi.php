@@ -60,7 +60,7 @@ final class OpenApi
         return [
             'openapi' => '3.0.3',
             'info' => [
-                'title' => 'Gantry 6 core API', 'version' => '6.0.2-rc.2',
+                'title' => 'Gantry 6 core API', 'version' => '6.0.2',
                 'description' => 'Joomla 6.2 core Web Services and existing Joomla core token authentication. PHP 8.5 only. No bridge, extra component or custom token. Use the existing Joomla user API token with X-Joomla-Token; basic authentication stays disabled. Gantry settings-administrator permissions are required. Writes use the native outline, layout and blueprint configuration stores. New outlines are unassigned; assigned/default/system outlines cannot be deleted. The API does not edit files, users, menus, template code or credentials. No separate application rate limiter is installed; existing host/Joomla policies apply. Admin and REST share one change engine, native writers, theme lock, exact-state recovery and a maximum of 20 undo snapshots. Preview is no-write validation, not a rendered staging URL. Undo only the latest change with a matching current revision. Clearing derived caches retains history. An interrupted change blocks further edits pending operator recovery. Requests are synchronous and writes are revision checked; retrieve the resource again after 409. Normal CMS/host access logs may record method, path, status and user identity. Never include a token in URLs or reports.',
                 'contact' => ['name' => 'Matthew X Murphy', 'url' => 'https://builtnotbegged.com'],
                 'license' => ['name' => 'Existing Gantry MIT or GPL-2.0-or-later terms; Joomla extensions GPL-2.0-or-later'],

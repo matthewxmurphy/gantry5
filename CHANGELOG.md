@@ -1,3 +1,8 @@
+# 6.0.2
+
+- Publish the verified rc.2 runtime with final Joomla package, framework, and API version metadata.
+- Prepare a fresh compiled generation after upgrading before admitting frontend requests.
+
 # 6.0.2-rc.2
 
 - Scan rendered image tags by byte offset and splice only changed tags.

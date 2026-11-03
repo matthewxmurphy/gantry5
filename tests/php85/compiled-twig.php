@@ -126,7 +126,7 @@ try {
     $expect(!preg_match('/PHP (?:Warning|Fatal|Parse error|Deprecated)|Uncaught/i', file_get_contents($log)), 'direct HTTP artifact guard emits no PHP diagnostics or class-load fatal');
 
     BundleRuntime::pin(new BundleRuntime($temporary . '/bundle', ['schema' => 1, 'id' => $generation, 'php' => '8.5',
-        'framework' => '6.0.2-rc.2', 'theme' => 'g6_fixture', 'revision' => hash('sha256', 'revision'), 'data' => [], 'outlines' => []]));
+        'framework' => '6.0.2', 'theme' => 'g6_fixture', 'revision' => hash('sha256', 'revision'), 'data' => [], 'outlines' => []]));
     $theme->activateCompiledTwig($map, $temporary . '/bundle');
     $paths = $theme->sourcePathCalls;
     rename($temporary . '/source', $temporary . '/source-removed');

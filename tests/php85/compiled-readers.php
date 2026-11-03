@@ -115,7 +115,7 @@ try {
         file_put_contents($temporary . '/bundle/' . $file, $php);
         return ['file' => $file, 'sha256' => hash('sha256', $php)];
     };
-    $manifest = ['schema' => 1, 'id' => hash('sha256', 'frozen native readers'), 'php' => '8.5', 'framework' => '6.0.2-rc.2', 'theme' => 'g6_fixture', 'revision' => hash('sha256', 'revision'), 'data' => [], 'outlines' => []];
+    $manifest = ['schema' => 1, 'id' => hash('sha256', 'frozen native readers'), 'php' => '8.5', 'framework' => '6.0.2', 'theme' => 'g6_fixture', 'revision' => hash('sha256', 'revision'), 'data' => [], 'outlines' => []];
     $configurations = [];
     foreach ([true, false] as $combine) {
         foreach ([true, false] as $defaults) {

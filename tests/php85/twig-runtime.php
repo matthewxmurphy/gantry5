@@ -162,7 +162,7 @@ if ($child) {
     $root = $argv[4]; $mode = $argv[5];
     $gantry = $container();
     $map = json_decode(file_get_contents($root . '/' . $mode . '-map.json'), true, 512, JSON_THROW_ON_ERROR);
-    $manifest = ['schema' => 1, 'id' => $map['generation'], 'php' => '8.5', 'framework' => '6.0.2-rc.2',
+    $manifest = ['schema' => 1, 'id' => $map['generation'], 'php' => '8.5', 'framework' => '6.0.2',
         'revision' => hash('sha256', 'runtime-fixture'), 'theme' => 'g343_fixture', 'data' => [], 'outlines' => []];
     BundleRuntime::pin(new BundleRuntime($root . '/' . $mode . '-bundle', $manifest));
     $theme = new RuntimeFixtureTheme($root); $theme->mode = $mode;
