@@ -155,7 +155,7 @@ class Menu extends AbstractMenu
 
         if ($items === null) {
             $db = Factory::getContainer()->get(DatabaseInterface::class);
-            $query = $db->getQuery(true)
+            $query = $db->createQuery()
                 ->select($db->quoteName('a.menutype'))
                 ->select($db->quoteName('a.title'))
                 ->from($db->quoteName('#__menu_types', 'a'))
@@ -806,7 +806,7 @@ class Menu extends AbstractMenu
     private function getMenuItemIds($menutype)
     {
         $db = Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class);
-        $query = $db->getQuery(true)
+        $query = $db->createQuery()
             ->select('m.id, m.alias, m.path AS route, m.level, m.parent_id')
             ->from('#__menu AS m')
             ->where('m.menutype = ' . $db->quote($menutype))
