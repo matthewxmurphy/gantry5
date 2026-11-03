@@ -21,8 +21,7 @@ final class ImagesRuntime
         if ($mainEntry !== null && !ImageEntry::valid($mainEntry)) { throw new \RuntimeException('The compiled primary-image manifest is invalid.'); }
         $primaryUsed = false;
         $pattern = '#<!--[\s\S]*?-->(*SKIP)(*F)|<(script|style|pre|code|textarea|noscript|picture|template)\b(?:[^>"\']+|"[^"]*"|\'[^\']*\')*>[\s\S]*?</\1\s*>(*SKIP)(*F)|<(?!img\b)(?:[^>"\']+|"[^"]*"|\'[^\']*\')+>(*SKIP)(*F)|<img\b(?:[^>"\']+|"[^"]*"|\'[^\']*\')*>#i';
-        return preg_replace_callback($pattern, static function (array $match) use ($images, $mainEntry, &$primaryUsed): string {
-            $tag = $match[0];
+        $rewrite = static function (string $tag) use ($images, $mainEntry, &$primaryUsed): string {
             if (!preg_match('/^<img\b/i', $tag)) { return $tag; }
             $attributes = self::attributes($tag);
             if ($attributes !== null) {
@@ -59,7 +58,23 @@ final class ImagesRuntime
                 if ($set !== '') { $sources .= '<source type="image/' . $format . '" srcset="' . self::escape($set) . '" sizes="' . self::escape($image->getAttribute('sizes') ?: '100vw') . '">'; }
             }
             return '<picture>' . $sources . $doc->saveHtml($image) . '</picture>';
-        }, $html);
+        };
+
+        $result = '';
+        $copied = $offset = 0;
+        while (($matched = preg_match($pattern, $html, $match, PREG_OFFSET_CAPTURE, $offset)) === 1) {
+            [$tag, $start] = $match[0];
+            $offset = $start + strlen($tag);
+            $replacement = $rewrite($tag);
+            if ($replacement === $tag) { continue; }
+
+            $result .= substr($html, $copied, $start - $copied);
+            $result .= $replacement;
+            $copied = $offset;
+        }
+        // Preserve the original replacement call's null result on a PCRE error.
+        if ($matched === false) { return null; }
+        return $copied === 0 ? $html : $result . substr($html, $copied);
     }
 
     /** Quote-aware admission only; null delegates malformed/ambiguous tags to DOM. */
