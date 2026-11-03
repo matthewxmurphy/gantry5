@@ -120,7 +120,7 @@ class Theme extends AbstractTheme
 
         if (!($date instanceof Date)) {
             // Create localized Date object.
-            $twig_date = \twig_date_converter($env, $date, $timezone);
+            $twig_date = $env->getExtension(CoreExtension::class)->convertDate($date, $timezone);
 
             $date = new Date($twig_date->getTimestamp());
             $date->setTimezone($twig_date->getTimezone());
