@@ -64,7 +64,7 @@ final class BundleCompiler
             $manifest = ['schema' => 1, 'id' => $id, 'revision' => $revision,
                 'theme' => (string) $this->gantry['theme.name'], 'php' => PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION,
                 'framework' => defined('GANTRY5_VERSION') ? GANTRY5_VERSION : '6.0.2-rc.1',
-                'created' => gmdate('Y-m-d\TH:i:s\Z'), 'data' => [], 'outlines' => []];
+                'created' => gmdate('Y-m-d\TH:i:s\Z'), 'particle_configs' => true, 'data' => [], 'outlines' => []];
 
             $details = [];
             $detail = $theme->details();
@@ -94,6 +94,7 @@ final class BundleCompiler
                 $theme->resetRenderState();
                 $layout = Layout::instance($outline)->init();
                 $nodes = $this->arrays($layout->toArray());
+                $entry['particles'] = $this->write($staging, 'particles/' . $key . '.php', $this->particleConfigs($layout->toArray(), $effective));
                 $entry['layout'] = $this->write($staging, 'layout/' . $key . '.php', ['nodes' => $layout->toArray(), 'preset' => $layout->preset, 'timestamp' => $layout->timestamp]);
                 $entry['index'] = $this->write($staging, 'index/' . $key . '.php', $layout->buildIndex());
                 $css = [];
@@ -167,6 +168,40 @@ final class BundleCompiler
     private function arrays(array $value): array
     {
         return json_decode(json_encode($value, JSON_THROW_ON_ERROR), true, 128, JSON_THROW_ON_ERROR);
+    }
+
+    /** Resolve native merge rules offline, including settings-derived atoms. */
+    private function particleConfigs(array $nodes, \Gantry\Component\Config\Config $config): array
+    {
+        $result = [];
+        $visit = static function (array $items) use (&$visit, &$result, $config): void {
+            foreach ($items as $item) {
+                if (!is_array($item) && !$item instanceof \stdClass) { continue; }
+                $item = (array) $item;
+                if (isset($item['children']) && is_array($item['children'])) { $visit($item['children']); }
+                if (in_array($item['type'] ?? null, ['atom', 'particle', 'position', 'spacer'], true) && is_string($item['subtype'] ?? null)) {
+                    $subtype = $item['subtype'];
+                    $attributes = (array) ($item['attributes'] ?? []);
+                    $defaults = $config->get('particles.' . $subtype);
+                    try { $key = BundleRuntime::particleKey($subtype, $defaults, $attributes); }
+                    catch (\UnexpectedValueException | \LengthException $error) { continue; }
+                    $merged = $config->getJoined('particles.' . $subtype, $attributes);
+                    // Never snapshot object identity or mutable nested objects.
+                    try { BundleRuntime::particleKey($subtype, $merged, []); }
+                    catch (\UnexpectedValueException | \LengthException $error) { continue; }
+                    $result[$key] = $merged;
+                }
+            }
+        };
+        $visit($nodes);
+        $atoms = [];
+        foreach ((array) $config->get('page.head.atoms') as $data) {
+            $atoms[] = ['type' => 'atom', 'subtype' => $data['type']] + $data;
+        }
+        $assets = (array) $config->get('page.assets');
+        if ($assets) { $atoms[] = ['type' => 'atom', 'subtype' => 'assets', 'attributes' => $assets + ['enabled' => 1]]; }
+        $visit($atoms);
+        return $result;
     }
 
     private function phpData(mixed $value): mixed

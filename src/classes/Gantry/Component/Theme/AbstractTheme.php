@@ -26,6 +26,7 @@ use Gantry\Component\Twig\CompiledLoader;
 use Gantry\Component\Twig\GenerationFilesystemLoader;
 use Gantry\Component\Twig\ImmutableCache;
 use Gantry\Component\Twig\ThemeRuntime;
+use Gantry\Component\Twig\TwigManifest;
 use Gantry\Component\Twig\TwigBundle;
 use Gantry\Component\Twig\TwigCacheFilesystem;
 use Gantry\Component\Twig\TwigExtension;
@@ -219,7 +220,7 @@ abstract class AbstractTheme
     /** Install the registry's pinned immutable generation without resolving source paths. */
     public function activateCompiledTwig(array $map, string $directory): void
     {
-        TwigBundle::validate($map);
+        TwigManifest::validate($map);
         $loader = new CompiledLoader($map['templates'], $map['generation']);
         $cache = new ImmutableCache($directory, $loader, $map['templates']);
         $twig = new CompiledEnvironment($loader, $cache, $map['strings'], $map['generation'], $map['options']);

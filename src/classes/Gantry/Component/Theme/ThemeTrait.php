@@ -790,7 +790,13 @@ trait ThemeTrait
         }
 
         $attributes = isset($item->attributes) ? $item->attributes : [];
-        $particle = $config->getJoined("particles.{$subtype}", $attributes);
+        $particle = null;
+        if ((is_array($attributes) || is_object($attributes)) && ($runtime = BundleRuntime::current($gantry))
+            && ConfigServiceProvider::canUsePreparedParticles($gantry, $config)) {
+            $outline = isset($gantry['configuration']) ? (string) $gantry['configuration'] : 'default';
+            $particle = $runtime->particleConfig($outline, (string) $subtype, (array) $attributes, $config->get("particles.{$subtype}"));
+        }
+        $particle ??= $config->getJoined("particles.{$subtype}", $attributes);
 
         $cached = false;
         $cacheKey = [];

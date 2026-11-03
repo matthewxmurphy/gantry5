@@ -41,6 +41,8 @@
 - Reject development dependencies and autoload maps before production packaging.
 - Avoid repeated URL processing, unrelated image parsing and offline compiler
   loading during compiled frontend delivery; retain native ordering and barriers.
+- Prepare native particle/default merges offline while preserving custom and
+  mutable runtime inputs through the frozen native schema path.
 - See docs/compiled-rendering.md for activation, recovery and delivery limits.
 
 # 6.0.1

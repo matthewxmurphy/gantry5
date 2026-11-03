@@ -16,6 +16,7 @@ final class BundleRuntime
     private static int $sourceDepth = 0;
     private static ?string $failure = null;
     private array $loaded = [];
+    private array $checkedParticles = [];
 
     public function __construct(private readonly string $directory, private readonly array $manifest)
     {
@@ -30,8 +31,14 @@ final class BundleRuntime
         foreach ($manifest['data'] as $key => $entry) {
             if (!is_string($key) || !preg_match('/\A[a-z_]+\z/D', $key) || !self::descriptor($entry)) { self::fail('The production artifact map is malformed.'); }
         }
+        if (array_key_exists('particle_configs', $manifest) && $manifest['particle_configs'] !== true) {
+            self::fail('The production particle configuration capability is invalid.');
+        }
         foreach ($manifest['outlines'] as $outline => $kinds) {
             if (!preg_match('/\A[\p{L}\p{N}\p{M}_-]+\z/uD', (string) $outline) || !is_array($kinds)) { self::fail('The production outline map is malformed.'); }
+            if (isset($manifest['particle_configs']) && !self::descriptor($kinds['particles'] ?? null)) {
+                self::fail('The production particle configuration map is incomplete.');
+            }
             foreach ($kinds as $kind => $entry) {
                 if (!is_string($kind) || !preg_match('/\A[a-z_]+\z/D', $kind) || !self::descriptor($entry)) { self::fail('The production outline artifact is malformed.'); }
             }
@@ -109,6 +116,50 @@ final class BundleRuntime
         $entry = $this->manifest['outlines'][$outline][$kind] ?? null;
         if (!is_array($entry)) { self::fail('The selected outline needs a verified production rebuild.'); }
         return $this->read($entry);
+    }
+
+    /** A changed/custom runtime input keeps the native frozen-schema merge path. */
+    public function particleConfig(string $outline, string $subtype, array $attributes, mixed $defaults): ?array
+    {
+        if (!($this->manifest['particle_configs'] ?? false)) { return null; }
+        try { $key = self::particleKey($subtype, $defaults, $attributes); }
+        catch (\Throwable $error) { return null; }
+        $entries = $this->outlineData($outline, 'particles');
+        if (!isset($this->checkedParticles[$outline])) {
+            foreach ($entries as $identity => $value) {
+                if (!is_string($identity) || !preg_match('/\A[a-f0-9]{64}\z/D', $identity) || !is_array($value)) { self::fail('The production particle configuration map is invalid.'); }
+                $remaining = 100000;
+                try { self::particleValue($value, 0, $remaining); }
+                catch (\Throwable $error) { self::fail('The production particle configuration contains unsupported values.'); }
+            }
+            $this->checkedParticles[$outline] = true;
+        }
+        if (!array_key_exists($key, $entries)) { return null; }
+        if (!is_array($entries[$key])) { self::fail('The production particle configuration is invalid.'); }
+        return $entries[$key];
+    }
+
+    public static function particleKey(string $subtype, mixed $defaults, array $attributes): string
+    {
+        $remaining = 100000;
+        self::particleValue($defaults, 0, $remaining);
+        self::particleValue($attributes, 0, $remaining);
+        // PHP-native types/order matter to the original blueprint merge rules.
+        return hash('sha256', $subtype . "\0" . serialize([$defaults, $attributes]));
+    }
+
+    /** Cache value-only data; native merging retains all object identity/behavior. */
+    private static function particleValue(mixed $value, int $depth, int &$remaining): void
+    {
+        if ($depth > 128 || --$remaining < 0) { throw new \LengthException('Particle data exceeds the prepared-value boundary.'); }
+        if (is_array($value)) {
+            foreach ($value as $key => $item) {
+                if (\ReflectionReference::fromArrayElement($value, $key) !== null) { throw new \UnexpectedValueException('Referenced particle data requires native merging.'); }
+                self::particleValue($item, $depth + 1, $remaining);
+            }
+        } elseif ($value !== null && !is_string($value) && !is_int($value) && !is_bool($value) && !(is_float($value) && is_finite($value))) {
+            throw new \UnexpectedValueException('Particle data requires native merging.');
+        }
     }
 
     /** Frozen YAML values support the few native metadata readers outside config/layout hydration. */

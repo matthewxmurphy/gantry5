@@ -173,6 +173,7 @@ if ($child) {
     $result['source_absent'] = !file_exists($root . '/source');
     $result['source_paths'] = $theme->sourcePaths;
     $result['same_core_object'] = $twig->getExtension(CoreExtension::class) === $beforeCore;
+    $result['offline_compiler_loaded'] = class_exists(\Gantry\Component\Twig\TwigBundle::class, false);
     $result['compiler_registry_loaded'] = class_exists(Twig\ExpressionParser\ExpressionParsers::class, false);
     $result['compiler_families'] = array_values(array_filter(get_declared_classes(), static fn (string $class): bool =>
         str_starts_with($class, 'Twig\\TokenParser\\') || str_starts_with($class, 'Twig\\NodeVisitor\\')
@@ -232,6 +233,7 @@ try {
         $expect($actual['source_absent'] && $actual['source_paths'] === 0, $mode . ' compiled render cannot discover removed sources');
         $expect($actual['same_core_object'] && $actual['core_timezone'] === 'America/Los_Angeles', $mode . ' runtime preserves native CoreExtension identity/state');
         $expect($actual['statistics']['source_attempts'] === 0 && $actual['statistics']['compiler_attempts'] === 0 && $actual['statistics']['artifact_loads'] > 0, $mode . ' runs actual immutable artifacts without interpretation');
+        $expect($actual['offline_compiler_loaded'] === false, $mode . ' runtime validation does not autoload the offline bundle compiler');
         $expect($actual['compiler_registry_loaded'] === ($mode === 'staged'), $mode . ' native callbacks avoid compiler discovery while custom closures retain Twig fallback');
         $expect(($actual['compiler_families'] !== []) === ($mode === 'staged'), $mode . ' native execution does not autoload token-parser/node-visitor families');
     }

@@ -21,6 +21,14 @@ Each frontend request pins its generation once. Old generations and content-hash
 assets remain available to in-flight readers. No automatic deletion or garbage
 collection is introduced here.
 
+The bundle also stores native particle/default merges for layout particles,
+head atoms and page assets. Prepared lookups require the exact current defaults
+and attributes, a native provider-created configuration, and an unchanged,
+unresolved native blueprint service. Custom configuration, requested or changed
+blueprints, and changed inputs retain native merging against the frozen schema.
+Objects, references and other values with identity or serialization behavior
+stay on that native path; prepared arrays retain normal copy-on-write behavior.
+
 The initial build uses the installed library, native Joomla bootstrap and existing
 change engine, without a new component or plugin:
 
