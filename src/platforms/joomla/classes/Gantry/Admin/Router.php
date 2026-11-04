@@ -13,6 +13,7 @@
 
 namespace Gantry\Admin;
 
+use Gantry\Admin\Controller\Html\Api;
 use Gantry\Component\Config\Config;
 use Gantry\Component\File\CompiledYamlFile;
 use Gantry\Component\Filesystem\Streams;
@@ -176,7 +177,12 @@ class Router extends BaseRouter
         if ($response instanceof JsonResponse) {
             $application->setHeader('Expires', 'Wed, 17 Aug 2005 00:00:00 GMT', true);
             $application->setHeader('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT', true);
-            $application->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0', false);
+            if ($this->resource === 'api' && in_array($this->path, [['openapi'], ['inventory']], true)) {
+                $application->setHeader('Cache-Control', Api::JSON_CACHE_CONTROL, true);
+                $application->setHeader('X-Content-Type-Options', Api::JSON_CONTENT_TYPE_OPTIONS, true);
+            } else {
+                $application->setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0', false);
+            }
             $application->setHeader('Pragma', 'no-cache');
             $application->sendHeaders();
         }

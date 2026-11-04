@@ -19,9 +19,13 @@ namespace Gantry\Component\Twig\Node;
 use Twig\Attribute\YieldReady;
 
 use Twig\Compiler;
+use Twig\Error\SyntaxError;
 use Twig\Node\Expression\AbstractExpression;
+use Twig\Node\Expression\FunctionExpression;
+use Twig\Node\Expression\Variable\LocalVariable;
 use Twig\Node\CaptureNode;
 use Twig\Node\Node;
+use Twig\Node\Nodes;
 use Twig\Node\NodeCaptureInterface;
 
 /**
@@ -54,8 +58,18 @@ class TwigNodeAssets extends Node implements NodeCaptureInterface
      */
     public function compile(Compiler $compiler): void
     {
+        $function = $compiler->getEnvironment()->getFunction('parse_assets');
+        if ($function === null) {
+            throw new SyntaxError('The parse_assets function must be registered.', $this->getTemplateLine(), $this->getSourceContext());
+        }
+        // Native callable compilation preserves the effective extension, runtime
+        // or custom callback and its options, without a forced runtime lookup.
+        $call = new FunctionExpression($function, new Nodes([
+            new LocalVariable('content', $this->getTemplateLine()),
+            new LocalVariable('location', $this->getTemplateLine()),
+            new LocalVariable('priority', $this->getTemplateLine()),
+        ]), $this->getTemplateLine());
         $compiler->addDebugInfo($this)
-            ->write("\$assetFunction = \$this->env->getFunction('parse_assets')->getCallable();\n")
             ->write('$assetVariables = ')
             ->subcompile($this->getNode('variables'))
             ->raw(";\n")
@@ -76,6 +90,8 @@ class TwigNodeAssets extends Node implements NodeCaptureInterface
             ->write('$content = ')
             ->subcompile($this->getNode('body'))
             ->raw("\n")
-            ->write("\$assetFunction(\$content, \$location, \$priority);\n");
+            ->write('')
+            ->subcompile($call)
+            ->raw(";\n");
     }
 }

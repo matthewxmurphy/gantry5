@@ -29,6 +29,9 @@
         <span class="parent-indicator"></span>
     {%- endif %}
 {% endif %}
+{% if item.isUnpublished() %}
+    <span class="menu-item-publication">({{ 'JUNPUBLISHED'|trans }})</span>
+{% endif %}
 {% if not item.path %}
 </span>
 {% else %}

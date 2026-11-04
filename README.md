@@ -1,6 +1,6 @@
-## Gantry 6 shared change engine candidate
+## Gantry 6.0.3
 
-This branch builds **6.0.2-rc.1** (calendar **2026.11.02.002**) on the published
+This branch builds **6.0.3** (calendar **2026.11.03.003**) on the published
 [Gantry 6.0.1 API release](https://github.com/matthewxmurphy/gantry5/releases/tag/v2026.11.02.001).
 The original release remains immutable. This candidate adds one shared
 preview/save/undo engine for native outline/layout/settings editors and REST,
@@ -13,12 +13,10 @@ permissions remain authoritative; no account, token, bridge plugin or standalone
 component is created. See [shared changes](docs/shared-changes.md),
 [candidate notes](docs/6.0.2-candidate-notes.md),
 [API contracts](docs/core-api.md), and the [accepted roadmap](docs/gantry6-roadmap.md).
-The shared core has native CMS adapters; current transport/runtime acceptance is
-Joomla only. No render-bundle, speed, registry, metadata, Template Club or MCP
-completion is claimed by this first slice.
+Current transport and runtime acceptance cover Joomla. Joomla frontend rendering
+uses the [compiled generation](docs/compiled-rendering.md). The internal image rewrite preserves emitted markup.
 
-Installation is manual. This branch is a staging candidate; availability of source
-or packages does not constitute a public production release. Unchanged Helium
+Installation is manual. Prepare a new compiled generation after upgrading. Unchanged Helium
 and Hydrogen remain6.0.1, with their existing migration requirements.
 Historical [6.0.1 notes](docs/6.0.1-release-notes.md), [runbook](docs/6.0.1-runbook.md)
 and [dependency migration](docs/dependency-migration.md) remain available.

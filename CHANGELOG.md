@@ -1,3 +1,25 @@
+# 6.0.3
+
+- Rewrite Phing's implicit nullable temporary-file parameter before building packages.
+- Use Twig's native date conversion API in the Joomla date filter.
+- Mark unpublished Joomla menu items in Gantry's editor.
+- Pass an integer TLS mode to Joomla routing.
+- Use Joomla's native query factory for menu and style reads.
+- Use Joomla's request input accessor.
+- Pass explicit optional arguments to Twig menu macros.
+- Register the Joomla system plugin through native DI and explicit event subscriptions.
+
+# 6.0.2
+
+- Publish the verified rc.2 runtime with final Joomla package, framework, and API version metadata.
+- Prepare a fresh compiled generation after upgrading before admitting frontend requests.
+
+# 6.0.2-rc.2
+
+- Scan rendered image tags by byte offset and splice only changed tags.
+  Preserve the responsive image output and protected markup from rc.1.
+- Prepare a new compiled generation before serving frontend traffic after upgrade.
+
 # 6.0.2-rc.1
 ## Staging candidate — calendar revision 2026.11.02.002
 
@@ -14,6 +36,36 @@
 - Keep native duplicated outline titles consistent across the admin and API
   by applying the Joomla theme prefix once.
 - Preserve the published 6.0.1 release and all Gantry 5 artifacts.
+- Fix #2282: keep native contact-form radio controls and labels visible,
+  focusable and selectable while preserving enhanced Bootstrap button controls.
+- Fix #2519: let unmeasured Owl slides fill their carousel without overriding
+  the measured inline widths used by initialized multi-item views.
+- Fix #2486: preserve safe Unicode outline identities through create, duplicate,
+  rename and subsequent native layout/index writes.
+- Fix #2894: restore the selected Font Awesome 6.5.1 JavaScript and matching
+  versioned font assets without replacing the existing 5.x or 7.x files.
+- Fix #3419: load Joomla debug styles only when Gantry debugging is enabled.
+- Run one explicitly issue-named regression gate for each Batch 1 defect in CI.
+- Prepare resolved configuration, blueprints, native layout/index objects and
+  executable Twig PHP before committing a Joomla save or undo; activate the
+  complete immutable generation with one pointer rename.
+- Refuse missing, corrupt or incompatible production artifacts with a controlled
+  failure. Production requests never rebuild Twig, YAML, layouts or SCSS.
+- Add the native `libraries/gantry5/src/render.php` command for an initial
+  production build under the existing theme revision lock.
+- Freeze native compiled stylesheets and prepare content-versioned, minified
+  assets with safe adjacent combinations using the existing `page.assets`
+  settings. Keep Joomla Web Asset Manager and its dependency graph authoritative.
+- Prepare critical CSS and responsive AVIF/WebP variants of eligible public
+  images offline, preserving fallback formats, dimensions and primary eager
+  loading. Preserve private, animated and color-profile-sensitive originals.
+- Fix the PHP 8.5 null menu-offset deprecation without suppressing diagnostics.
+- Reject development dependencies and autoload maps before production packaging.
+- Avoid repeated URL processing, unrelated image parsing and offline compiler
+  loading during compiled frontend delivery; retain native ordering and barriers.
+- Prepare native particle/default merges offline while preserving custom and
+  mutable runtime inputs through the frozen native schema path.
+- See docs/compiled-rendering.md for activation, recovery and delivery limits.
 
 # 6.0.1
 ## Calendar revision 2026.11.02.001

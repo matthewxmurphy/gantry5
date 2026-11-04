@@ -10,8 +10,20 @@
 	width: 80%;
 }
 
+// #2282: contact fields use btn-group without replacing the native controls.
+// Restore both the labels' inherited font and the radios' focus/hit targets.
+.radio.btn-group {
+	font-size: inherit;
+}
+
 .radio.btn-group input[type=radio] {
-	display: none;
+	display: inline-block;
+	float: none;
+	margin-left: 0;
+}
+
+.radio.btn-group > label {
+	display: inline-block;
 }
 
 .radio.btn-group > label:first-of-type {

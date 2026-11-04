@@ -151,6 +151,12 @@ abstract class Platform
     abstract public function getAssetsPaths();
     abstract public function getMediaPaths();
 
+    /** Production artifacts survive normal CMS/derived-cache clearing. */
+    public function getRenderPath()
+    {
+        return rtrim(GANTRY5_ROOT, '/') . '/' . \Gantry\Component\Render\RenderRegistry::DIRECTORY;
+    }
+
     /**
      * @return $this
      */

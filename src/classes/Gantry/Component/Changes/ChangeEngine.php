@@ -17,7 +17,8 @@ use Gantry\Framework\Gantry;
  * The single theme mutation boundary for native editors and CMS transports.
  * Preview runs only a pure planner. Save and undo serialize, check content revisions,
  * journal exact authoritative state, recover failure, and return one new revision.
- * This is recoverable multi-file I/O, not atomic visibility of a complete render bundle.
+ * Joomla prepares an immutable render generation before committing, then atomically
+ * activates it. Interrupted finalization blocks further writes for verified recovery.
  */
 final class ChangeEngine
 {
@@ -87,6 +88,20 @@ final class ChangeEngine
         return $this->locked(fn (): array => $this->commit($expectedRevision, $label, $writer));
     }
 
+    /** Rebuild derived production artifacts under the same lock, without changing source/revision. */
+    public function rebuild(string $expectedRevision): array
+    {
+        return $this->locked(function () use ($expectedRevision): array {
+            $revision = $this->check($expectedRevision);
+            if (!isset($this->gantry['render.registry'])) { throw new ApiException('This CMS render adapter is unavailable.', 503, 'render_unavailable'); }
+            $registry = $this->gantry['render.registry'];
+            $id = $registry->prepare($revision, $this->state->renderSources());
+            $this->check($revision);
+            $registry->activate($id, $revision);
+            return ['revision' => $revision, 'render_generation' => $id];
+        });
+    }
+
     public function undo(string $expectedRevision, string $changeId): array
     {
         return $this->locked(function () use ($expectedRevision, $changeId): array {
@@ -129,6 +144,8 @@ final class ChangeEngine
         $id = bin2hex(random_bytes(32));
         $generation = $this->generation();
         $record = ['before_generation' => $generation, 'before_state_hash' => $this->state->digest($snapshot), 'schema' => 1, 'theme' => (string) $this->gantry['theme.name'], 'label' => $label, 'created' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.u\Z'), 'before' => $before, 'before_state' => $snapshot];
+        $registry = isset($this->gantry['render.registry']) ? $this->gantry['render.registry'] : null;
+        $record['before_render'] = $registry?->activeId();
         $this->state->begin();
         $active = true;
         try {
@@ -138,12 +155,24 @@ final class ChangeEngine
             $this->writeRecord('generation', ['generation' => $id]);
             $after = $this->digest($this->state->capture());
             $record['after'] = $after;
+            // Prepare all immutable bytes while native DB changes are still
+            // transactional. Existing readers keep their pinned old bundle.
+            $render = $registry?->prepare($after, $this->state->renderSources());
+            if (!hash_equals($after, $this->digest($this->state->capture()))) {
+                throw new ApiException('Theme state changed during render preparation.', 409, 'revision_conflict');
+            }
+            $record['after_render'] = $render;
             $this->writeRecord($id, $record);
             $this->state->commit();
             $active = false;
+            // Failure from here must leave the pending marker and must never
+            // attempt a database rollback after a successful native commit.
+            if ($render !== null) { $registry->activate($render, $after); }
             $this->prune();
             $this->removeRecord('pending');
-            return ['revision' => $after, 'change_id' => $id, 'result' => $result];
+            $response = ['revision' => $after, 'change_id' => $id, 'result' => $result];
+            if ($render !== null) { $response['render_generation'] = $render; }
+            return $response;
         } catch (\Throwable $error) {
             // A durable pending record deliberately blocks subsequent edits if recovery fails.
             // An interrupted process requires operator recovery, never blind success/retry.

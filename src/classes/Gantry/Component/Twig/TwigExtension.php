@@ -239,6 +239,13 @@ class TwigExtension extends AbstractExtension implements GlobalsInterface
      */
     public function imageSize($src, $attrib = true, $remote = false)
     {
+        $manifest = \Gantry\Component\Render\Assets\AssetRuntime::manifest(static::gantry());
+        if ($manifest !== null) {
+            $image = $manifest['images'][(string) $src] ?? null;
+            if ($image !== null && !\Gantry\Component\Render\Assets\ImageEntry::valid($image)) { throw new \RuntimeException('The compiled image-size manifest is invalid.'); }
+            $sizes = $image ? ['width' => $image['width'], 'height' => $image['height']] : ['width' => null, 'height' => null];
+            return $attrib ? ($image ? 'width="' . (int) $sizes['width'] . '" height="' . (int) $sizes['height'] . '"' : '') : $sizes;
+        }
         // TODO: need to better handle absolute and relative paths
         //$url = Gantry::instance()['document']->url(trim((string) $src), false, false);
         $width = $height = null;

@@ -18,4 +18,6 @@ abstract class StateAdapter
     public function begin(): void {}
     public function commit(): void {}
     public function rollback(): void {}
+    /** Native public-content HTML for offline image preparation; never fetched on page loads. */
+    public function renderSources(): array { return []; }
 }

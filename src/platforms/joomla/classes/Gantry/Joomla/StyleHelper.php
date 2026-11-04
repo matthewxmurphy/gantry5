@@ -60,7 +60,7 @@ class StyleHelper
         $db = Factory::getContainer()->get(DatabaseInterface::class);
 
         $query = $db
-            ->getQuery(true)
+            ->createQuery()
             ->select('s.id, s.template, s.home, s.title AS long_title, s.params')
             ->from('#__template_styles AS s')
             ->where('s.client_id = 0')

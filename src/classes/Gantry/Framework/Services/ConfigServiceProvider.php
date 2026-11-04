@@ -19,6 +19,9 @@ namespace Gantry\Framework\Services;
 use Gantry\Component\Config\CompiledBlueprints;
 use Gantry\Component\Config\CompiledConfig;
 use Gantry\Component\Config\ConfigFileFinder;
+use Gantry\Component\Config\BlueprintSchema;
+use Gantry\Component\Config\Config;
+use Gantry\Component\Render\BundleRuntime;
 use Gantry\Debugger;
 use Gantry\Framework\Atoms;
 use Gantry\Framework\Gantry;
@@ -33,6 +36,10 @@ use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
  */
 class ConfigServiceProvider implements ServiceProviderInterface
 {
+    private static ?\WeakMap $particleFactories = null;
+    private static ?\WeakMap $particleConfigs = null;
+    private static ?\WeakMap $requestedBlueprints = null;
+
     /**
      * @param Container $gantry
      */
@@ -51,6 +58,10 @@ class ConfigServiceProvider implements ServiceProviderInterface
 
             return $blueprints;
         };
+        if (static::class === self::class) {
+            self::$particleFactories ??= new \WeakMap;
+            self::$particleFactories[$gantry] = $gantry->raw('blueprints');
+        }
 
         $gantry['config'] = static function(Gantry $gantry) {
             // Make sure configuration has been set.
@@ -81,6 +92,16 @@ class ConfigServiceProvider implements ServiceProviderInterface
      */
     public static function blueprints(Container $container)
     {
+        self::$requestedBlueprints ??= new \WeakMap;
+        self::$requestedBlueprints[$container] = true;
+        if ($runtime = BundleRuntime::current($container instanceof Gantry ? $container : null)) {
+            $state = $runtime->data('blueprints');
+            foreach (['items', 'rules', 'nested', 'dynamic', 'filter', 'configuration'] as $field) {
+                if (!is_array($state[$field] ?? null)) { BundleRuntime::fail('The frozen blueprint schema is incomplete.'); }
+            }
+            return new BlueprintSchema($state);
+        }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Frozen blueprints are unavailable.'); }
         /** @var UniformResourceLocator $locator */
         $locator = $container['locator'];
 
@@ -109,10 +130,17 @@ class ConfigServiceProvider implements ServiceProviderInterface
      */
     public static function load(Container $container, $name = 'default', $combine = true, $withDefaults = true)
     {
+        $combine = $combine && $name !== 'default';
+        if ($runtime = BundleRuntime::current($container instanceof Gantry ? $container : null)) {
+            $kind = ($combine ? 'config' : 'config_single') . ($withDefaults ? '' : '_raw');
+            $config = new Config($runtime->outlineData((string) $name, $kind), static function () use ($container) { return $container['blueprints']; });
+            self::$particleConfigs ??= new \WeakMap;
+            self::$particleConfigs[$config] = \WeakReference::create($container);
+            return $config;
+        }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Frozen theme configuration is unavailable.'); }
         /** @var UniformResourceLocator $locator */
         $locator = $container['locator'];
-
-        $combine = $combine && $name !== 'default';
 
         // Merge current configuration with the default.
         $uris = $combine ? ["gantry-config://{$name}", 'gantry-config://default'] : ["gantry-config://{$name}"];
@@ -152,5 +180,15 @@ class ConfigServiceProvider implements ServiceProviderInterface
         }
 
         return $config;
+    }
+
+    /** Custom/resolved schema paths keep native merge behavior and mutation identity. */
+    public static function canUsePreparedParticles(Container $container, Config $config): bool
+    {
+        return self::$particleConfigs !== null && isset(self::$particleConfigs[$config])
+            && self::$particleConfigs[$config]->get() === $container
+            && self::$particleFactories !== null && isset(self::$particleFactories[$container])
+            && !isset(self::$requestedBlueprints[$container]) && isset($container['blueprints'])
+            && self::$particleFactories[$container] === $container->raw('blueprints');
     }
 }

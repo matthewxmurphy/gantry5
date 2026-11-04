@@ -54,6 +54,14 @@ if (!$user || (
     && !($user->authorise('core.manage', 'com_modules') && strtolower($app->input->getCmd('format', 'html')) === 'json')
     && !$clientEntry
 )) {
+    $input = $app->getInput();
+    if ($user && !$user->guest
+        && strtolower($input->getCmd('format', 'html')) === 'json'
+        && array_values(array_filter(explode('/', $input->getString('view', '')), 'strlen')) === ['api', 'inventory']
+    ) {
+        $app->setHeader('Status', '403 Forbidden', true);
+    }
+
     $app->enqueueMessage(Text::_('JERROR_ALERTNOAUTHOR'), 'error');
 
     return false;

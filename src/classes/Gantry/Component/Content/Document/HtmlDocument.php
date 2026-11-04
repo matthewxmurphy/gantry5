@@ -21,6 +21,7 @@ use Gantry\Component\Content\Block\ContentBlock;
 use Gantry\Component\Content\Block\HtmlBlock;
 use Gantry\Component\Gantry\GantryTrait;
 use Gantry\Component\Url\Url;
+use Gantry\Component\Render\Assets\AssetRuntime;
 use Gantry\Framework\Gantry;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
 
@@ -228,10 +229,7 @@ class HtmlDocument
         foreach ($styles as $style) {
             switch ($style[':type']) {
                 case 'file':
-                    $attribs = '';
-                    if ($style['media']) {
-                        $attribs .= ' media="' . static::escape($style['media']) . '"';
-                    }
+                    $attribs = static::assetAttributes(array_replace(['media' => $style['media']], $style['element'] ?? [], isset($style['id']) ? ['id' => $style['id']] : []));
                     $output[] = sprintf(
                         '<link rel="stylesheet" href="%s" type="%s"%s />',
                         static::escape($style['href']),
@@ -270,13 +268,7 @@ class HtmlDocument
         foreach ($scripts as $script) {
             switch ($script[':type']) {
                 case 'file':
-                    $attribs = '';
-                    if ($script['async']) {
-                        $attribs .= ' async="async"';
-                    }
-                    if ($script['defer']) {
-                        $attribs .= ' defer="defer"';
-                    }
+                    $attribs = static::assetAttributes(array_replace($script['element'] ?? [], ['async' => $script['async'], 'defer' => $script['defer']], isset($script['id']) ? ['id' => $script['id']] : []));
                     $output[] = sprintf(
                         '<script type="%s"%s src="%s"></script>',
                         static::escape($script['type']),
@@ -444,6 +436,10 @@ class HtmlDocument
             return null;
         }
 
+        if (str_starts_with($url, 'gantry-') && ($frozen = AssetRuntime::sourceUrl($url, static::gantry())) !== null) {
+            return static::domain($domain) . $frozen;
+        }
+
         if ($url[0] === '#' || $url[0] === '?') {
             // Handle urls with query string or fragment only.
             return str_replace(' ', '%20', $url);
@@ -546,6 +542,12 @@ class HtmlDocument
     {
         static::$urlFilterParams = [$domain, $timestamp_age, $streamOnly];
 
+        // Fully resolved output needs no stream tokenization or URL callbacks.
+        // Keep the one final-document responsive-image pass independent of that.
+        if ($streamOnly && !preg_match('/gantry-[^\s"\'<>]+:\/\//', $html)) {
+            return stripos($html, '<html') !== false ? AssetRuntime::html($html, static::gantry()) : $html;
+        }
+
         // Tokenize all PRE, CODE and SCRIPT tags to avoid modifying any src|href|url in them
         $tokens = [];
 
@@ -574,7 +576,7 @@ class HtmlDocument
                 }
             }
             if (empty($list)) {
-                return $html;
+                return static::replaceTokens($tokens, $html);
             }
 
             $match = '(gantry-(' . implode('|', $list). ')://.*?)';
@@ -585,7 +587,19 @@ class HtmlDocument
         $html = preg_replace_callback('^(\s)(src|href)="' . $match . '"^u', static::class . '::linkHandler', $html);
         $html = preg_replace_callback('^(\s)url\(' . $match . '\)^u', static::class . '::urlHandler', $html);
         $html = static::replaceTokens($tokens, $html);
-        return $html;
+        return $streamOnly && stripos($html, '<html') !== false ? AssetRuntime::html($html, static::gantry()) : $html;
+    }
+
+    /** Native asset attributes survive both direct footer and CMS rendering. */
+    protected static function assetAttributes(array $attributes): string
+    {
+        $output = '';
+        foreach ($attributes as $name => $value) {
+            if (!is_string($name) || !preg_match('/\A[a-zA-Z_:][a-zA-Z0-9_.:-]*\z/D', $name) || $value === null || $value === false) { continue; }
+            if (!is_scalar($value)) { throw new \InvalidArgumentException('Asset attributes must be scalar values.'); }
+            $output .= ' ' . $name . '="' . static::escape($value === true ? $name : (string) $value) . '"';
+        }
+        return $output;
     }
 
     /**

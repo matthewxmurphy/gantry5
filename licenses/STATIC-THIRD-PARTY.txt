@@ -15,7 +15,7 @@ Included components and applicable upstream terms:
 - Color Schemer: Scott Kellum and Mason Wendell; MIT.
 - Lightcase 2.5.0 JavaScript / 2.4.4 CSS and bundled icon font: Cornel Boppart;
   upstream license.txt is reproduced without changing its GPL declaration.
-- Font Awesome 4.7.0 CSS/font, 5.14.0 JS/fonts, 6.5.1 CSS and 7.0.0 CSS/JS/fonts:
+- Font Awesome 4.7.0 CSS/font, 5.14.0 JS/fonts, 6.5.1 CSS/JS/fonts and 7.0.0 CSS/JS/fonts:
   original embedded attribution is preserved. Code: MIT; fonts: SIL OFL 1.1;
   Free SVG/JS icons: CC BY 4.0, as specified by the respective upstream release.
 - Roboto fonts: embedded notice "Font data copyright Google 2012";

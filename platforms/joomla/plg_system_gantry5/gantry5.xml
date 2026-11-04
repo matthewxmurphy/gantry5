@@ -15,6 +15,7 @@
         <filename>MD5SUMS</filename>
         <folder>forms</folder>
         <folder>language</folder>
+        <folder>services</folder>
     </files>
 
     <config>

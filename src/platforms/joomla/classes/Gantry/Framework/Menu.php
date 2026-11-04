@@ -102,6 +102,11 @@ class Menu extends AbstractMenu
     #[\ReturnTypeWillChange]
     public function offsetGet($offset)
     {
+        // A page without an active menu item has no lookup key. PHP 8.5 no
+        // longer silently accepts null as an array offset during this read.
+        if ($offset === null) {
+            return null;
+        }
         $item = isset($this->items[$offset]) ? $this->items[$offset] : null;
         if (!$this->isAdmin) {
             return $item && $item->enabled ? $item : null;
@@ -150,7 +155,7 @@ class Menu extends AbstractMenu
 
         if ($items === null) {
             $db = Factory::getContainer()->get(DatabaseInterface::class);
-            $query = $db->getQuery(true)
+            $query = $db->createQuery()
                 ->select($db->quoteName('a.menutype'))
                 ->select($db->quoteName('a.title'))
                 ->from($db->quoteName('#__menu_types', 'a'))
@@ -692,7 +697,8 @@ class Menu extends AbstractMenu
             }
         }
 
-        $item = new Item($this, $properties);
+        $unpublished = isset($menuItem->published) && (int) $menuItem->published === 0;
+        $item = new Item($this, $properties, $unpublished);
 
         $link = $item->link;
         if ($item->type === 'url') {
@@ -705,7 +711,7 @@ class Menu extends AbstractMenu
         if (!$link) {
             $url = false;
         } elseif ((strpos($link, 'index.php?') !== false) && strcasecmp(substr($link, 0, 4), 'http')) {
-            $url = Route::_($link, false, $params->get('secure'));
+            $url = Route::_($link, false, (int) $params->get('secure'));
         } else {
             $url = Route::_($link, false);
         }
@@ -800,7 +806,7 @@ class Menu extends AbstractMenu
     private function getMenuItemIds($menutype)
     {
         $db = Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class);
-        $query = $db->getQuery(true)
+        $query = $db->createQuery()
             ->select('m.id, m.alias, m.path AS route, m.level, m.parent_id')
             ->from('#__menu AS m')
             ->where('m.menutype = ' . $db->quote($menutype))
@@ -850,7 +856,7 @@ class Menu extends AbstractMenu
             }
             
             $query = $db->getQuery(true)
-                ->select('m.id, m.menutype, m.title, m.alias, m.note, m.path AS route, m.link, m.type, m.level, m.language')
+                ->select('m.id, m.menutype, m.title, m.alias, m.note, m.path AS route, m.link, m.type, m.level, m.language, m.published')
                 ->select($db->quoteName('m.browserNav') . ', m.access, m.params, m.home, m.img, m.template_style_id, m.component_id, m.parent_id')
                 ->select('e.element as component')
                 ->from('#__menu AS m')
@@ -878,7 +884,7 @@ class Menu extends AbstractMenu
                 $cache = Factory::getContainer()->get(\Joomla\CMS\Cache\CacheControllerFactoryInterface::class)
                     ->createCacheController('callback', ['defaultgroup' => 'com_menus']);
 
-                $items = $cache->get($loader, [], md5(get_class($this) . $menutype), false);
+                $items = $cache->get($loader, [], md5(get_class($this) . ':published:' . $menutype), false);
             } catch (\Exception $e) {
                 // Fallback for Joomla 4 or if cache factory fails
                 $items = $loader();

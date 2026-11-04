@@ -71,7 +71,7 @@ class Page extends Base\Page
 
         /** @var CMSApplication $application */
         $application = Factory::getApplication();
-        $input = $application->input;
+        $input = $application->getInput();
 
         $this->tmpl     = $input->getCmd('tmpl', '');
         $this->option   = $input->getCmd('option', '');

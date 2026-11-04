@@ -91,6 +91,13 @@ abstract class CompiledBase
      */
     public function load()
     {
+        // Save/publish preparation must read the current bytes, including edits
+        // made within the same filesystem timestamp. Requests use the bundle.
+        if (\Gantry\Component\Render\BundleRuntime::isBuilding()) {
+            $this->loadFiles();
+            return $this->object;
+        }
+
         if ($this->object) {
             return $this->object;
         }

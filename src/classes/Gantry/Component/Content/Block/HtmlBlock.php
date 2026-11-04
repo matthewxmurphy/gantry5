@@ -19,6 +19,7 @@ namespace Gantry\Component\Content\Block;
 use Gantry\Framework\Document;
 use Gantry\Framework\Gantry;
 use Gantry\Framework\Theme;
+use Gantry\Component\Render\Assets\AssetRuntime;
 
 /**
  * Class HtmlBlock
@@ -80,6 +81,7 @@ class HtmlBlock extends ContentBlock implements HtmlBlockInterface
         /** @var Document $document */
         $document = $gantry['document'];
 
+        $manifest = AssetRuntime::manifest($gantry);
         foreach ($styles as $key => $style) {
             if (isset($style['href'])) {
                 $url = $style['href'];
@@ -87,14 +89,17 @@ class HtmlBlock extends ContentBlock implements HtmlBlockInterface
                     // Compile SCSS files.
                     $url = $theme->css(Gantry::basename($url, '.scss'));
                 }
-                // Deal with streams and relative paths.
-                $url = $document::url($url, null, null, false);
+                // Resolve approved immutable identities before native timestamping;
+                // all other records retain the native URL/attribute semantics.
+                $style['href'] = $url;
+                $prepared = $manifest !== null ? AssetRuntime::preparedUrl($style, 'style', $manifest) : null;
+                $url = $prepared ?? $document::url($url, null, null, false);
 
                 $styles[$key]['href'] = $url;
             }
         }
 
-        return $styles;
+        return $manifest !== null ? AssetRuntime::substitute($styles, 'style', $manifest) : $styles;
     }
 
     /**
@@ -115,14 +120,15 @@ class HtmlBlock extends ContentBlock implements HtmlBlockInterface
         /** @var Document $document */
         $document = $gantry['document'];
 
+        $manifest = AssetRuntime::manifest($gantry);
         foreach ($scripts as $key => $script) {
             if (isset($script['src'])) {
-                // Deal with streams and relative paths.
-                $scripts[$key]['src'] = $document::url($script['src'], null, null, false);
+                $prepared = $manifest !== null ? AssetRuntime::preparedUrl($script, 'script', $manifest) : null;
+                $scripts[$key]['src'] = $prepared ?? $document::url($script['src'], null, null, false);
             }
         }
 
-        return $scripts;
+        return $manifest !== null ? AssetRuntime::substitute($scripts, 'script', $manifest) : $scripts;
     }
 
     /**
@@ -287,6 +293,9 @@ class HtmlBlock extends ContentBlock implements HtmlBlockInterface
         $defer = isset($element['defer']) ? true : false;
         $async = isset($element['async']) ? true : false;
         $handle = !empty($element['handle']) ? (string) $element['handle'] : '';
+        $id = !empty($element['id']) ? ['id' => (string) $element['id']] : [];
+        $dependencies = isset($element['dependencies']) ? array_values((array) $element['dependencies']) : [];
+        unset($element['tag'], $element['id'], $element['src'], $element['type'], $element['defer'], $element['async'], $element['handle'], $element['dependencies'], $element['content']);
 
         $this->scripts[$location][md5($src) . sha1($src)] = [
             ':type' => 'file',
@@ -295,8 +304,10 @@ class HtmlBlock extends ContentBlock implements HtmlBlockInterface
             'type' => $type,
             'defer' => $defer,
             'async' => $async,
-            'handle' => $handle
-        ];
+            'handle' => $handle,
+            'element' => $element,
+            'dependencies' => $dependencies
+        ] + $id;
 
         return true;
     }
