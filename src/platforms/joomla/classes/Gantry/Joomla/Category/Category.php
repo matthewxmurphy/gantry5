@@ -48,8 +48,8 @@ class Category extends AbstractObject
             return false;
         }
 
-        $this->params = json_decode($this->params, false);
-        $this->metadata = json_decode($this->metadata, false);
+        $this->params = json_decode($this->params ?? '', false);
+        $this->metadata = json_decode($this->metadata ?? '', false);
 
         return true;
     }
