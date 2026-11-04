@@ -18,6 +18,26 @@ reloads. Requests must remain on the same CMS origin. On other CMS ports the
 same entry shows this contract as a reference with request execution disabled;
 This candidate exposes no WordPress or Grav API transport. The shared core uses native CMS adapters; only Joomla has the database adapter verified by this candidate.
 
+## Declaring an extension API in Joomla
+
+An enabled Joomla Web Services plugin can add its API to the Gantry inventory
+by packaging `openapi.json` in its installed plugin directory,
+`plugins/webservices/<element>/openapi.json`. Include
+`<filename>openapi.json</filename>` in the plugin manifest's `<files>` list.
+
+Gantry reads an OpenAPI 3.x JSON document of up to 256 KiB directly from that
+directory. Include an `info` title and version and define up to 256 operations
+inline in `paths`. The inventory recognizes the standard
+`get`, `put`, `post`, `delete`, `options`, `head`, `patch` and `trace`
+method keys. It displays the document version and operations and identifies
+the source as `installed-plugin` in the inventory JSON.
+Gantry does not resolve references, fetch URLs, execute the plugin, or verify
+that its routes, authentication or permissions match the declaration. A
+missing, unreadable, invalid or unsupported declaration leaves the plugin
+listed as a discovered Web Services provider.
+
+## Gantry core operations
+
 All paths below follow `/api/index.php` relative to the Joomla installation.
 `{theme}` is an installed Gantry theme identifier; `{outline}` is its outline ID.
 
