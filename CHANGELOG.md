@@ -1,3 +1,7 @@
+# 6.0.4
+
+- Honor Joomla's Show Page Heading setting on Gantry custom pages, with native title fallback and escaped heading text.
+
 # 6.0.3
 
 - Rewrite Phing's implicit nullable temporary-file parameter before building packages.

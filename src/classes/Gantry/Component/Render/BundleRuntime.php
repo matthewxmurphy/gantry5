@@ -24,7 +24,7 @@ final class BundleRuntime
             || ($manifest['php'] ?? null) !== PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION
             || !is_string($manifest['revision'] ?? null) || !preg_match('/\A[a-f0-9]{64}\z/D', $manifest['revision'])
             || !is_string($manifest['theme'] ?? null) || !preg_match('/\A[a-zA-Z0-9_-]{1,100}\z/D', $manifest['theme'])
-            || ($manifest['framework'] ?? null) !== (defined('GANTRY5_VERSION') ? GANTRY5_VERSION : '6.0.3')
+            || ($manifest['framework'] ?? null) !== (defined('GANTRY5_VERSION') ? GANTRY5_VERSION : '6.0.4')
             || !is_array($manifest['data'] ?? null) || !is_array($manifest['outlines'] ?? null)) {
             self::fail('The production render bundle is incompatible or incomplete. Rebuild it before serving.');
         }
