@@ -1,6 +1,7 @@
 <section aria-labelledby="gantry-api-inventory-title">
     <h2 id="gantry-api-inventory-title">Extension API inventory</h2>
     <p>Installed Joomla extensions and the API evidence available to Gantry. A detected Web Services plugin does not identify its routes, authentication or permissions.</p>
+    <p><a href="{{ gantry.route('api', 'inventory')|e('html_attr') }}">Extension inventory JSON</a></p>
     <ul>
         {% for extension in api_extension_inventory %}
             <li>

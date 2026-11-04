@@ -49,6 +49,14 @@ final class ExtensionApiInventory
                 'version' => is_string($version) || is_int($version) ? (string) $version : null,
                 'state' => $documented ? 'documented' : ($detected ? 'discovered' : 'none'),
                 'operations' => $documented ? $operations : [],
+                'contract' => $documented ? [
+                    'format' => 'openapi',
+                    'version' => $specification['openapi'],
+                    'server' => $specification['servers'][0]['url'],
+                    'security' => $specification['security'],
+                    'security_schemes' => $specification['components']['securitySchemes'],
+                    'permission' => 'platform.settings.manage',
+                ] : null,
             ];
         }
 

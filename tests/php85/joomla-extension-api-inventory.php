@@ -23,6 +23,7 @@ if (PHP_VERSION_ID < 80500 || PHP_VERSION_ID >= 80600 || !extension_loaded('pdo_
 $source = dirname(__DIR__, 2);
 define('_JEXEC', 1);
 define('GANTRY_DEBUGGER', false);
+define('GANTRY5_DEBUG', false);
 require $argv[2];
 $loader = require $argv[1];
 $loader->addPsr4('Gantry\\', $source . '/src/classes/Gantry', true);
@@ -51,7 +52,7 @@ try {
     $gantry['platform'] = new class {
         public function authorize($action, $id): bool { return false; }
     };
-    foreach (['index', 'document'] as $method) {
+    foreach (['index', 'document', 'inventory'] as $method) {
         try {
             (new Api($gantry))->$method();
             throw new RuntimeException('Unauthorized request was accepted.');
@@ -104,9 +105,21 @@ try {
         }
     };
     $response = $page->index();
-    $check($response->getStatusCode() === 200 && $page->context['api_extension_inventory'] === $rows, 'authorized controller exposes the real inventory');
+    $check($response->getStatusCode() === 200 && array_column($page->context['api_extension_inventory'], 'id') === array_column($rows, 'id'), 'authorized controller exposes the real inventory');
     $check(json_decode($page->context['api_spec_json'], true)['servers'][0]['url'] === '/fixture/api/index.php', 'subdirectory API URL is preserved');
     $check($page->document()->getStatusCode() === 200, 'existing OpenAPI JSON action remains available');
+    $inventory = $page->execute('GET', ['inventory'], []);
+    $body = json_decode((string) $inventory, true, flags: JSON_THROW_ON_ERROR);
+    $check($inventory->getStatusCode() === 200 && $body['schema_version'] === 1, 'versioned native GET inventory response');
+    $check($body['extensions'] === $page->context['api_extension_inventory'], 'HTML and JSON use the same installed rows');
+    $contract = $body['extensions'][0]['contract'];
+    $check($contract['version'] === '3.0.3' && $contract['server'] === '/fixture/api/index.php'
+        && $contract['security_schemes']['JoomlaToken']['name'] === 'X-Joomla-Token'
+        && $contract['permission'] === 'platform.settings.manage', 'Gantry declaration uses shipped OpenAPI metadata');
+    $check($body['extensions'][1]['contract'] === null && $body['extensions'][3]['contract'] === null, 'unknown declarations are explicitly null');
+    $headers = array_change_key_case($inventory->getHeaders());
+    $check(in_array('private, no-store', (array) $headers['cache-control'], true), 'inventory cannot be shared-cached');
+
 
     $check($platformEvents <= 1 && error_reporting() === -1, 'only known Joomla SQLite event and inherited native mask');
     echo "PASS {$checks} Joomla extension inventory checks on PHP " . PHP_VERSION . "; Joomla SQLite events {$platformEvents}\n";

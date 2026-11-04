@@ -10,10 +10,11 @@ use Gantry\Component\Admin\HtmlController;
 use Gantry\Component\Api\OpenApi;
 use Gantry\Component\Api\OpenApiResponse;
 use Gantry\Component\Response\HtmlResponse;
+use Gantry\Component\Response\JsonResponse;
 
 class Api extends HtmlController
 {
-    protected $httpVerbs = ['GET' => ['/' => 'index', '/openapi' => 'document']];
+    protected $httpVerbs = ['GET' => ['/' => 'index', '/openapi' => 'document', '/inventory' => 'inventory']];
 
     public function index()
     {
@@ -23,8 +24,7 @@ class Api extends HtmlController
         $specification = $this->specification();
         $this->params['api_spec_json'] = json_encode($specification, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         if ($platform === 'joomla') {
-            $database = \Joomla\CMS\Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class);
-            $this->params['api_extension_inventory'] = \Gantry\Joomla\ExtensionApiInventory::read($database, $specification);
+            $this->params['api_extension_inventory'] = $this->readInventory($specification);
         }
         $response = new HtmlResponse($this->render('@gantry-admin/pages/api.html.twig', $this->params));
         $response->setHeader('Cache-Control', 'private, no-store');
@@ -38,6 +38,28 @@ class Api extends HtmlController
         $response->setHeader('Cache-Control', 'private, no-store');
         $response->setHeader('X-Content-Type-Options', 'nosniff');
         return $response;
+    }
+
+    public function inventory(): JsonResponse
+    {
+        $this->requireAdministrator();
+        if ($this->container['platform']->getName() !== 'joomla') {
+            throw new \RuntimeException('Extension API inventory is available on Joomla.', 404);
+        }
+        $specification = $this->specification();
+        $response = new JsonResponse([
+            'schema_version' => 1,
+            'extensions' => $this->readInventory($specification),
+        ]);
+        $response->setHeader('Cache-Control', 'private, no-store');
+        $response->setHeader('X-Content-Type-Options', 'nosniff');
+        return $response;
+    }
+
+    private function readInventory(array $specification): array
+    {
+        $database = \Joomla\CMS\Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class);
+        return \Gantry\Joomla\ExtensionApiInventory::read($database, $specification);
     }
 
     private function requireAdministrator(): void
