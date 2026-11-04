@@ -63,7 +63,7 @@ final class BundleCompiler
             $before = $this->fingerprint($sources);
             $manifest = ['schema' => 1, 'id' => $id, 'revision' => $revision,
                 'theme' => (string) $this->gantry['theme.name'], 'php' => PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION,
-                'framework' => defined('GANTRY5_VERSION') ? GANTRY5_VERSION : '6.0.3',
+                'framework' => defined('GANTRY5_VERSION') ? GANTRY5_VERSION : '6.0.4',
                 'created' => gmdate('Y-m-d\TH:i:s\Z'), 'particle_configs' => true, 'data' => [], 'outlines' => []];
 
             $details = [];

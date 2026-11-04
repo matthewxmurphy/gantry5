@@ -1,6 +1,6 @@
-## Gantry 6.0.3
+## Gantry 6.0.4
 
-This branch builds **6.0.3** (calendar **2026.11.03.003**) on the published
+This branch builds **6.0.4** (calendar **2026.11.03.004**) on the published
 [Gantry 6.0.1 API release](https://github.com/matthewxmurphy/gantry5/releases/tag/v2026.11.02.001).
 The original release remains immutable. This candidate adds one shared
 preview/save/undo engine for native outline/layout/settings editors and REST,
