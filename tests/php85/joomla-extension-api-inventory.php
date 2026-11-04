@@ -37,6 +37,27 @@ $check = static function (bool $ok, string $label) use (&$checks): void {
     ++$checks;
 };
 $db = new SqliteDriver(['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => 'fixture_']);
+$plugins = sys_get_temp_dir() . '/gantry-api-inventory-' . bin2hex(random_bytes(8));
+define('JPATH_PLUGINS', $plugins);
+$schema = json_encode([
+    'openapi' => '3.1.0',
+    'info' => ['title' => 'Widget API', 'version' => '1.0'],
+    'paths' => ['/widgets' => ['get' => ['responses' => ['200' => ['description' => 'OK']]]]],
+], JSON_THROW_ON_ERROR);
+$declarations = [
+    'declared' => $schema,
+    'invalid' => '{',
+    'disabled' => $schema,
+    'oversized' => $schema . str_repeat(' ', 262144),
+];
+foreach ($declarations as $element => $content) {
+    $directory = "$plugins/webservices/$element";
+    mkdir($directory, 0700, true);
+    file_put_contents("$directory/openapi.json", $content);
+}
+$linked = "$plugins/webservices/linked";
+mkdir($linked, 0700);
+symlink("$plugins/webservices/declared/openapi.json", "$linked/openapi.json");
 $sqliteFile = realpath((new ReflectionClass(SqliteDriver::class))->getFileName());
 $platformEvents = 0;
 set_error_handler(static function (int $level, string $message, string $file, int $line) use ($sqliteFile, &$platformEvents): bool {
@@ -67,23 +88,39 @@ try {
         [7, 'Disabled provider', 'plugin', 'webservices', 'disabled', 0, '{"version":"1.0"}'],
         [5, 'Gantry', 'plugin', 'system', 'gantry5', 1, '{"version":"6.0.3"}'],
         [6, 'Active provider', 'plugin', 'webservices', 'content', 1, 'invalid JSON'],
+        [9, 'Declared provider', 'plugin', 'webservices', 'declared', 1, '{}'],
+        [10, 'Invalid declaration', 'plugin', 'webservices', 'invalid', 1, '{}'],
+        [11, 'Unsafe element', 'plugin', 'webservices', 'declared/../declared', 1, '{}'],
+        [12, 'Oversized declaration', 'plugin', 'webservices', 'oversized', 1, '{}'],
+        [13, 'Linked declaration', 'plugin', 'webservices', 'linked', 1, '{}'],
     ] as [$id, $name, $type, $folder, $element, $enabled, $manifest]) {
         $record = (object) ['extension_id' => $id, 'name' => $name,
             'type' => $type, 'folder' => $folder, 'element' => $element, 'enabled' => $enabled, 'manifest_cache' => $manifest];
         $db->insertObject('#__extensions', $record);
     }
     $rows = ExtensionApiInventory::read($db, OpenApi::document());
-    $check(array_column($rows, 'id') === [5, 6, 7, 8], 'one ordered row per extension');
-    $check(array_column($rows, 'state') === ['documented', 'discovered', 'none', 'none'], 'evidence states and disabled provider');
-    $check(array_column($rows, 'version') === ['6.0.3', null, '1.0', '<bad>'], 'invalid manifest is safely treated as unknown');
+    $check(array_column($rows, 'id') === [5, 6, 7, 8, 9, 10, 11, 12, 13], 'one ordered row per extension');
+    $check(array_column($rows, 'state') === [
+        'documented', 'discovered', 'none', 'none', 'documented', 'discovered', 'discovered', 'discovered', 'discovered',
+    ], 'evidence states and disabled provider');
+    $check(array_column($rows, 'version') === ['6.0.3', null, '1.0', '<bad>', null, null, null, null, null], 'invalid manifest is safely treated as unknown');
     $check(count($rows[0]['operations']) === 12 && in_array('POST /v1/gantry/themes/{theme}/changes/undo', $rows[0]['operations'], true), 'real OpenAPI operations');
     $check($rows[1]['operations'] === [] && $rows[2]['operations'] === [], 'no invented endpoints');
+    $check($rows[4]['operations'] === ['GET /widgets'] && $rows[4]['contract'] === [
+        'format' => 'openapi', 'version' => '3.1.0', 'source' => 'installed-plugin',
+    ], 'packaged contract exposes declared operations without claiming access details');
+    $check($rows[2]['contract'] === null && $rows[5]['contract'] === null && $rows[6]['contract'] === null,
+        'disabled, malformed and unsafe declarations expose no contract');
+    $check($rows[7]['contract'] === null && $rows[8]['contract'] === null, 'oversized and linked declarations expose no contract');
     $twig = new Twig\Environment(new Twig\Loader\FilesystemLoader($source . '/platforms/common/templates/pages'), ['autoescape' => false]);
     $html = $twig->render('api-extension-inventory.html.twig', ['api_extension_inventory' => $rows,
         'gantry' => new class { public function route($controller, $path): string { return '/administrator/' . $controller . '/' . $path; } }]);
     $check(!str_contains($html, '<script>') && str_contains($html, '&lt;script&gt;') && str_contains($html, '&lt;bad&gt;'), 'untrusted manifest fields are escaped');
-    $check(substr_count($html, 'Documented operations') === 1 && substr_count($html, 'Discovered Web Services provider') === 1, 'rendered evidence states');
+    $check(substr_count($html, 'Documented operations') === 2 && substr_count($html, 'Discovered Web Services provider') === 5, 'rendered evidence states');
     $check(str_contains($html, 'Joomla API token and Gantry settings-administrator permission'), 'native auth and ACL disclosed');
+    $check(str_contains($html, 'Declared by installed plugin') && str_contains($html, 'GET /widgets')
+        && substr_count($html, 'Joomla API token and Gantry settings-administrator permission') === 1,
+        'HTML identifies the third-party declaration separately from Gantry authentication');
     $check(ExtensionApiInventory::read($db, OpenApi::document()) === $rows, 'read-only repeated inventory');
     $_SERVER['HTTP_HOST'] = 'localhost';
     $_SERVER['SCRIPT_NAME'] = '/fixture/administrator/index.php';
@@ -144,4 +181,12 @@ try {
     echo "PASS {$checks} Joomla extension inventory checks on PHP " . PHP_VERSION . "; Joomla SQLite events {$platformEvents}\n";
 } finally {
     restore_error_handler();
+    unlink("$linked/openapi.json");
+    rmdir($linked);
+    foreach (array_keys($declarations) as $element) {
+        unlink("$plugins/webservices/$element/openapi.json");
+        rmdir("$plugins/webservices/$element");
+    }
+    rmdir("$plugins/webservices");
+    rmdir($plugins);
 }

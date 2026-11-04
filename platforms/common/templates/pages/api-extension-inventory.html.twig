@@ -11,8 +11,13 @@
                 {{ extension.enabled ? 'Enabled.' : 'Disabled.' }}
                 {% if extension.state == 'documented' %}
                     Documented.
-                    <a href="{{ gantry.route('api', 'openapi')|e('html_attr') }}">OpenAPI JSON</a>.
-                    Joomla API token and Gantry settings-administrator permission.
+                    {% if extension.contract.source|default('') == 'installed-plugin' %}
+                        Declared by installed plugin (OpenAPI {{ extension.contract.version|e }}).
+                        Routing, authentication and permissions are unverified.
+                    {% else %}
+                        <a href="{{ gantry.route('api', 'openapi')|e('html_attr') }}">OpenAPI JSON</a>.
+                        Joomla API token and Gantry settings-administrator permission.
+                    {% endif %}
                     <details>
                         <summary>Documented operations</summary>
                         <ul>
