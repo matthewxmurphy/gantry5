@@ -14,6 +14,9 @@ use Gantry\Component\Response\JsonResponse;
 
 class Api extends HtmlController
 {
+    public const JSON_CACHE_CONTROL = 'private, no-store';
+    public const JSON_CONTENT_TYPE_OPTIONS = 'nosniff';
+
     protected $httpVerbs = ['GET' => ['/' => 'index', '/openapi' => 'document', '/inventory' => 'inventory']];
 
     private const TEMPLATE_LIBRARY_REVIEW = [
@@ -58,8 +61,8 @@ class Api extends HtmlController
     {
         $this->requireAdministrator();
         $response = new OpenApiResponse($this->specification());
-        $response->setHeader('Cache-Control', 'private, no-store');
-        $response->setHeader('X-Content-Type-Options', 'nosniff');
+        $response->setHeader('Cache-Control', self::JSON_CACHE_CONTROL);
+        $response->setHeader('X-Content-Type-Options', self::JSON_CONTENT_TYPE_OPTIONS);
         return $response;
     }
 
@@ -75,8 +78,8 @@ class Api extends HtmlController
             'extensions' => $this->readInventory($specification),
             'template_library_review' => self::TEMPLATE_LIBRARY_REVIEW,
         ]);
-        $response->setHeader('Cache-Control', 'private, no-store');
-        $response->setHeader('X-Content-Type-Options', 'nosniff');
+        $response->setHeader('Cache-Control', self::JSON_CACHE_CONTROL);
+        $response->setHeader('X-Content-Type-Options', self::JSON_CONTENT_TYPE_OPTIONS);
         return $response;
     }
 

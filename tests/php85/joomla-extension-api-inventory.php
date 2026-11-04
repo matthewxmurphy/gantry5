@@ -107,7 +107,8 @@ try {
     $response = $page->index();
     $check($response->getStatusCode() === 200 && array_column($page->context['api_extension_inventory'], 'id') === array_column($rows, 'id'), 'authorized controller exposes the real inventory');
     $check(json_decode($page->context['api_spec_json'], true)['servers'][0]['url'] === '/fixture/api/index.php', 'subdirectory API URL is preserved');
-    $check($page->document()->getStatusCode() === 200, 'existing OpenAPI JSON action remains available');
+    $document = $page->document();
+    $check($document->getStatusCode() === 200, 'existing OpenAPI JSON action remains available');
     $inventory = $page->execute('GET', ['inventory'], []);
     $body = json_decode((string) $inventory, true, flags: JSON_THROW_ON_ERROR);
     $check($inventory->getStatusCode() === 200 && $body['schema_version'] === 1, 'versioned native GET inventory response');
@@ -132,8 +133,11 @@ try {
         && $contract['security_schemes']['JoomlaToken']['name'] === 'X-Joomla-Token'
         && $contract['permission'] === 'platform.settings.manage', 'Gantry declaration uses shipped OpenAPI metadata');
     $check($body['extensions'][1]['contract'] === null && $body['extensions'][3]['contract'] === null, 'unknown declarations are explicitly null');
-    $headers = array_change_key_case($inventory->getHeaders());
-    $check(in_array('private, no-store', (array) $headers['cache-control'], true), 'inventory cannot be shared-cached');
+    foreach (['OpenAPI' => $document, 'inventory' => $inventory] as $label => $json) {
+        $headers = array_change_key_case($json->getHeaders());
+        $check($headers['cache-control'] === ['private, no-store']
+            && $headers['x-content-type-options'] === ['nosniff'], $label . ' declares the exact JSON header policy');
+    }
 
 
     $check($platformEvents <= 1 && error_reporting() === -1, 'only known Joomla SQLite event and inherited native mask');

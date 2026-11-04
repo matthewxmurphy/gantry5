@@ -14,6 +14,7 @@ defined('_JEXEC') or die;
 
 use Joomla\CMS\Document\HtmlDocument;
 use Joomla\CMS\Event\Application\BeforeApiRouteEvent;
+use Joomla\CMS\Event\Application\BeforeRespondEvent;
 use Joomla\CMS\Event\Model\AfterSaveEvent;
 use Joomla\CMS\Event\Model\BeforeDeleteEvent;
 use Joomla\CMS\Event\Model\BeforeSaveEvent;
@@ -33,6 +34,7 @@ use Joomla\Event\SubscriberInterface;
 use Joomla\Registry\Registry;
 use Joomla\Router\Route as ApiRoute;
 use Gantry5\Loader;
+use Gantry\Admin\Controller\Html\Api;
 use Gantry\Component\Config\Config;
 use Gantry\Component\File\CompiledYamlFile;
 use Gantry\Component\FileSystem\Folder;
@@ -72,6 +74,7 @@ class plgSystemGantry5 extends CMSPlugin implements SubscriberInterface
             'onAfterRoute' => 'onAfterRoute',
             'onAfterDispatch' => 'onAfterDispatch',
             'onAfterRender' => 'onAfterRender',
+            'onBeforeRespond' => 'onBeforeRespond',
             'onRenderModule' => 'handleRenderModule',
             'onAjaxParticle' => 'handleAjaxParticle',
             'onAfterDispatchSiteAdmin' => 'onAfterDispatchSiteAdmin',
@@ -198,6 +201,37 @@ class plgSystemGantry5 extends CMSPlugin implements SubscriberInterface
 
         } elseif ($this->getApplication()->isClient('administrator')) {
             $this->onAfterRouteAdmin();
+        }
+    }
+
+    public function onBeforeRespond(BeforeRespondEvent $event): void
+    {
+        $app = $event->getApplication();
+        if (!$app->isClient('administrator')) {
+            return;
+        }
+
+        // Read the original query because Joomla can dispatch a guest to com_login.
+        $input = $app->getInput();
+        $query = $input->get;
+        $view = array_values(array_filter(explode('/', $query->getString('view', '')), 'strlen'));
+        if ($query->getCmd('option') !== 'com_gantry5'
+            || strtolower($query->getCmd('format', 'html')) !== 'json'
+            || !in_array($view, [['api', 'openapi'], ['api', 'inventory']], true)
+        ) {
+            return;
+        }
+
+        Loader::setup();
+        $app->setHeader('Cache-Control', Api::JSON_CACHE_CONTROL, true);
+        $app->setHeader('X-Content-Type-Options', Api::JSON_CONTENT_TYPE_OPTIONS, true);
+
+        // Keep Joomla's other no-cache headers while supplying our own Cache-Control.
+        if (!$app->allowCache()) {
+            $app->setHeader('Expires', 'Wed, 17 Aug 2005 00:00:00 GMT', true);
+            $app->setHeader('Last-Modified', gmdate('D, d M Y H:i:s') . ' GMT', true);
+            $app->setHeader('Pragma', 'no-cache');
+            $app->allowCache(true);
         }
     }
 
