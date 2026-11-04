@@ -192,6 +192,12 @@ class Designpacks extends HtmlController
 
     public function apply()
     {
+        $this->changeSave('admin.designpack', fn() => $this->applyNative());
+        return $this->page();
+    }
+
+    private function applyNative()
+    {
         $service = $this->service();
         $bytes = $this->upload();
         $pack = $service->decode($bytes);
@@ -257,7 +263,7 @@ class Designpacks extends HtmlController
             throw $error;
         }
         $this->params['design_result'] = ['id' => (string) $createdId, 'title' => $pack['title']];
-        return $this->page();
+        return $this->params['design_result'];
     }
 
     private function saveNewYaml($path, array $data)

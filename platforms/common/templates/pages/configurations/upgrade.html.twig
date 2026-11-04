@@ -28,12 +28,14 @@
     <h3>Download a private snapshot</h3>
     <p>The snapshot preserves exact YAML bytes, including particle content and any embedded credentials. Store it privately. It is not a complete site backup.</p>
     <form method="post" action="{{ gantry.route('configurations', outline, 'upgrade', 'download') }}">
+        <input type="hidden" name="g6_revision" value="{{ g6_revision }}">
         <label><input type="checkbox" name="private_ack" value="yes" required> I understand this may contain private content or embedded credentials and will store it securely.</label>
         <p><button class="button button-primary" type="submit">Download private outline snapshot</button></p>
     </form>
     <h3>Preview a restore</h3>
     <p>Choose a snapshot from this CMS, theme and outline. Preview does not change configuration. Maximum upload: {{ snapshot_limit }} bytes.</p>
     <form method="post" enctype="multipart/form-data" action="{{ gantry.route('configurations', outline, 'upgrade', 'preview') }}">
+        <input type="hidden" name="g6_revision" value="{{ g6_revision }}">
         <label for="upgrade-preview-file">Private snapshot JSON</label>
         <input id="upgrade-preview-file" type="file" name="snapshot" accept="application/json,.json" required>
         <p><button class="button" type="submit">Preview restore</button></p>
@@ -45,6 +47,7 @@
     {% for file in restore_preview.files %}<tr><td>{{ file.path }}</td><td>{{ file.action }}</td></tr>{% endfor %}
     </tbody></table>
     <form method="post" enctype="multipart/form-data" action="{{ gantry.route('configurations', outline, 'upgrade', 'restore') }}">
+        <input type="hidden" name="g6_revision" value="{{ g6_revision }}">
         <input type="hidden" name="revision" value="{{ restore_preview.revision }}">
         <input type="hidden" name="snapshot_digest" value="{{ restore_preview.snapshot }}">
         <p>Close other configuration editors. Choose the same snapshot again; browsers do not retain uploaded files after preview.</p>

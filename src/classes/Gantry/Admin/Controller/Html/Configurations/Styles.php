@@ -284,33 +284,20 @@ class Styles extends HtmlController
 
         if ($id) {
             $data = (array) $config->get('styles');
-            $data[$id] = $this->request->post->getArray();
+            $block = $this->request->post->getArray();
+            unset($block['g6_revision'], $block['g6_mode']);
+            $data[$id] = $block;
         } else {
             $data = $this->request->post->getArray('styles');
         }
 
-        /** @var UniformResourceLocator $locator */
-        $locator = $this->container['locator'];
-
-        // Save layout into custom directory for the current theme.
-        $outline = $this->params['outline'];
-        $save_dir = $locator->findResource("gantry-config://{$outline}", true, true);
-        $filename = "{$save_dir}/styles.yaml";
-
-        $file = YamlFile::instance($filename);
-        $file->save($data);
-        $file->free();
-
-        // Fire save event.
-        $event = new StylesEvent();
-        $event->gantry = $this->container;
-        $event->theme = $this->container['theme'];
-        $event->controller = $this;
-        $event->data = $data;
-        $this->container->fireEvent('admin.styles.save', $event);
-
-        // Compile CSS.
-        $warnings = $this->compileSettings();
+        $outline = (string) $this->params['outline'];
+        $writer = new \Gantry\Component\Changes\NativeWriter($this->container);
+        $change = $this->changeSave('admin.styles',
+            fn() => $writer->saveSettings($outline, ['styles' => $data], $this),
+            fn() => $writer->previewSettings($outline, ['styles' => $data]));
+        if (!empty($change['preview'])) { return $this->changeResponse($change); }
+        $warnings = $change['result']['warnings'] ?? [];
 
         if (empty($this->params['ajax'])) {
             // FIXME: HTML request: Output compiler warnings!!
@@ -319,7 +306,7 @@ class Styles extends HtmlController
 
         if ($warnings) {
             $this->params += ['warnings' => $warnings];
-            return new JsonResponse(
+            return $this->changeResponse($change,
                 [
                     'html'    => $this->render('@gantry-admin/layouts/css-warnings.html.twig', $this->params),
                     'warning' => true,
@@ -328,7 +315,7 @@ class Styles extends HtmlController
             );
         }
 
-        return new JsonResponse(['html' => 'The CSS was successfully compiled', 'title' => 'CSS Compiled']);
+        return $this->changeResponse($change, ['html' => 'The CSS was successfully compiled', 'title' => 'CSS Compiled']);
     }
 
     /**

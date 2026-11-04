@@ -20,7 +20,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: opcache, gd, zip
+          extensions: opcache, gd, zip, pdo_sqlite
           tools: composer:v2, phpunit
           coverage: none
         env:
@@ -40,16 +40,68 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
       - name: Build Gantry packages
         run: composer build-dev
+      - name: Production vendors guard
+        run: php tests/php85/production-vendors.php platforms/joomla/lib_gantry5 platforms/wordpress/gantry5
+      - name: "Issue #2282: visible and selectable contact radios"
+        run: node tests/frontend/issue-2282.js platforms/joomla/lib_gantry5/vendor/autoload.php
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+      - name: "Issue #2519: Owl Carousel slide widths"
+        run: node tests/frontend/issue-2519.js platforms/joomla/lib_gantry5/vendor/autoload.php
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+      - name: "Issue #2486: native Unicode outline persistence"
+        run: php tests/php85/issue-2486.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: "Issue #2894: emitted Font Awesome assets and icon rendering"
+        run: node tests/frontend/issue-2894.js platforms/joomla/lib_gantry5/vendor/autoload.php
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+      - name: "Issue #3419: debug stylesheet admission"
+        run: php tests/php85/issue-3419.php platforms/joomla/lib_gantry5/vendor/autoload.php .
       - name: Check icon catalogues on all supported CMS bootstraps
         run: php tests/php84/icon-catalogues.php
       - name: Run modern dependency and Twig integration checks
         run: php tests/modern/dependencies.php platforms/wordpress/gantry5/vendor/autoload.php
       - name: Run download and Unicode runtime regression checks
         run: php tests/php85/runtime.php
+      - name: Run native PHP 8.5 menu key admission checks
+        run: php tests/php85/menu-offset.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run strict precompiled Twig checks
+        run: php tests/php85/compiled-twig.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run native compiled Twig runtime dispatch checks
+        run: php tests/php85/twig-runtime.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run frozen config, layout and blueprint checks
+        run: php tests/php85/compiled-readers.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run actual native render bundle preparation and activation checks
+        run: php tests/php85/compiled-bundle.php platforms/joomla/lib_gantry5/vendor/autoload.php
+      - name: Run compiled save and recovery protocol checks
+        run: php tests/php85/change-render.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run offline assets and responsive images checks
+        run: php tests/php85/render-assets.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Prepare pinned native Joomla test libraries
+        run: php tests/php85/prepare-joomla-fixture.php --directory="$RUNNER_TEMP/gantry-joomla-6.2.0"
+      - name: Run native Joomla extension API inventory checks
+        run: php tests/php85/joomla-extension-api-inventory.php platforms/joomla/lib_gantry5/vendor/autoload.php "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/vendor/autoload.php"
+      - name: Run native Joomla Web Asset Manager checks
+        run: php tests/php85/joomla-render-assets.php platforms/joomla/lib_gantry5/vendor/autoload.php "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/vendor/autoload.php" "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/src"
+      - name: Run native Joomla bootstrap and source-free theme admission checks
+        run: php tests/php85/joomla-render-admission.php platforms/joomla/lib_gantry5/vendor/autoload.php "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/vendor/autoload.php" "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/src"
+      - name: Run native Joomla transaction and guest content admission checks
+        run: php tests/php85/joomla-change-state.php platforms/joomla/lib_gantry5/vendor/autoload.php "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/vendor/autoload.php" . "$RUNNER_TEMP/gantry-joomla-6.2.0/libraries/src/Factory.php"
+      - name: Run deterministic native layout identity checks
+        run: php tests/php85/layout-identity.php
       - name: Run core API request boundary checks
         run: php tests/php85/api-input.php
       - name: Run native API configuration cache regressions
         run: php tests/php85/api-cache.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run shared change-engine recovery and concurrency checks
+        run: php tests/php85/change-engine.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run native administrator change permissions checks
+        run: php tests/php85/admin-change-permissions.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run assigned outline deletion boundary checks
+        run: php tests/php85/admin-outline-delete.php platforms/joomla/lib_gantry5/vendor/autoload.php .
+      - name: Run native editor revision lifecycle checks
+        run: node tests/frontend/change-request.js
       - name: Run targeted PHP 8.4/8.5 nullable-rewriter checks
         if: matrix.php == '8.4' || matrix.php == '8.5'
         run: php tests/php84/nullable-rewriter.php

@@ -2,7 +2,7 @@
 var $              = require('elements'),
     zen            = require('elements/zen'),
     ready          = require('elements/domready'),
-    request        = require('agent'),
+    request        = require('./utils/change-request'),
     ui             = require('./ui'),
     interpolate    = require('mout/string/interpolate'),
     trim           = require('mout/string/trim'),
@@ -174,7 +174,7 @@ ready(function() {
             case 'layout':
                 var preset = $('[data-lm-preset]');
                 lm.layoutmanager.singles('cleanup', lm.builder, false);
-                lm.savestate.setSession(lm.builder.serialize(null, true));
+                // Saved baseline advances only after a confirmed engine commit.
 
                 data.preset = preset && preset.data('lm-preset') ? preset.data('lm-preset') : 'default';
 
@@ -209,7 +209,7 @@ ready(function() {
             default:
                 var form = element.parent('form');
 
-                if (form && element.attribute('type') == 'submit') {
+                if (form && (element.attribute('type') == 'submit' || element.data('g6-mode') === 'preview')) {
                     $(form[0].elements).forEach(function(input) {
                         input = $(input);
                         var name     = input.attribute('name'),
@@ -227,6 +227,8 @@ ready(function() {
                 }
         }
 
+        if (element.data('g6-mode') === 'preview') { data.g6_mode = 'preview'; }
+
         if (invalid.length) {
             saves.disabled(false);
             saves.hideIndicator();
@@ -236,8 +238,6 @@ ready(function() {
         }
 
         if (page == 'other') { $('.settings-param-title, .card.settings-block > h4').hideIndicator(); }
-        body.emit('updateOriginalFields');
-
         request('post', saveURL, data, function(error, response) {
             if (!response.body.success) {
                 modal.open({
@@ -246,8 +246,12 @@ ready(function() {
                         if (!response.body.html && !response.body.message) { container.style({ width: '90%' }); }
                     }
                 });
+            } else if (response.body.preview) {
+                var text = JSON.stringify(response.body.result || {}, null, 2).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                modal.open({content: '<h3>Change preview</h3><p>No theme configuration was changed.</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere">' + text + '</pre>'});
             } else {
                 modal.close();
+                body.emit('updateOriginalFields');
 
                 if ($('#styles')) {
                     extras = '<br />' + (response.body.warning ? '<hr />' + response.body.title + '<br />' + response.body.html : translate('GANTRY5_PLATFORM_JS_CSS_COMPILED'));
@@ -262,15 +266,16 @@ ready(function() {
 
             saves.disabled(false);
             saves.hideIndicator();
-            saves.forEach(function(save) {
-                $(save).lastSaved = new Date();
-            });
 
-            if (page == 'layout') { lm.layoutmanager.updatePendingChanges(); }
-
-            // all good, disable 'pending' flag
-            flags.set('pending', false);
-            flags.emit('update:pending');
+            if (response.body.success && !response.body.preview) {
+                saves.forEach(function(save) { $(save).lastSaved = new Date(); });
+                if (page == 'layout') {
+                    lm.savestate.setSession(lm.builder.serialize(null, true));
+                    lm.layoutmanager.updatePendingChanges();
+                }
+                flags.set('pending', false);
+                flags.emit('update:pending');
+            }
         });
     });
 
@@ -377,7 +382,7 @@ var modules = {
      "$"     : elements,
      zen     : zen,
      domready: domready,
-     agent   : require('agent'),*/
+     agent   : require('./utils/change-request'),*/
     lm: lm,
     mm: mm,
     assingments: require('./assignments'),

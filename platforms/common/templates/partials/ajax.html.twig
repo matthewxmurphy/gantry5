@@ -1,7 +1,7 @@
 {% block content %}
 {% block gantry_content_wrapper %}
     {% if navbar %}
-    <div data-g5-content-wrapper="">
+    <div data-g5-content-wrapper="" data-g6-current-revision="{{ g6_revision }}">
         {% include "@gantry-admin/partials/navigation.html.twig" %}
         <div class="g-grid">
             <div class="g-block main-block">

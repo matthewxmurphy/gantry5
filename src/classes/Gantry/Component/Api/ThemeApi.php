@@ -8,17 +8,14 @@ declare(strict_types=1);
 
 namespace Gantry\Component\Api;
 
-use Gantry\Admin\Events\LayoutEvent;
-use Gantry\Admin\Events\PageEvent;
-use Gantry\Admin\Events\SettingsEvent;
-use Gantry\Admin\Events\StylesEvent;
 use Gantry\Component\Config\BlueprintForm;
 use Gantry\Component\File\CompiledYamlFile;
 use Gantry\Component\Layout\Layout;
 use Gantry\Framework\Gantry;
+use Gantry\Component\Changes\ChangeEngine;
+use Gantry\Component\Changes\NativeWriter;
 use Gantry\Framework\Outlines;
 use Gantry\Framework\Services\ConfigServiceProvider;
-use RocketTheme\Toolbox\File\YamlFile;
 
 /**
  * The bounded core data surface shared by CMS transports.
@@ -30,10 +27,14 @@ final class ThemeApi
     private readonly string $theme;
     private readonly Outlines $outlines;
     private array $collections;
+    private readonly ChangeEngine $changes;
+    private readonly NativeWriter $writer;
 
     public function __construct(private readonly Gantry $gantry)
     {
         $this->theme = Input::id($gantry['theme.name']);
+        $this->changes = new ChangeEngine($gantry);
+        $this->writer = new NativeWriter($gantry);
         // The container intentionally returns a fresh clone on every outlines lookup.
         $this->outlines = $gantry['outlines'];
         $this->collections = [
@@ -68,7 +69,7 @@ final class ThemeApi
 
     public function createOutline(array $payload): array
     {
-        Input::shape($payload, ['title', 'preset'], ['title']);
+        Input::shape($payload, ['title', 'preset', 'revision'], ['title']);
         $title = Input::title($payload['title']);
         $preset = Input::id($payload['preset'] ?? 'default');
         $presets = Layout::presets();
@@ -86,7 +87,7 @@ final class ThemeApi
             $this->invalidateCaches([$this->path((string) $id, 'layout.yaml'), $this->path((string) $id, 'index.yaml')], [(string) $id]);
             $this->refreshOutlines();
             return $this->getOutline((string) $id);
-        });
+        }, isset($payload['revision']) ? Input::revision($payload['revision']) : null, 'create');
     }
 
     public function updateOutline(string $id, array $payload): array
@@ -101,7 +102,7 @@ final class ThemeApi
             $newId = $this->outlines->rename($id, $title);
             $this->refreshOutlines();
             return $this->getOutline((string) ($newId ?: $id));
-        });
+        }, Input::revision($payload['revision']), 'rename');
     }
 
     public function deleteOutline(string $id, array $payload): array
@@ -109,17 +110,11 @@ final class ThemeApi
         Input::shape($payload, ['revision'], ['revision']);
         return $this->locked(function () use ($id, $payload): array {
             $this->requireRevision($id, $payload['revision']);
+            $this->requireDeletable($id);
             $outlines = $this->outlines;
-            if ($id === 'default' || str_starts_with($id, '_') || $outlines->isDefault($id) || !$outlines->canDelete($id)) {
-                throw new ApiException('Base, system and default outlines cannot be deleted.', 409, 'protected_outline');
-            }
-            if ($this->assigned($id) || $outlines->getInheritingOutlines($id) || $outlines->getInheritingOutlinesWithAtom($id)) {
-                throw new ApiException('An assigned or inherited outline cannot be deleted.', 409, 'outline_in_use');
-            }
-            $this->path($id);
             $outlines->delete($id);
             return ['id' => $id, 'deleted' => true];
-        });
+        }, Input::revision($payload['revision']), 'delete');
     }
 
     public function getLayout(string $id): array
@@ -133,42 +128,25 @@ final class ThemeApi
 
     public function updateLayout(string $id, array $payload): array
     {
+        return $this->locked(function () use ($id, $payload): array {
+            $plan = $this->planLayout($id, $payload);
+            $this->writer->saveLayout($id, $plan['layout'], $plan['preset']);
+            return $this->getLayout($id);
+        }, Input::revision($payload['revision'] ?? null), 'layout');
+    }
+
+    private function planLayout(string $id, array $payload): array
+    {
         Input::shape($payload, ['layout', 'preset', 'revision'], ['layout', 'revision']);
         $nodes = Input::layout($payload['layout']);
-        return $this->locked(function () use ($id, $payload, $nodes): array {
-            $this->requireRevision($id, $payload['revision']);
-            $old = Layout::load($id);
-            $oldNodes = [];
-            $this->indexNodes($this->arrayData($old->toArray()), $oldNodes);
-            $this->validateNodes($id, $nodes, $oldNodes);
-            $preset = $old->preset;
-            if (array_key_exists('preset', $payload)) {
-                Input::preset($payload['preset'], $preset);
-            }
-            // The native writer expects objects, exactly as the editor JSON decoder produces.
-            $layout = new Layout($id, $this->nodeObjects($nodes), $preset);
-            $layout->init(false, false);
-            $elements = $layout->sections() + $layout->particles(false);
-            $changed = [$id];
-            foreach ($this->outlines->getInheritingOutlines($id) as $dependent => $title) {
-                $this->path((string) $dependent);
-                Layout::instance($dependent)->updateInheritance($id, $id, $elements)->save()->saveIndex();
-                $changed[] = (string) $dependent;
-            }
-            $layout->save()->saveIndex();
-            $files = [];
-            foreach ($changed as $changedId) {
-                $files[] = $this->path($changedId, 'layout.yaml');
-                $files[] = $this->path($changedId, 'index.yaml');
-            }
-            $this->invalidateCaches($files, $changed);
-            $event = new LayoutEvent();
-            $event->gantry = $this->gantry;
-            $event->theme = $this->gantry['theme'];
-            $event->layout = $layout;
-            $this->gantry->fireEvent('admin.layout.save', $event);
-            return $this->getLayout($id);
-        });
+        $this->requireRevision($id, $payload['revision']);
+        $old = Layout::load($id);
+        $oldNodes = [];
+        $this->indexNodes($this->arrayData($old->toArray()), $oldNodes);
+        $this->validateNodes($id, $nodes, $oldNodes);
+        $preset = $old->preset;
+        if (array_key_exists('preset', $payload)) { Input::preset($payload['preset'], $preset); }
+        return $this->writer->previewLayout($id, $nodes, $preset);
     }
 
     public function getSettings(string $id): array
@@ -188,73 +166,99 @@ final class ThemeApi
 
     public function updateSettings(string $id, array $payload): array
     {
-        Input::shape($payload, ['styles', 'page', 'particles', 'revision'], ['revision']);
-        if (count($payload) === 1) {
-            throw new ApiException('Supply at least one settings group.', 400, 'invalid_fields');
-        }
         return $this->locked(function () use ($id, $payload): array {
-            $this->requireRevision($id, $payload['revision']);
-            $settings = $this->getSettings($id);
-            $writes = [];
-            $events = [];
-            foreach ($this->collections as $group => $collection) {
-                if (!array_key_exists($group, $payload)) { continue; }
-                $patch = $payload[$group];
-                if (!is_array($patch) || array_is_list($patch) || !$patch) {
-                    throw new ApiException('Settings groups must be non-empty objects.', 422, 'invalid_settings');
-                }
-                $installed = $collection->all();
-                $merged = $settings['raw'][$group];
-                foreach ($patch as $block => $values) {
-                    Input::id($block);
-                    if (!array_key_exists($block, $installed) || !is_array($values) || !$values || array_is_list($values)) {
-                        throw new ApiException('Use an installed settings block with named values.', 422, 'invalid_settings');
-                    }
-                    $form = $collection->getBlueprintForm($block);
-                    $this->validateFields($form, $values, $group === 'styles');
-                    $complete = Input::merge((array) ($settings['effective'][$group][$block] ?? []), $values);
-                    $this->nativeValidate($form, $complete);
-                    $merged[$block] = Input::merge((array) ($merged[$block] ?? []), $values);
-                    if ($group !== 'styles') {
-                        $writes[$this->path($id, "$group/$block.yaml")] = $merged[$block];
-                    }
-                }
-                if ($group === 'styles') { $writes[$this->path($id, 'styles.yaml')] = $merged; }
-                $events[$group] = $merged;
-            }
-            // All groups validate before the first write. Restore exact prior bytes on save/compile failure.
-            $backup = [];
-            try {
-                foreach ($writes as $filename => $data) {
-                    $backup[$filename] = is_file($filename) ? file_get_contents($filename) : null;
-                    if ($backup[$filename] === false) { throw new ApiException('The current settings could not be read.', 500, 'settings_read_failed'); }
-                    $file = YamlFile::instance($filename);
-                    try { $file->save($data); } finally { $file->free(); }
-                }
-                $this->invalidateCaches(array_keys($writes), [$id]);
-                if (isset($events['styles'])) { $this->compile($id); }
-            } catch (\Throwable $error) {
-                foreach ($backup as $filename => $bytes) {
-                    if ($bytes === null) {
-                        if (is_file($filename) && !unlink($filename)) { throw new ApiException('Settings recovery requires administrator attention.', 500, 'settings_recovery_failed', $error); }
-                    } elseif (is_string($bytes) && file_put_contents($filename, $bytes, LOCK_EX) === false) {
-                        throw new ApiException('Settings recovery requires administrator attention.', 500, 'settings_recovery_failed', $error);
-                    }
-                }
-                $this->invalidateCaches(array_keys($backup), [$id]);
-                if (isset($events['styles'])) { $this->compile($id); }
-                throw $error;
-            }
-            foreach ($events as $group => $data) {
-                $class = ['styles' => StylesEvent::class, 'page' => PageEvent::class, 'particles' => SettingsEvent::class][$group];
-                $event = new $class();
-                $event->gantry = $this->gantry;
-                $event->theme = $this->gantry['theme'];
-                $event->data = $data;
-                $this->gantry->fireEvent('admin.' . ($group === 'particles' ? 'settings' : $group) . '.save', $event);
-            }
+            $plan = $this->planSettings($id, $payload);
+            $saved = $this->writer->saveSettings($id, $plan['groups']);
+            if (!empty($saved['warnings'])) { throw new ApiException('The native CSS compiler reported warnings.', 422, 'css_compile_failed'); }
             return $this->getSettings($id);
+        }, Input::revision($payload['revision'] ?? null), 'settings');
+    }
+
+    private function planSettings(string $id, array $payload): array
+    {
+        Input::shape($payload, ['styles', 'page', 'particles', 'revision'], ['revision']);
+        if (count($payload) === 1) { throw new ApiException('Supply at least one settings group.', 400, 'invalid_fields'); }
+        $this->requireRevision($id, $payload['revision']);
+        $settings = $this->getSettings($id);
+        $groups = [];
+        foreach ($this->collections as $group => $collection) {
+            if (!array_key_exists($group, $payload)) { continue; }
+            $patch = $payload[$group];
+            if (!is_array($patch) || array_is_list($patch) || !$patch) { throw new ApiException('Settings groups must be non-empty objects.', 422, 'invalid_settings'); }
+            $installed = $collection->all();
+            foreach ($patch as $block => $values) {
+                Input::id($block);
+                if (!array_key_exists($block, $installed) || !is_array($values) || !$values || array_is_list($values)) { throw new ApiException('Use an installed settings block with named values.', 422, 'invalid_settings'); }
+                $form = $collection->getBlueprintForm($block);
+                $this->validateFields($form, $values, $group === 'styles');
+                $complete = Input::merge((array) ($settings['effective'][$group][$block] ?? []), $values);
+                $this->nativeValidate($form, $complete);
+                $groups[$group][$block] = Input::merge((array) ($settings['raw'][$group][$block] ?? []), $values);
+            }
+            // The common writer receives canonical replacement data. REST is a patch;
+            // native admin forms supply complete selected blocks through the same writer.
+            if ($group === 'styles') { $groups[$group] = array_replace($settings['raw'][$group], $groups[$group]); }
+        }
+        return $this->writer->previewSettings($id, $groups);
+    }
+
+    public function history(): array
+    {
+        return ['id' => $this->theme, 'theme' => $this->theme] + $this->changes->history();
+    }
+
+    public function undo(array $payload): array
+    {
+        Input::shape($payload, ['revision', 'change_id'], ['revision', 'change_id']);
+        if (!is_string($payload['change_id'])) { throw new ApiException('Use a change identifier.', 400, 'invalid_change'); }
+        $result = $this->changes->undo(Input::revision($payload['revision']), $payload['change_id']);
+        $this->refreshOutlines();
+        return ['id' => $this->theme, 'theme' => $this->theme] + $result;
+    }
+
+    /** Same validated plans consumed by save, without invoking persistence or events. */
+    public function preview(array $payload): array
+    {
+        Input::shape($payload, ['operation', 'outline', 'data', 'revision'], ['operation', 'data', 'revision']);
+        if (!is_string($payload['operation']) || !is_array($payload['data'])) { throw new ApiException('Use a named operation and object data.', 400, 'invalid_preview'); }
+        $revision = Input::revision($payload['revision']);
+        $id = isset($payload['outline']) ? Input::id($payload['outline']) : null;
+        $result = $this->changes->preview($revision, function () use ($payload, $revision, $id): array {
+            $data = $payload['data'];
+            switch ($payload['operation']) {
+                case 'layout':
+                    if ($id === null) { throw new ApiException('Select an outline.', 400, 'invalid_outline'); }
+                    return $this->planLayout($id, $data + ['revision' => $revision]);
+                case 'settings':
+                    if ($id === null) { throw new ApiException('Select an outline.', 400, 'invalid_outline'); }
+                    return $this->planSettings($id, $data + ['revision' => $revision]);
+                case 'rename':
+                    if ($id === null) { throw new ApiException('Select an outline.', 400, 'invalid_outline'); }
+                    Input::shape($data, ['title'], ['title']);
+                    $this->requireOutline($id);
+                    if ($id === 'default' || str_starts_with($id, '_')) { throw new ApiException('System outlines cannot be renamed.', 409, 'protected_outline'); }
+                    return ['operation' => 'rename', 'outline' => $id, 'title' => Input::title($data['title'])];
+                case 'create':
+                    Input::shape($data, ['title', 'preset'], ['title']);
+                    $preset = Input::id($data['preset'] ?? 'default');
+                    if (!isset(Layout::presets()['user'][$preset])) { throw new ApiException('Choose an installed user layout preset.', 422, 'invalid_preset'); }
+                    return ['operation' => 'create', 'title' => Input::title($data['title']), 'preset' => $preset, 'assigned' => false];
+                case 'delete':
+                    Input::shape($data, []);
+                    if ($id === null) { throw new ApiException('Select an outline.', 400, 'invalid_outline'); }
+                    $this->requireDeletable($id);
+                    return ['operation' => 'delete', 'outline' => $id];
+                default: throw new ApiException('Preview a supported outline, layout or settings operation.', 400, 'invalid_preview');
+            }
         });
+        return ['id' => $id ?? $this->theme, 'theme' => $this->theme] + $result;
+    }
+
+    private function requireDeletable(string $id): void
+    {
+        $this->requireOutline($id);
+        if ($id === 'default' || str_starts_with($id, '_') || $this->outlines->isDefault($id) || !$this->outlines->canDelete($id)) { throw new ApiException('Base, system and default outlines cannot be deleted.', 409, 'protected_outline'); }
+        if ($this->assigned($id) || $this->outlines->getInheritingOutlines($id) || $this->outlines->getInheritingOutlinesWithAtom($id)) { throw new ApiException('An assigned or inherited outline cannot be deleted.', 409, 'outline_in_use'); }
     }
 
     private function requireOutline(string $id): void
@@ -281,26 +285,7 @@ final class ThemeApi
 
     private function revision(string $id): string
     {
-        $parts = [$this->theme, $id, $this->outlines->title($id), (string) $this->outlines->isDefault($id)];
-        foreach (array_unique([$id, 'default']) as $outline) {
-            foreach ($this->gantry['locator']->findResources("gantry-config://$outline") as $directory) {
-                if (!is_dir($directory)) { continue; }
-                $files = [];
-                $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS));
-                foreach ($iterator as $file) {
-                    if ($file->isLink()) { throw new ApiException('Linked configuration paths are not supported.', 409, 'unsafe_config_path'); }
-                    if ($file->isFile()) {
-                        if (count($files) >= 1024 || $file->getSize() > 2097152) { throw new ApiException('The configuration exceeds the API limits.', 409, 'config_too_large'); }
-                        $hash = hash_file('sha256', $file->getPathname());
-                        if ($hash === false) { throw new ApiException('The configuration could not be read.', 500, 'config_read_failed'); }
-                        $files[substr($file->getPathname(), strlen($directory))] = $hash;
-                    }
-                }
-                ksort($files);
-                $parts[] = json_encode($files, JSON_THROW_ON_ERROR);
-            }
-        }
-        return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
+        return $this->changes->revision();
     }
 
     /** Resolve only native selected-theme config paths, rejecting linked descendants. */
@@ -325,28 +310,14 @@ final class ThemeApi
         return $path;
     }
 
-    /** API writers serialize per selected theme. The revision also detects completed admin saves. */
-    private function locked(callable $operation): array
+    /** Every transport uses the same theme generation, lock, writer and recovery journal. */
+    private function locked(callable $operation, ?string $revision = null, string $label = 'outline'): array
     {
-        $filename = $this->gantry['locator']->findResource('gantry-cache://theme/gantry-api.lock', true, true);
-        if (!is_string($filename) || is_link($filename)) { throw new ApiException('The API write lock is unavailable.', 500, 'lock_unavailable'); }
-        $directory = dirname($filename);
-        if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
-            throw new ApiException('The API write lock is unavailable.', 500, 'lock_unavailable');
-        }
-        $lock = fopen($filename, 'c');
-        if ($lock === false) { throw new ApiException('The API write lock is unavailable.', 500, 'lock_unavailable'); }
         try {
-            if (!flock($lock, LOCK_EX | LOCK_NB)) { throw new ApiException('Another API write is in progress. Retry after reading the outline.', 409, 'write_in_progress'); }
-            return $this->fresh($operation);
-        } catch (ApiException $error) {
-            throw $error;
-        } catch (\Throwable $error) {
-            throw new ApiException('The native Gantry operation failed. Inspect the server log.', 500, 'native_operation_failed', $error);
-        } finally {
-            flock($lock, LOCK_UN);
-            fclose($lock);
-        }
+            $change = $this->changes->save($revision ?? $this->changes->revision(), $label, fn (): array => $this->fresh($operation));
+            return array_replace($change['result'], ['revision' => $change['revision'], 'change_id' => $change['change_id']]);
+        } catch (ApiException $error) { throw $error; }
+        catch (\Throwable $error) { throw new ApiException('The native Gantry operation failed. Inspect the server log.', 500, 'native_operation_failed', $error); }
     }
 
     /**
@@ -372,57 +343,15 @@ final class ThemeApi
         }
     }
 
-    /** Invalidate only native derived files; front-end/admin reads must see same-second writes too. */
+    /** Scoped native cache invalidation is shared by every writer. */
     private function invalidateCaches(array $filenames, array $outlines): void
     {
-        clearstatcache();
-        $locator = $this->gantry['locator'];
-        $yamlDirectories = [$locator->findResource('gantry-cache://theme/compiled/yaml', true, true)];
-        foreach ($outlines as $id) {
-            Input::id($id);
-            $yamlDirectories[] = $locator->findResource("gantry-cache://$id/compiled/yaml", true, true);
-        }
-        foreach (array_unique($yamlDirectories) as $directory) {
-            if (!is_string($directory) || !is_dir($directory)) { continue; }
-            if (is_link($directory)) { throw new ApiException('Linked API cache paths are not supported.', 409, 'unsafe_cache_path'); }
-            foreach ($filenames as $filename) {
-                foreach (array_unique([$filename, realpath($filename) ?: $filename]) as $source) {
-                    $this->removeCache($directory . '/' . md5($source) . '.yaml.php');
-                }
-            }
-        }
-        // Native combined-config names are hashes of path sets, including default inheritance.
-        // Rebuild the selected theme's generated combined configs instead of guessing every consumer.
-        $directory = $locator->findResource('gantry-cache://theme/compiled/config', true, true);
-        if (is_string($directory) && is_dir($directory)) {
-            if (is_link($directory)) { throw new ApiException('Linked API cache paths are not supported.', 409, 'unsafe_cache_path'); }
-            foreach (new \FilesystemIterator($directory, \FilesystemIterator::SKIP_DOTS) as $file) {
-                if (preg_match('/\A[a-f0-9]{32}\.php\z/D', $file->getFilename())) {
-                    $this->removeCache($file->getPathname());
-                }
-            }
-        }
-    }
-
-    private function removeCache(string $filename): void
-    {
-        if (is_link($filename)) { throw new ApiException('Linked API cache paths are not supported.', 409, 'unsafe_cache_path'); }
-        if (is_file($filename)) {
-            if (!unlink($filename)) { throw new ApiException('A native configuration cache could not be refreshed.', 500, 'cache_refresh_failed'); }
-            if (function_exists('opcache_invalidate')) { opcache_invalidate($filename, true); }
-        }
+        $this->writer->invalidate($filenames, $outlines);
     }
 
     private function assigned(string $id): bool
     {
-        // Only the Joomla transport ships in this release. Query native menu assignment, never change it.
-        if (class_exists(\Joomla\CMS\Factory::class) && ctype_digit($id)) {
-            $db = \Joomla\CMS\Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class);
-            $query = $db->getQuery(true)->select('COUNT(*)')->from('#__menu')->where('template_style_id=' . (int) $id);
-            $db->setQuery($query);
-            return (int) $db->loadResult() > 0;
-        }
-        return false;
+        return $this->changes->isAssigned($id);
     }
 
     private function refreshOutlines(): void
@@ -430,17 +359,8 @@ final class ThemeApi
         // Joomla's native writer stores the template-prefixed DB title in its
         // collection, whereas its loader exposes the short editor title. Reload
         // the native style catalogue so mutation and following GET revisions agree.
-        if (class_exists(\Joomla\CMS\Factory::class)) {
-            \Gantry\Admin\ThemeList::getStyles($this->theme, true);
-        }
+        $this->changes->refreshCatalog();
         $this->outlines->load();
-    }
-
-    private function compile(string $id): void
-    {
-        if ($this->gantry['theme']->updateCss($id === 'default' ? null : [$id => $this->outlines->title($id)])) {
-            throw new ApiException('The native CSS compiler reported warnings.', 422, 'css_compile_failed');
-        }
     }
 
     private function arrayData(array $data): array
@@ -497,21 +417,6 @@ final class ThemeApi
             $index[$node['id']] = $node;
             if (isset($node['children'])) { $this->indexNodes($node['children'], $index); }
         }
-    }
-
-    private function nodeObjects(array $nodes): array
-    {
-        $objects = [];
-        foreach ($nodes as $node) {
-            $object = json_decode(json_encode($node, JSON_THROW_ON_ERROR), false, 32, JSON_THROW_ON_ERROR);
-            // JSON object {} and [] both arrive as [] with Joomla's associative decoder.
-            $object->attributes = (object) $object->attributes;
-            if (isset($node['inherit'])) { $object->inherit = (object) $object->inherit; }
-            if (isset($node['block'])) { $object->block = (object) $object->block; }
-            if (isset($node['children'])) { $object->children = $this->nodeObjects($node['children']); }
-            $objects[] = $object;
-        }
-        return $objects;
     }
 
     private function validateNodes(string $outline, array $nodes, array $old): void

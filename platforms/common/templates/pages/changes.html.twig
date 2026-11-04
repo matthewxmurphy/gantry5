@@ -1,0 +1,22 @@
+{% extends '@gantry-admin/partials/base.html.twig' %}
+{% block gantry %}
+<section data-g6-current-revision="{{ changes.revision }}" aria-labelledby="g6-changes-title">
+    <h2 id="g6-changes-title">Theme changes</h2>
+    {% if change_status %}<p role="status">{{ change_status }}</p>{% endif %}
+    <p>Admin and API saves share this theme history. Undo restores the latest saved theme state, including native outline metadata. Later edits must be undone first. Open editors keep their own loaded revision and must be reloaded after an undo.</p>
+    <table><caption>Recent saved theme changes</caption><thead><tr><th scope="col">Saved (UTC)</th><th scope="col">Change</th><th scope="col">Action</th></tr></thead><tbody>
+    {% for change in changes.items %}
+        <tr><td>{{ change.created }}</td><td>{{ change.label }}</td><td>
+        {% if change.can_undo %}
+            <form method="post" action="{{ gantry.route('changes', 'undo') }}">
+                <input type="hidden" name="g6_revision" value="{{ changes.revision }}">
+                <input type="hidden" name="change_id" value="{{ change.id }}">
+                <label><input type="checkbox" name="undo_confirm" value="yes" required> Undo this latest change</label>
+                <button type="submit" class="button">Undo</button>
+            </form>
+        {% else %}Later edits exist{% endif %}
+        </td></tr>
+    {% else %}<tr><td colspan="3">No saved theme changes have been recorded.</td></tr>{% endfor %}
+    </tbody></table>
+</section>
+{% endblock %}

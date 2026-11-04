@@ -29,17 +29,28 @@ function gantry_php84_run()
         gantry_php84_self_test();
 
         $project = dirname(__DIR__);
-        $roots = ['src', 'themes', 'platforms', 'tests'];
+        $roots = [
+            'src',
+            'themes',
+            'platforms',
+            'tests',
+            // Phing 3.0.1 loads this file before its diagnostics can be handled.
+            'bin/builder/vendor/phing/phing/src/Phing/Io/FileUtils.php',
+        ];
         $pending = [];
         $signatures = 0;
 
         foreach ($roots as $relative) {
             $root = $project . DIRECTORY_SEPARATOR . $relative;
-            if (!is_dir($root)) {
+            if (is_file($root)) {
+                $files = [$root];
+            } elseif (is_dir($root)) {
+                $files = gantry_php84_php_files($root);
+            } else {
                 continue;
             }
 
-            foreach (gantry_php84_php_files($root) as $file) {
+            foreach ($files as $file) {
                 $original = file_get_contents($file);
                 if ($original === false) {
                     throw new RuntimeException('Unable to read ' . $file);

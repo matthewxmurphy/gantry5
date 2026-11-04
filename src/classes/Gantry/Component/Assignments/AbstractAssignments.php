@@ -19,6 +19,7 @@ namespace Gantry\Component\Assignments;
 
 use Gantry\Component\Config\CompiledConfig;
 use Gantry\Component\Config\ConfigFileFinder;
+use Gantry\Component\Render\BundleRuntime;
 use Gantry\Framework\Gantry;
 use RocketTheme\Toolbox\File\YamlFile;
 use RocketTheme\Toolbox\ResourceLocator\UniformResourceLocator;
@@ -126,7 +127,15 @@ abstract class AbstractAssignments
      */
     public function loadAssignments()
     {
+        return $this->loadSavedAssignments();
+    }
+
+    /** Saved Gantry rules only; native adapters overlay current CMS identity/menu data. */
+    public function loadSavedAssignments(): array
+    {
         $gantry = Gantry::instance();
+        if ($runtime = BundleRuntime::current($gantry)) { return $runtime->data('assignments'); }
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Frozen assignment rules are unavailable.'); }
 
         /** @var UniformResourceLocator $locator */
         $locator = $gantry['locator'];
@@ -227,6 +236,7 @@ abstract class AbstractAssignments
      */
     public function save(array $data)
     {
+        if (!BundleRuntime::isSource()) { BundleRuntime::fail('Assignments cannot be saved by the production renderer.'); }
         $data = $this->filter($data);
 
         $gantry = Gantry::instance();

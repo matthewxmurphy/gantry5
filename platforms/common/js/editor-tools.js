@@ -62,6 +62,8 @@
                 body.append(input.name, input.type === 'checkbox' ? (input.checked ? '1' : '0') : input.value);
             }
         }
+        var revisionMarker = document.querySelector('[data-g5-content] [data-g6-current-revision]') || document.querySelector('[data-g6-current-revision]');
+        if (revisionMarker) { body.set('g6_revision', revisionMarker.getAttribute('data-g6-current-revision')); }
         form.setAttribute('aria-busy', 'true');
         button.disabled = true;
         status.textContent = 'Saving section styles…';
@@ -70,6 +72,9 @@
                 headers: { Accept: 'application/json' }, body: body });
             var reply = await response.json();
             if (!response.ok || !reply.success) { throw new Error('Save unconfirmed'); }
+            if (/^[a-f0-9]{64}$/.test(reply.revision || '')) {
+                document.querySelectorAll('[data-g6-current-revision]').forEach(function (marker) { marker.setAttribute('data-g6-current-revision', reply.revision); });
+            }
             status.textContent = reply.warning ? 'Styles saved with compiler warnings. Review the Styles page. Your Layout draft is unchanged.'
                 : 'Section styles saved. Your unsaved layout changes are unchanged.';
         } catch (error) {

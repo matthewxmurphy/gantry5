@@ -3,12 +3,13 @@
 {% block gantry %}
     {% if gantry.particles.overrides(configuration) or gantry.request.get.get('enable') %}
     {% set stored_data = get_cookie('g5-collapsed')|default('{}')|json_decode %}
-    <div id="settings">
+    <div id="settings" data-g6-current-revision="{{ g6_revision }}">
         <form method="post">
+        <input type="hidden" name="g6_revision" value="{{ g6_revision }}">
             <div data-set-page="{{ page_id }}" data-set-root="">
                 <span class="float-right">
                     <button type="submit" class="button button-primary button-save" data-save="Particle Defaults">
-                    <i class="fa fa-fw fa-check" aria-hidden="true"></i> <span>{{ 'GANTRY5_PLATFORM_SAVE_PARTICLE_DEFAULTS'|trans }}</span></button>
+                    <i class="fa fa-fw fa-check" aria-hidden="true"></i> <span>{{ 'GANTRY5_PLATFORM_SAVE_PARTICLE_DEFAULTS'|trans }}</span></button> <button type="button" class="button button-save" data-save="Particle Defaults" data-g6-mode="preview">Preview changes</button>
                 </span>
                 {% for group, list in particles %}
                     {% if list and (group != 'hidden') %}
@@ -64,7 +65,7 @@
                 <div class="g-footer-actions">
                     <span class="float-right">
                         <button type="submit" class="button button-primary button-save" data-save="Particle Defaults">
-                            <i class="fa fa-fw fa-check" aria-hidden="true"></i> <span>{{ 'GANTRY5_PLATFORM_SAVE_PARTICLE_DEFAULTS'|trans }}</span></button>
+                            <i class="fa fa-fw fa-check" aria-hidden="true"></i> <span>{{ 'GANTRY5_PLATFORM_SAVE_PARTICLE_DEFAULTS'|trans }}</span></button> <button type="button" class="button button-save" data-save="Particle Defaults" data-g6-mode="preview">Preview changes</button>
                     </span>
                 </div>
             </div>

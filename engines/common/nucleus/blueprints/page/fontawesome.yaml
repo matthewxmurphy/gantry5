@@ -31,13 +31,13 @@ form:
     fa4_compatibility:
       type: enable.enable
       label: V4 Compatibility
-      description: Enable or disable the backwards compatibility for version 4.x of the Font Awesome library when using version 5.x.
+      description: Enable or disable version 4 compatibility when using the selected modern Font Awesome library.
       default: 1
 
     content_compatibility:
       type: enable.enable
       label: Content Compatibility
-      description: Enable or disable the content (pseudo-element) compatibility when using the SVG / JS version of Font Awesome 5.x. This also applies when loading the library manually.
+      description: Enable or disable matching Font Awesome 6 fonts for content (pseudo-elements) when using its SVG / JS library. This font fallback also applies when loading the library manually.
       default: 1
 
     html_css_import:

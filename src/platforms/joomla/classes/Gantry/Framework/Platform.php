@@ -399,7 +399,7 @@ class Platform extends BasePlatform
 
         $html = trim($renderer->render(null, $params, $content ?: $document->getBuffer('component')));
 
-        $isGantry = \strpos($application->input->getCmd('option'), 'gantry5') !== false;
+        $isGantry = \strpos($application->getInput()->getCmd('option'), 'gantry5') !== false;
 
         if ($html && !$isGantry) {
             /** @var Theme $theme */

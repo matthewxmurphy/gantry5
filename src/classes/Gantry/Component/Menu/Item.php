@@ -112,10 +112,16 @@ class Item implements \ArrayAccess, \Iterator, \Serializable, \Countable, \JsonS
      * @param AbstractMenu $menu
      * @param array $item
      */
-    public function __construct(AbstractMenu $menu, array $item = [])
+    public function __construct(AbstractMenu $menu, array $item = [], private readonly bool $unpublished = false)
     {
         $this->menu = $menu;
         $this->items = array_merge(static::$defaults, $item);
+    }
+
+    /** Native publication state for editor display, separate from saved menu settings. */
+    public function isUnpublished(): bool
+    {
+        return $this->unpublished ?? false;
     }
 
     /**

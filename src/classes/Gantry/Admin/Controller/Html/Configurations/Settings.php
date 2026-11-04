@@ -238,32 +238,17 @@ class Settings extends HtmlController
      */
     public function save($id = null)
     {
-        if (!$this->request->post->get('_end')) {
-            throw new \OverflowException("Incomplete data received. Please increase the value of 'max_input_vars' variable (in php.ini or .htaccess)", 400);
-        }
-
+        if (!$this->request->post->get('_end')) { throw new \OverflowException('Incomplete data received; check max_input_vars.', 400); }
         $data = $id ? [$id => $this->request->post->getArray('particle')] : $this->request->post->getArray('particles');
-
-        /** @var UniformResourceLocator $locator */
-        $locator = $this->container['locator'];
-
-        // Save layout into custom directory for the current theme.
-        $outline = $this->params['outline'];
-        $save_dir = $locator->findResource("gantry-config://{$outline}/particles", true, true);
-
-        foreach ($data as $name => $values) {
-            $this->saveItem($name, $values, $save_dir);
-        }
-        @rmdir($save_dir);
-
-        // Fire save event.
-        $event = new SettingsEvent();
-        $event->gantry = $this->container;
-        $event->theme = $this->container['theme'];
-        $event->controller = $this;
-        $event->data = $data;
-        $this->container->fireEvent('admin.settings.save', $event);
-
+        unset($data['g6_revision'], $data['g6_mode']);
+        foreach ($data as &$values) { if (!is_array($values)) { $values = null; } }
+        unset($values);
+        $outline = (string) $this->params['outline'];
+        $writer = new \Gantry\Component\Changes\NativeWriter($this->container);
+        $change = $this->changeSave('admin.particles',
+            fn() => $writer->saveSettings($outline, ['particles' => $data], $this),
+            fn() => $writer->previewSettings($outline, ['particles' => $data]));
+        if (!empty($this->params['ajax']) || !empty($change['preview'])) { return $this->changeResponse($change); }
         return $id ? $this->display($id) : $this->index();
     }
 
@@ -272,26 +257,6 @@ class Settings extends HtmlController
      * @param array $data
      * @param string $save_dir
      */
-    protected function saveItem($id, $data, $save_dir)
-    {
-        $filename = "{$save_dir}/{$id}.yaml";
-
-        $file = YamlFile::instance($filename);
-        if (!is_array($data)) {
-            if ($file->exists()) {
-                $file->delete();
-            }
-        } else {
-            /** @var Particles $particles */
-            $particles = $this->container['particles'];
-
-            $blueprints = $particles->getBlueprintForm($id);
-            $config = new Config($data, function() use ($blueprints) { return $blueprints; });
-
-            $file->save($config->toArray());
-        }
-        $file->free();
-    }
 
     /**
      * @param string $id

@@ -1,7 +1,7 @@
 {% extends ajax-suffix ? "@gantry-admin/partials/ajax.html.twig" : "@gantry-admin/partials/base.html.twig" %}
 
 {% block gantry %}
-    <div id="configurations">
+    <div id="configurations" data-g6-current-revision="{{ g6_revision }}">
         <div class="menu-header">
         <span class="float-right">
             <button class="button button-back-to-conf" tabindex="0"

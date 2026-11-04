@@ -39,9 +39,9 @@ class Client extends HtmlController
     public function policy()
     {
         if (!$this->container['platform']->isSettingsAdministrator()) { $this->forbidden(); }
-        Access::store($this->container)->savePolicy($this->request->post['policy_revision'],
+        $this->changeSave('admin.client.policy', fn() => Access::store($this->container)->savePolicy($this->request->post['policy_revision'],
             $this->request->post['candidate_revision'], $this->request->post['enabled'] === 'yes',
-            $this->request->post->getArray('approvals'), $this->request->post['policy_confirm'] === 'yes');
+            $this->request->post->getArray('approvals'), $this->request->post['policy_confirm'] === 'yes'));
         $this->params['client_status'] = 'Client editing policy saved. No users or capabilities were changed.';
         return $this->index();
     }
@@ -52,13 +52,15 @@ class Client extends HtmlController
         $fields = $this->request->post->getArray();
         // Router/native CMS have already verified their nonce. These transport fields are not editable content.
         foreach ($this->container['platform']->clientEditingNonceFields() as $nonceField) { unset($fields[$nonceField]); }
+        unset($fields['g6_revision'], $fields['g6_mode']);
         if (array_diff(array_keys($fields), ['policy_revision', 'layout_revision', 'outline', 'instance', 'text'])) {
             throw new \RuntimeException('Only the approved text field may be submitted.', 400);
         }
-        Access::store($this->container)->saveText($fields['policy_revision'] ?? null, $fields['layout_revision'] ?? null,
-            $fields['outline'] ?? null, $fields['instance'] ?? null, $fields['text'] ?? null);
-        $cache = $this->container['locator']->findResource('gantry-cache://theme', true);
-        if (is_string($cache) && is_dir($cache)) { Folder::delete($cache, false); }
+        $this->changeSave('client.text', function () use ($fields) {
+            Access::store($this->container)->saveText($fields['policy_revision'] ?? null, $fields['layout_revision'] ?? null,
+                $fields['outline'] ?? null, $fields['instance'] ?? null, $fields['text'] ?? null);
+            (new \Gantry\Component\Changes\NativeWriter($this->container))->invalidateAll();
+        });
         $this->params['client_status'] = 'Approved text saved. Layout structure and global settings were not changed.';
         return $this->index();
     }

@@ -1,0 +1,9 @@
+// Copyright (c) 2026 Matthew X Murphy, https://MatthewxMurphy.com.
+// SPDX-License-Identifier: MIT
+// Product/support: https://builtnotbegged.com.
+
+// #2519: apply the width fallback in core so framework-only updates also fix
+// existing themes. Owl's measured inline widths still control multi-item views.
+.g-owlcarousel .owl-item {
+    width: 100%;
+}

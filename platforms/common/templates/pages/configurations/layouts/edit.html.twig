@@ -8,7 +8,7 @@
 
 {% else %}
 
-<div class="g-grid" data-lm-container="">
+<div class="g-grid" data-lm-container="" data-g6-current-revision="{{ g6_revision }}">
     <div class="g-block sidebar-block particles-sidebar-block">
         <h2 class="page-title">
             <span class="title">{{ 'GANTRY5_PLATFORM_PARTICLES'|trans }}</span>
@@ -86,7 +86,7 @@
                     aria-label="{{ 'GANTRY5_PLATFORM_SAVE_LAYOUT'|trans }}"
             >
                 <i class="fa fa-fw fa-check" aria-hidden="true"></i> <span>{{ 'GANTRY5_PLATFORM_SAVE_LAYOUT'|trans }}</span>
-            </button>
+            </button> <button type="button" class="button button-save" data-save="Layout" data-g6-mode="preview">Preview changes</button>
         </span>
         <h2 class="page-title layout-title">
             <span class="title">{{ 'GANTRY5_PLATFORM_LAYOUT'|trans }} <small>({{ preset_title|default('GANTRY5_PLATFORM_LM_PRESET_UNKNOWN'|trans) }})</small></span>
@@ -146,7 +146,7 @@
             </div>
                 <a href="#" class="button button-primary button-save" data-save="Layout">
                     <i class="fa fa-fw fa-check" aria-hidden="true"></i> <span>{{ 'GANTRY5_PLATFORM_SAVE_LAYOUT'|trans }}</span>
-                </a>
+                </a> <button type="button" class="button button-save" data-save="Layout" data-g6-mode="preview">Preview changes</button>
             </span>
             </div>
         </div>

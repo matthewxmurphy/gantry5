@@ -460,7 +460,7 @@ class OutlineCollection extends Collection
     public function create($id, $title = null, $preset = null, ?callable $reserve = null)
     {
         $title = $title ?: 'Untitled';
-        $name = ltrim(strtolower(preg_replace('|[^a-z\d_-]|ui', '_', $id ?: $title)), '_');
+        $name = ltrim(OutlineName::slug((string) ($id ?: $title)), '_');
 
         if (!$name) {
             throw new \RuntimeException('Outline needs a name', 400);
@@ -474,10 +474,6 @@ class OutlineCollection extends Collection
         if ($reserve) {
             $reserve($name);
         }
-        if (!$id) {
-            $title = ucwords(trim(preg_replace(['|_|', '|/|'], [' ', ' / '], $name)));
-        }
-
         if (!is_array($preset)) {
             // Load preset.
             $preset = Layout::preset($preset ?: 'default');
@@ -560,9 +556,9 @@ class OutlineCollection extends Collection
             throw new \RuntimeException('Outline not found', 404);
         }
 
-        $folder = strtolower(preg_replace('|[^a-z\d_-]|ui', '_', $title));
+        $folder = OutlineName::slug((string) $title);
 
-        if ($folder === 'default' || $folder[0] === '_') {
+        if ($folder === '' || $folder === 'default' || $folder[0] === '_') {
             throw new \RuntimeException(sprintf('Outline cannot use reserved name "%s".', $folder), 400);
         }
 
@@ -585,7 +581,8 @@ class OutlineCollection extends Collection
             throw new \RuntimeException('Renaming outline failed.', 500, $e);
         }
 
-        $this->items[$id] = $title;
+        unset($this->items[$id]);
+        $this->items[$folder] = $title;
 
         return $folder;
     }

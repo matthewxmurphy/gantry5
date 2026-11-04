@@ -1,0 +1,49 @@
+<section aria-labelledby="gantry-api-inventory-title">
+    <h2 id="gantry-api-inventory-title">Extension API inventory</h2>
+    <p>Installed Joomla extensions and the API evidence available to Gantry. A detected Web Services plugin does not identify its routes, authentication or permissions.</p>
+    <p><a href="{{ gantry.route('api', 'inventory')|e('html_attr') }}">Extension inventory JSON</a></p>
+    <ul>
+        {% for extension in api_extension_inventory %}
+            <li>
+                <strong>{{ extension.name|e }}</strong>
+                <code>{{ extension.type|e }}{% if extension.folder %}/{{ extension.folder|e }}{% endif %}/{{ extension.element|e }} #{{ extension.id|e }}</code>
+                {% if extension.version is not null %}Version {{ extension.version|e }}.{% endif %}
+                {{ extension.enabled ? 'Enabled.' : 'Disabled.' }}
+                {% if extension.state == 'documented' %}
+                    Documented.
+                    <a href="{{ gantry.route('api', 'openapi')|e('html_attr') }}">OpenAPI JSON</a>.
+                    Joomla API token and Gantry settings-administrator permission.
+                    <details>
+                        <summary>Documented operations</summary>
+                        <ul>
+                            {% for operation in extension.operations %}<li><code>{{ operation|e }}</code></li>{% endfor %}
+                        </ul>
+                    </details>
+                {% elseif extension.state == 'discovered' %}
+                    Discovered Web Services provider. Schema and access details unverified.
+                {% else %}
+                    None declared in this inventory.
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</section>
+{% if template_library_review is defined %}
+    <section aria-labelledby="gantry-template-library-review-title">
+        <h2 id="gantry-template-library-review-title">Template library review</h2>
+        <p>The owner relayed the {{ template_library_review.report|e }} results.
+            The crew reconciled {{ template_library_review.reconciled_packs|e }} packs and reported
+            {{ template_library_review.render_checks.passed|e }} of {{ template_library_review.render_checks.total|e }} render checks passed.
+            Authenticated acceptance is {{ template_library_review.authenticated_acceptance|e }}.</p>
+        <ul>
+            {% for lineage, decision in template_library_review.lineages %}
+                <li><code>{{ lineage|e }}</code> {{ decision == 'merge_partial' ? 'Merge partial, feature ports only.' : 'Drop.' }}</li>
+            {% endfor %}
+        </ul>
+        <ul>
+            {% for reference, remainder in template_library_review.remainders %}
+                <li><code>{{ reference|e }}</code> {{ remainder|e }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}

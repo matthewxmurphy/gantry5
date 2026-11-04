@@ -4,9 +4,10 @@
 {% set labels = {collapse: 'GANTRY5_PLATFORM_COLLAPSE'|trans, expand: 'GANTRY5_PLATFORM_EXPAND'|trans} %}
 {% set defaultStyles = defaults.flatten('styles', '][', 'styles') %}
 
-<div id="styles">
+<div id="styles" data-g6-current-revision="{{ g6_revision }}">
     {% set stored_data = get_cookie('g5-collapsed')|default('{}')|json_decode %}
     <form method="post" action="{{ gantry.route('configurations', configuration, 'styles') }}">
+        <input type="hidden" name="g6_revision" value="{{ g6_revision }}">
         <span class="float-right">
             <a href="{{ gantry.route('configurations', configuration, 'styles/compile') }}"
                title="{{ 'GANTRY5_PLATFORM_RECOMPILE_CSS'|trans }}"
@@ -18,7 +19,7 @@
             </a>
             <button type="submit" class="button button-primary button-save" data-save="Styles">
                 <i class="fa fa-fw fa-check" aria-hidden="true"></i> <span>{{ 'GANTRY5_PLATFORM_SAVE_STYLES'|trans }}</span>
-            </button>
+            </button> <button type="button" class="button button-save" data-save="Styles" data-g6-mode="preview">Preview changes</button>
         </span>
 
         {% set presets = gantry.theme.presets %}
@@ -117,7 +118,7 @@
                 >
                     <i class="fa fa-fw fa-tasks" aria-hidden="true"></i> <span>{{ 'GANTRY5_PLATFORM_RECOMPILE_CSS'|trans }}</span>
                 </a>
-                <button type="submit" class="button button-primary button-save" data-save="{{ 'GANTRY5_PLATFORM_STYLES'|trans }}"><i class="fa fa-fw fa-check" aria-hidden="true"></i> <span>{{ 'GANTRY5_PLATFORM_SAVE_STYLES'|trans }}</span></button>
+                <button type="submit" class="button button-primary button-save" data-save="{{ 'GANTRY5_PLATFORM_STYLES'|trans }}"><i class="fa fa-fw fa-check" aria-hidden="true"></i> <span>{{ 'GANTRY5_PLATFORM_SAVE_STYLES'|trans }}</span></button> <button type="button" class="button button-save" data-save="{{ 'GANTRY5_PLATFORM_STYLES'|trans }}" data-g6-mode="preview">Preview changes</button>
             </span>
         </div>
     </form>
