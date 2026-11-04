@@ -28,3 +28,22 @@
         {% endfor %}
     </ul>
 </section>
+{% if template_library_review is defined %}
+    <section aria-labelledby="gantry-template-library-review-title">
+        <h2 id="gantry-template-library-review-title">Template library review</h2>
+        <p>The owner relayed the {{ template_library_review.report|e }} results.
+            The crew reconciled {{ template_library_review.reconciled_packs|e }} packs and reported
+            {{ template_library_review.render_checks.passed|e }} of {{ template_library_review.render_checks.total|e }} render checks passed.
+            Authenticated acceptance is {{ template_library_review.authenticated_acceptance|e }}.</p>
+        <ul>
+            {% for lineage, decision in template_library_review.lineages %}
+                <li><code>{{ lineage|e }}</code> {{ decision == 'merge_partial' ? 'Merge partial, feature ports only.' : 'Drop.' }}</li>
+            {% endfor %}
+        </ul>
+        <ul>
+            {% for reference, remainder in template_library_review.remainders %}
+                <li><code>{{ reference|e }}</code> {{ remainder|e }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+{% endif %}

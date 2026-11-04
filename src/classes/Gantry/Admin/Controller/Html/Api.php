@@ -16,6 +16,28 @@ class Api extends HtmlController
 {
     protected $httpVerbs = ['GET' => ['/' => 'index', '/openapi' => 'document', '/inventory' => 'inventory']];
 
+    private const TEMPLATE_LIBRARY_REVIEW = [
+        'report' => 'TEMPLATE-PACKS-PRECHECK-2026-11-03',
+        'source' => 'owner_relay',
+        'reconciled_packs' => 670,
+        'render_checks' => ['passed' => 669, 'total' => 669],
+        'authenticated_acceptance' => 'pending',
+        'partial_merge_scope' => 'feature_ports_only',
+        'lineages' => [
+            'tc-faq' => 'drop',
+            'tc-gallery' => 'merge_partial',
+            'tc-hero' => 'merge_partial',
+            'tc-pricing' => 'drop',
+            'tc-testimonials' => 'merge_partial',
+            'tc-text-block' => 'merge_partial',
+        ],
+        'remainders' => [
+            'R1' => 'Supply admin/images/preset1.png during packaging. Every pack references it and none contains it.',
+            'R5' => 'Preserve the Hydrogen base names.',
+            'R6' => 'Resolve the missing image basename in each of the six affected packs.',
+        ],
+    ];
+
     public function index()
     {
         $this->requireAdministrator();
@@ -25,6 +47,7 @@ class Api extends HtmlController
         $this->params['api_spec_json'] = json_encode($specification, JSON_THROW_ON_ERROR | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         if ($platform === 'joomla') {
             $this->params['api_extension_inventory'] = $this->readInventory($specification);
+            $this->params['template_library_review'] = self::TEMPLATE_LIBRARY_REVIEW;
         }
         $response = new HtmlResponse($this->render('@gantry-admin/pages/api.html.twig', $this->params));
         $response->setHeader('Cache-Control', 'private, no-store');
@@ -50,6 +73,7 @@ class Api extends HtmlController
         $response = new JsonResponse([
             'schema_version' => 1,
             'extensions' => $this->readInventory($specification),
+            'template_library_review' => self::TEMPLATE_LIBRARY_REVIEW,
         ]);
         $response->setHeader('Cache-Control', 'private, no-store');
         $response->setHeader('X-Content-Type-Options', 'nosniff');

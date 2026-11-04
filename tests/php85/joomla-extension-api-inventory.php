@@ -112,6 +112,21 @@ try {
     $body = json_decode((string) $inventory, true, flags: JSON_THROW_ON_ERROR);
     $check($inventory->getStatusCode() === 200 && $body['schema_version'] === 1, 'versioned native GET inventory response');
     $check($body['extensions'] === $page->context['api_extension_inventory'], 'HTML and JSON use the same installed rows');
+    $review = $body['template_library_review'];
+    $check($review === $page->context['template_library_review'], 'HTML and JSON share the template review separately from installed extensions');
+    $check($review['report'] === 'TEMPLATE-PACKS-PRECHECK-2026-11-03' && $review['source'] === 'owner_relay'
+        && $review['reconciled_packs'] === 670 && $review['render_checks'] === ['passed' => 669, 'total' => 669]
+        && $review['authenticated_acceptance'] === 'pending', 'review identifies its source and leaves authenticated acceptance pending');
+    $check($review['lineages'] === [
+        'tc-faq' => 'drop', 'tc-gallery' => 'merge_partial', 'tc-hero' => 'merge_partial',
+        'tc-pricing' => 'drop', 'tc-testimonials' => 'merge_partial', 'tc-text-block' => 'merge_partial',
+    ] && $review['partial_merge_scope'] === 'feature_ports_only'
+        && array_keys($review['remainders']) === ['R1', 'R5', 'R6'], 'all six lineage decisions and packaging remainders');
+    $reviewHtml = $twig->render('api-extension-inventory.html.twig', $page->context + [
+        'gantry' => new class { public function route($controller, $path): string { return '/administrator/' . $controller . '/' . $path; } },
+    ]);
+    $check(substr_count($reviewHtml, 'Merge partial, feature ports only.') === 4
+        && substr_count($reviewHtml, 'Drop.') === 2 && str_contains($reviewHtml, 'Authenticated acceptance is pending.'), 'admin shows lineage scope and pending acceptance');
     $contract = $body['extensions'][0]['contract'];
     $check($contract['version'] === '3.0.3' && $contract['server'] === '/fixture/api/index.php'
         && $contract['security_schemes']['JoomlaToken']['name'] === 'X-Joomla-Token'
