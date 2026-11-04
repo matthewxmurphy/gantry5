@@ -214,7 +214,7 @@ var MenuManager = new prime({
 
             this.placeholder.style({ display: 'block' }).bottom(submenu_items);
             this.addNewItem = submenu_items;
-            this.targetLevel = 2;
+            this.targetLevel = Number(submenu_items.data('mm-base-level')) + 1;
             this.dragdrop.matched = false;
             return;
         }
@@ -345,7 +345,7 @@ var MenuManager = new prime({
 
         var particle = this.block,
             base = particle.parent('[data-mm-base]').data('mm-base'),
-            col = (particle.parent('[data-mm-id]').data('mm-id').match(/\d+$/) || [0])[0],
+            col = particle.data('mm-level') > 2 ? 0 : (particle.parent('[data-mm-id]').data('mm-id').match(/\d+$/) || [0])[0],
             index = indexOf(particle.parent().children('[data-mm-id]:not(.original-placeholder)'), particle[0]);
 
         delete this.items[this.itemID];
